@@ -1,7 +1,6 @@
 # Build tools
 
-These are the scripts the mod's generated files came from. They are working notes rather than a
-polished pipeline: paths and file names inside them are hard-coded to the original working folder.
+These scripts produce or validate the mod's generated assets.
 
 | Script | What it does |
 |---|---|
@@ -11,6 +10,18 @@ polished pipeline: paths and file names inside them are hard-coded to the origin
 | `gen_jbeam.py` | Generates the Covet part file (all mountings, finishes, sliders) |
 | `fit_check_render.py` | Software render of the car interior with the gauges, used to check the fit |
 | `bake_faceplates.html` | Bakes the printed face textures from the display page's own drawing code |
+| `validate_assets.py` | Checks JBeam structure, DAE mesh/material references, material texture paths, JavaScript syntax, Python syntax, and generated JBeam consistency |
 
-The placement and pod-shaping steps need the car's interior meshes extracted from the game's own
-`covet.dae`. Those are BeamNG's files and are not included here.
+## Run validation locally
+
+Requirements: Python 3.10+ and Node.js 18+.
+
+From the repository root:
+
+```bash
+python tools/validate_assets.py
+```
+
+The validator uses only Python's standard library and Node's built-in syntax checker. It does not launch BeamNG or Blender, so it cannot verify in-game fit, rendering, or game-side JBeam semantics.
+
+The placement and pod-shaping steps need the car's interior meshes extracted from the game's own `covet.dae`. Those are BeamNG's files and are not included here.

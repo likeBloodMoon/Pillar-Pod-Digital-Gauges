@@ -6,7 +6,7 @@ POS={ # variant: (boost position, oil position) -> ((x,y,z),yaw)
 SIZE={"std":"80","stripped":"80","cage":"65"}   # gauge size per mounting, percent of full size (the cage bar is much closer to the driver)
 NAMES={"std":"A-Pillar, Standard Interior","stripped":"A-Pillar, Stripped / Race / Rally Interior","cage":"Roll Cage Bar"}
 BOOST_CFG='''            "materialName": "@dbg_screen",
-            "htmlPath": "local://local/vehicles/common/digital_boost_gauge/screen.html",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
             "displayWidth":512,
             "displayHeight":512,
             "source":"boost",
@@ -30,7 +30,7 @@ BOOST_CFG='''            "materialName": "@dbg_screen",
             //display brightness at night or with headlights on (1 = no dimming)
             "nightBrightness":"$dbg_boost_night",'''
 OIL_CFG='''            "materialName": "@dbg_oil_screen",
-            "htmlPath": "local://local/vehicles/common/digital_boost_gauge/screen.html",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
             "displayWidth":512,
             "displayHeight":512,
             "source":"oiltemp",
