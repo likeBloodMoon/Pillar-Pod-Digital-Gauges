@@ -1,5 +1,5 @@
 {
-//Pillar Pod Digital Gauges v1.0 - parts for the Ibishu Covet.
+//Pillar Pod Digital Gauges - parts for the Ibishu Covet.
 //  Additional Modification -> Digital Pillar Gauges
 //      Boost Gauge:    empty, or one entry per interior type (standard / stripped / roll cage, LHD or RHD)
 //      Oil Temp Gauge: empty, or one entry per interior type
@@ -13,9 +13,9 @@
     },
     "slotType" : "covet_mod",
     "slots2": [
-        ["name",            "allowTypes",        "denyTypes", "default",                 "description"],
-        ["covet_dbg_boost", ["covet_dbg_boost"], [],          "covet_dbg_boost_std_lhd", "Boost Gauge"],
-        ["covet_dbg_oil",   ["covet_dbg_oil"],   [],          "",                        "Oil Temp Gauge"],
+        ["name",            "allowTypes",        "denyTypes", "default",              "description"],
+        ["covet_dbg_boost", ["covet_dbg_boost"], [],          "covet_dbg_boost_auto", "Boost Gauge"],
+        ["covet_dbg_oil",   ["covet_dbg_oil"],   [],          "",                     "Oil Temp Gauge"],
     ],
     //ambient light for automatic display dimming (shared by both gauges)
     "controller": [
@@ -23,16 +23,17 @@
         ["gauges/customModules/dbgAmbient"],
     ],
 },
-"covet_dbg_boost_std_lhd": {
+"covet_dbg_boost_auto": {
     "information":{
         "authors":"Kristof",
-        "name":"Boost - A-Pillar, Standard Interior (LHD)",
+        "name":"Boost - Automatic Mounting",
         "value":180,
     },
     "slotType" : "covet_dbg_boost",
     //sliders in the Tuning menu
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_boost_shift", "range", "", "Gauges", 1, 0, 1, "Boost Gauge: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
         ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
         ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],
         ["$dbg_boost_night", "range", "%", "Gauges", 12, 3, 100, "Boost Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
@@ -59,6 +60,9 @@
             "zeroLed":6,
             "titleLabel":"BOOST",
             //after a pull, flash the peak value for recallTime seconds
+            //1 = the whole LED ring flashes red near the rev limit (shiftAt = fraction of maximum RPM)
+            "shiftLight":"$dbg_boost_shift",
+            "shiftAt":0.96,
             "peakRecall":true,
             "recallTime":"$dbg_boost_recall",
             //digits flash at or above this boost
@@ -75,6 +79,189 @@
                 "superchargerBoost",
                 "engineRunning",
                 "rpm",
+                "maxrpm",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //meshes for every mounting (A-F); dbgAmbient.lua hides all but the one matching the car's interior
+        ["dbgvA1pod", ["covet_dash"],[],{"pos":{"x":0.5749,"y":-0.3246,"z":1.0758},"rot":{"x":0,"y":0,"z":24.8}}],
+        ["dbgvA1bzk", ["covet_dash"],[],{"pos":{"x":0.5749,"y":-0.3246,"z":1.0758},"rot":{"x":0,"y":0,"z":24.8}}],
+        ["dbgvA1sck", ["covet_dash"],[],{"pos":{"x":0.5749,"y":-0.3246,"z":1.0758},"rot":{"x":0,"y":0,"z":24.8}}],
+        ["dbgvB1pod", ["covet_dash"],[],{"pos":{"x":0.5823,"y":-0.3407,"z":1.0756},"rot":{"x":0,"y":0,"z":24.8}}],
+        ["dbgvB1bzk", ["covet_dash"],[],{"pos":{"x":0.5823,"y":-0.3407,"z":1.0756},"rot":{"x":0,"y":0,"z":24.8}}],
+        ["dbgvB1sck", ["covet_dash"],[],{"pos":{"x":0.5823,"y":-0.3407,"z":1.0756},"rot":{"x":0,"y":0,"z":24.8}}],
+        ["dbgvC1pod", ["covet_dash"],[],{"pos":{"x":0.5175,"y":-0.2189,"z":1.0961},"rot":{"x":0,"y":0,"z":23.8}}],
+        ["dbgvC1bzk", ["covet_dash"],[],{"pos":{"x":0.5175,"y":-0.2189,"z":1.0961},"rot":{"x":0,"y":0,"z":23.8}}],
+        ["dbgvC1sck", ["covet_dash"],[],{"pos":{"x":0.5175,"y":-0.2189,"z":1.0961},"rot":{"x":0,"y":0,"z":23.8}}],
+        ["dbgvD1pod", ["covet_dash"],[],{"pos":{"x":-0.5749,"y":-0.3246,"z":1.0758},"rot":{"x":0,"y":0,"z":-24.8}}],
+        ["dbgvD1bzk", ["covet_dash"],[],{"pos":{"x":-0.5749,"y":-0.3246,"z":1.0758},"rot":{"x":0,"y":0,"z":-24.8}}],
+        ["dbgvD1sck", ["covet_dash"],[],{"pos":{"x":-0.5749,"y":-0.3246,"z":1.0758},"rot":{"x":0,"y":0,"z":-24.8}}],
+        ["dbgvE1pod", ["covet_dash"],[],{"pos":{"x":-0.5823,"y":-0.3407,"z":1.0756},"rot":{"x":0,"y":0,"z":-24.8}}],
+        ["dbgvE1bzk", ["covet_dash"],[],{"pos":{"x":-0.5823,"y":-0.3407,"z":1.0756},"rot":{"x":0,"y":0,"z":-24.8}}],
+        ["dbgvE1sck", ["covet_dash"],[],{"pos":{"x":-0.5823,"y":-0.3407,"z":1.0756},"rot":{"x":0,"y":0,"z":-24.8}}],
+        ["dbgvF1pod", ["covet_dash"],[],{"pos":{"x":-0.5175,"y":-0.2189,"z":1.0961},"rot":{"x":0,"y":0,"z":-23.8}}],
+        ["dbgvF1bzk", ["covet_dash"],[],{"pos":{"x":-0.5175,"y":-0.2189,"z":1.0961},"rot":{"x":0,"y":0,"z":-23.8}}],
+        ["dbgvF1sck", ["covet_dash"],[],{"pos":{"x":-0.5175,"y":-0.2189,"z":1.0961},"rot":{"x":0,"y":0,"z":-23.8}}],
+    ],
+},
+"covet_dbg_boost_auto_silver": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Boost - Automatic Mounting, Silver",
+        "value":180,
+    },
+    "slotType" : "covet_dbg_boost",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_boost_shift", "range", "", "Gauges", 1, 0, 1, "Boost Gauge: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
+        ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
+        ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],
+        ["$dbg_boost_night", "range", "%", "Gauges", 12, 3, 100, "Boost Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgGauge"}],
+    ],
+    "dbgGauge": {
+        "configuration": {
+            "materialName": "@dbg_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"boost",
+            //"auto" follows the game's pressure unit setting; or force "psi", "bar" or "kpa"
+            "unit":"auto",
+            //LED arc range in PSI; LEDs below zeroValue show vacuum
+            "minValue":-10,
+            //0 = automatic: 1.25 x the turbo wastegate limit, so the red LEDs start just above it. A number here fixes the scale
+            "maxValue":0,
+            "zeroValue":0,
+            //the zero mark stays on the 7th LED so it matches the printed face; the scale stretches around it
+            "zeroLed":6,
+            "titleLabel":"BOOST",
+            //after a pull, flash the peak value for recallTime seconds
+            //1 = the whole LED ring flashes red near the rev limit (shiftAt = fraction of maximum RPM)
+            "shiftLight":"$dbg_boost_shift",
+            "shiftAt":0.96,
+            "peakRecall":true,
+            "recallTime":"$dbg_boost_recall",
+            //digits flash at or above this boost
+            "warnValue":"$dbg_boost_warn_at",
+            //seconds the peak LED stays lit
+            "peakHold":1.5,
+            //display brightness at night or with headlights on (1 = no dimming)
+            "nightBrightness":"$dbg_boost_night",
+            "face":"white",
+        },
+        "displayData": {
+            "electrics": [
+                "turboBoost",
+                "superchargerBoost",
+                "engineRunning",
+                "rpm",
+                "maxrpm",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //meshes for every mounting (A-F); dbgAmbient.lua hides all but the one matching the car's interior
+        ["dbgvA1pod", ["covet_dash"],[],{"pos":{"x":0.5749,"y":-0.3246,"z":1.0758},"rot":{"x":0,"y":0,"z":24.8}}],
+        ["dbgvA1bzs", ["covet_dash"],[],{"pos":{"x":0.5749,"y":-0.3246,"z":1.0758},"rot":{"x":0,"y":0,"z":24.8}}],
+        ["dbgvA1scs", ["covet_dash"],[],{"pos":{"x":0.5749,"y":-0.3246,"z":1.0758},"rot":{"x":0,"y":0,"z":24.8}}],
+        ["dbgvB1pod", ["covet_dash"],[],{"pos":{"x":0.5823,"y":-0.3407,"z":1.0756},"rot":{"x":0,"y":0,"z":24.8}}],
+        ["dbgvB1bzs", ["covet_dash"],[],{"pos":{"x":0.5823,"y":-0.3407,"z":1.0756},"rot":{"x":0,"y":0,"z":24.8}}],
+        ["dbgvB1scs", ["covet_dash"],[],{"pos":{"x":0.5823,"y":-0.3407,"z":1.0756},"rot":{"x":0,"y":0,"z":24.8}}],
+        ["dbgvC1pod", ["covet_dash"],[],{"pos":{"x":0.5175,"y":-0.2189,"z":1.0961},"rot":{"x":0,"y":0,"z":23.8}}],
+        ["dbgvC1bzs", ["covet_dash"],[],{"pos":{"x":0.5175,"y":-0.2189,"z":1.0961},"rot":{"x":0,"y":0,"z":23.8}}],
+        ["dbgvC1scs", ["covet_dash"],[],{"pos":{"x":0.5175,"y":-0.2189,"z":1.0961},"rot":{"x":0,"y":0,"z":23.8}}],
+        ["dbgvD1pod", ["covet_dash"],[],{"pos":{"x":-0.5749,"y":-0.3246,"z":1.0758},"rot":{"x":0,"y":0,"z":-24.8}}],
+        ["dbgvD1bzs", ["covet_dash"],[],{"pos":{"x":-0.5749,"y":-0.3246,"z":1.0758},"rot":{"x":0,"y":0,"z":-24.8}}],
+        ["dbgvD1scs", ["covet_dash"],[],{"pos":{"x":-0.5749,"y":-0.3246,"z":1.0758},"rot":{"x":0,"y":0,"z":-24.8}}],
+        ["dbgvE1pod", ["covet_dash"],[],{"pos":{"x":-0.5823,"y":-0.3407,"z":1.0756},"rot":{"x":0,"y":0,"z":-24.8}}],
+        ["dbgvE1bzs", ["covet_dash"],[],{"pos":{"x":-0.5823,"y":-0.3407,"z":1.0756},"rot":{"x":0,"y":0,"z":-24.8}}],
+        ["dbgvE1scs", ["covet_dash"],[],{"pos":{"x":-0.5823,"y":-0.3407,"z":1.0756},"rot":{"x":0,"y":0,"z":-24.8}}],
+        ["dbgvF1pod", ["covet_dash"],[],{"pos":{"x":-0.5175,"y":-0.2189,"z":1.0961},"rot":{"x":0,"y":0,"z":-23.8}}],
+        ["dbgvF1bzs", ["covet_dash"],[],{"pos":{"x":-0.5175,"y":-0.2189,"z":1.0961},"rot":{"x":0,"y":0,"z":-23.8}}],
+        ["dbgvF1scs", ["covet_dash"],[],{"pos":{"x":-0.5175,"y":-0.2189,"z":1.0961},"rot":{"x":0,"y":0,"z":-23.8}}],
+    ],
+},
+"covet_dbg_boost_std_lhd": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Boost - A-Pillar, Standard Interior (LHD)",
+        "value":180,
+    },
+    "slotType" : "covet_dbg_boost",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_boost_shift", "range", "", "Gauges", 1, 0, 1, "Boost Gauge: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
+        ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
+        ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],
+        ["$dbg_boost_night", "range", "%", "Gauges", 12, 3, 100, "Boost Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgGauge"}],
+    ],
+    "dbgGauge": {
+        "configuration": {
+            "materialName": "@dbg_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"boost",
+            //"auto" follows the game's pressure unit setting; or force "psi", "bar" or "kpa"
+            "unit":"auto",
+            //LED arc range in PSI; LEDs below zeroValue show vacuum
+            "minValue":-10,
+            //0 = automatic: 1.25 x the turbo wastegate limit, so the red LEDs start just above it. A number here fixes the scale
+            "maxValue":0,
+            "zeroValue":0,
+            //the zero mark stays on the 7th LED so it matches the printed face; the scale stretches around it
+            "zeroLed":6,
+            "titleLabel":"BOOST",
+            //after a pull, flash the peak value for recallTime seconds
+            //1 = the whole LED ring flashes red near the rev limit (shiftAt = fraction of maximum RPM)
+            "shiftLight":"$dbg_boost_shift",
+            "shiftAt":0.96,
+            "peakRecall":true,
+            "recallTime":"$dbg_boost_recall",
+            //digits flash at or above this boost
+            "warnValue":"$dbg_boost_warn_at",
+            //seconds the peak LED stays lit
+            "peakHold":1.5,
+            //display brightness at night or with headlights on (1 = no dimming)
+            "nightBrightness":"$dbg_boost_night",
+            "face":"black",
+        },
+        "displayData": {
+            "electrics": [
+                "turboBoost",
+                "superchargerBoost",
+                "engineRunning",
+                "rpm",
+                "maxrpm",
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
@@ -104,6 +291,7 @@
     //sliders in the Tuning menu
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_boost_shift", "range", "", "Gauges", 1, 0, 1, "Boost Gauge: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
         ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
         ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],
         ["$dbg_boost_night", "range", "%", "Gauges", 12, 3, 100, "Boost Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
@@ -130,6 +318,9 @@
             "zeroLed":6,
             "titleLabel":"BOOST",
             //after a pull, flash the peak value for recallTime seconds
+            //1 = the whole LED ring flashes red near the rev limit (shiftAt = fraction of maximum RPM)
+            "shiftLight":"$dbg_boost_shift",
+            "shiftAt":0.96,
             "peakRecall":true,
             "recallTime":"$dbg_boost_recall",
             //digits flash at or above this boost
@@ -146,6 +337,7 @@
                 "superchargerBoost",
                 "engineRunning",
                 "rpm",
+                "maxrpm",
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
@@ -175,6 +367,7 @@
     //sliders in the Tuning menu
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_boost_shift", "range", "", "Gauges", 1, 0, 1, "Boost Gauge: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
         ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
         ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],
         ["$dbg_boost_night", "range", "%", "Gauges", 12, 3, 100, "Boost Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
@@ -201,6 +394,9 @@
             "zeroLed":6,
             "titleLabel":"BOOST",
             //after a pull, flash the peak value for recallTime seconds
+            //1 = the whole LED ring flashes red near the rev limit (shiftAt = fraction of maximum RPM)
+            "shiftLight":"$dbg_boost_shift",
+            "shiftAt":0.96,
             "peakRecall":true,
             "recallTime":"$dbg_boost_recall",
             //digits flash at or above this boost
@@ -217,6 +413,7 @@
                 "superchargerBoost",
                 "engineRunning",
                 "rpm",
+                "maxrpm",
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
@@ -246,6 +443,7 @@
     //sliders in the Tuning menu
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_boost_shift", "range", "", "Gauges", 1, 0, 1, "Boost Gauge: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
         ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
         ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],
         ["$dbg_boost_night", "range", "%", "Gauges", 12, 3, 100, "Boost Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
@@ -272,6 +470,9 @@
             "zeroLed":6,
             "titleLabel":"BOOST",
             //after a pull, flash the peak value for recallTime seconds
+            //1 = the whole LED ring flashes red near the rev limit (shiftAt = fraction of maximum RPM)
+            "shiftLight":"$dbg_boost_shift",
+            "shiftAt":0.96,
             "peakRecall":true,
             "recallTime":"$dbg_boost_recall",
             //digits flash at or above this boost
@@ -288,6 +489,7 @@
                 "superchargerBoost",
                 "engineRunning",
                 "rpm",
+                "maxrpm",
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
@@ -317,6 +519,7 @@
     //sliders in the Tuning menu
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_boost_shift", "range", "", "Gauges", 1, 0, 1, "Boost Gauge: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
         ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
         ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],
         ["$dbg_boost_night", "range", "%", "Gauges", 12, 3, 100, "Boost Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
@@ -343,6 +546,9 @@
             "zeroLed":6,
             "titleLabel":"BOOST",
             //after a pull, flash the peak value for recallTime seconds
+            //1 = the whole LED ring flashes red near the rev limit (shiftAt = fraction of maximum RPM)
+            "shiftLight":"$dbg_boost_shift",
+            "shiftAt":0.96,
             "peakRecall":true,
             "recallTime":"$dbg_boost_recall",
             //digits flash at or above this boost
@@ -359,6 +565,7 @@
                 "superchargerBoost",
                 "engineRunning",
                 "rpm",
+                "maxrpm",
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
@@ -388,6 +595,7 @@
     //sliders in the Tuning menu
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_boost_shift", "range", "", "Gauges", 1, 0, 1, "Boost Gauge: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
         ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
         ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],
         ["$dbg_boost_night", "range", "%", "Gauges", 12, 3, 100, "Boost Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
@@ -414,6 +622,9 @@
             "zeroLed":6,
             "titleLabel":"BOOST",
             //after a pull, flash the peak value for recallTime seconds
+            //1 = the whole LED ring flashes red near the rev limit (shiftAt = fraction of maximum RPM)
+            "shiftLight":"$dbg_boost_shift",
+            "shiftAt":0.96,
             "peakRecall":true,
             "recallTime":"$dbg_boost_recall",
             //digits flash at or above this boost
@@ -430,6 +641,7 @@
                 "superchargerBoost",
                 "engineRunning",
                 "rpm",
+                "maxrpm",
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
@@ -459,6 +671,7 @@
     //sliders in the Tuning menu
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_boost_shift", "range", "", "Gauges", 1, 0, 1, "Boost Gauge: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
         ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
         ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],
         ["$dbg_boost_night", "range", "%", "Gauges", 12, 3, 100, "Boost Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
@@ -485,6 +698,9 @@
             "zeroLed":6,
             "titleLabel":"BOOST",
             //after a pull, flash the peak value for recallTime seconds
+            //1 = the whole LED ring flashes red near the rev limit (shiftAt = fraction of maximum RPM)
+            "shiftLight":"$dbg_boost_shift",
+            "shiftAt":0.96,
             "peakRecall":true,
             "recallTime":"$dbg_boost_recall",
             //digits flash at or above this boost
@@ -501,6 +717,7 @@
                 "superchargerBoost",
                 "engineRunning",
                 "rpm",
+                "maxrpm",
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
@@ -530,6 +747,7 @@
     //sliders in the Tuning menu
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_boost_shift", "range", "", "Gauges", 1, 0, 1, "Boost Gauge: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
         ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
         ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],
         ["$dbg_boost_night", "range", "%", "Gauges", 12, 3, 100, "Boost Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
@@ -556,6 +774,9 @@
             "zeroLed":6,
             "titleLabel":"BOOST",
             //after a pull, flash the peak value for recallTime seconds
+            //1 = the whole LED ring flashes red near the rev limit (shiftAt = fraction of maximum RPM)
+            "shiftLight":"$dbg_boost_shift",
+            "shiftAt":0.96,
             "peakRecall":true,
             "recallTime":"$dbg_boost_recall",
             //digits flash at or above this boost
@@ -572,6 +793,7 @@
                 "superchargerBoost",
                 "engineRunning",
                 "rpm",
+                "maxrpm",
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
@@ -601,6 +823,7 @@
     //sliders in the Tuning menu
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_boost_shift", "range", "", "Gauges", 1, 0, 1, "Boost Gauge: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
         ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
         ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],
         ["$dbg_boost_night", "range", "%", "Gauges", 12, 3, 100, "Boost Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
@@ -627,6 +850,9 @@
             "zeroLed":6,
             "titleLabel":"BOOST",
             //after a pull, flash the peak value for recallTime seconds
+            //1 = the whole LED ring flashes red near the rev limit (shiftAt = fraction of maximum RPM)
+            "shiftLight":"$dbg_boost_shift",
+            "shiftAt":0.96,
             "peakRecall":true,
             "recallTime":"$dbg_boost_recall",
             //digits flash at or above this boost
@@ -643,6 +869,7 @@
                 "superchargerBoost",
                 "engineRunning",
                 "rpm",
+                "maxrpm",
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
@@ -672,6 +899,7 @@
     //sliders in the Tuning menu
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_boost_shift", "range", "", "Gauges", 1, 0, 1, "Boost Gauge: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
         ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
         ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],
         ["$dbg_boost_night", "range", "%", "Gauges", 12, 3, 100, "Boost Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
@@ -698,6 +926,9 @@
             "zeroLed":6,
             "titleLabel":"BOOST",
             //after a pull, flash the peak value for recallTime seconds
+            //1 = the whole LED ring flashes red near the rev limit (shiftAt = fraction of maximum RPM)
+            "shiftLight":"$dbg_boost_shift",
+            "shiftAt":0.96,
             "peakRecall":true,
             "recallTime":"$dbg_boost_recall",
             //digits flash at or above this boost
@@ -714,6 +945,7 @@
                 "superchargerBoost",
                 "engineRunning",
                 "rpm",
+                "maxrpm",
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
@@ -743,6 +975,7 @@
     //sliders in the Tuning menu
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_boost_shift", "range", "", "Gauges", 1, 0, 1, "Boost Gauge: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
         ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
         ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],
         ["$dbg_boost_night", "range", "%", "Gauges", 12, 3, 100, "Boost Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
@@ -769,6 +1002,9 @@
             "zeroLed":6,
             "titleLabel":"BOOST",
             //after a pull, flash the peak value for recallTime seconds
+            //1 = the whole LED ring flashes red near the rev limit (shiftAt = fraction of maximum RPM)
+            "shiftLight":"$dbg_boost_shift",
+            "shiftAt":0.96,
             "peakRecall":true,
             "recallTime":"$dbg_boost_recall",
             //digits flash at or above this boost
@@ -785,6 +1021,7 @@
                 "superchargerBoost",
                 "engineRunning",
                 "rpm",
+                "maxrpm",
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
@@ -814,6 +1051,7 @@
     //sliders in the Tuning menu
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_boost_shift", "range", "", "Gauges", 1, 0, 1, "Boost Gauge: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
         ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
         ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],
         ["$dbg_boost_night", "range", "%", "Gauges", 12, 3, 100, "Boost Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
@@ -840,6 +1078,9 @@
             "zeroLed":6,
             "titleLabel":"BOOST",
             //after a pull, flash the peak value for recallTime seconds
+            //1 = the whole LED ring flashes red near the rev limit (shiftAt = fraction of maximum RPM)
+            "shiftLight":"$dbg_boost_shift",
+            "shiftAt":0.96,
             "peakRecall":true,
             "recallTime":"$dbg_boost_recall",
             //digits flash at or above this boost
@@ -856,6 +1097,7 @@
                 "superchargerBoost",
                 "engineRunning",
                 "rpm",
+                "maxrpm",
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
@@ -875,16 +1117,17 @@
         ["dbg_screen_w_65", ["covet_dash"],[],{"pos":{"x":-0.5175,"y":-0.2189,"z":1.0961},"rot":{"x":0,"y":0,"z":-23.8}}],
     ],
 },
-"covet_dbg_oil_std_lhd": {
+"covet_dbg_oil_auto": {
     "information":{
         "authors":"Kristof",
-        "name":"Oil Temp - A-Pillar, Standard Interior (LHD)",
+        "name":"Oil Temp - Automatic Mounting",
         "value":180,
     },
     "slotType" : "covet_dbg_oil",
     //sliders in the Tuning menu
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_oil_cold", "range", "C", "Gauges", 70, 0, 100, "Oil Temp Gauge: Cold Mark Below", "A blue COLD mark shows below this oil temperature (deg C). 0 = off", {"stepDis":1}],
         ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
         ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
     ],
@@ -906,6 +1149,158 @@
             "titleLabel":"OIL TEMP",
             //digits flash at or above this temperature (deg C)
             "warnValue":"$dbg_oil_warn",
+            //a blue COLD mark shows below this oil temperature (deg C); 0 = off
+            "coldBelow":"$dbg_oil_cold",
+            "peakHold":0,
+            "nightBrightness":"$dbg_oil_night",
+            "face":"black",
+        },
+        "displayData": {
+            "electrics": [
+                "oiltemp",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //meshes for every mounting (A-F); dbgAmbient.lua hides all but the one matching the car's interior
+        ["dbgvA2pod", ["covet_dash"],[],{"pos":{"x":0.5397,"y":-0.2291,"z":1.1372},"rot":{"x":0,"y":0,"z":25.7}}],
+        ["dbgvA2bzk", ["covet_dash"],[],{"pos":{"x":0.5397,"y":-0.2291,"z":1.1372},"rot":{"x":0,"y":0,"z":25.7}}],
+        ["dbgvA2sck", ["covet_dash"],[],{"pos":{"x":0.5397,"y":-0.2291,"z":1.1372},"rot":{"x":0,"y":0,"z":25.7}}],
+        ["dbgvB2pod", ["covet_dash"],[],{"pos":{"x":0.5473,"y":-0.2448,"z":1.1393},"rot":{"x":0,"y":0,"z":25.7}}],
+        ["dbgvB2bzk", ["covet_dash"],[],{"pos":{"x":0.5473,"y":-0.2448,"z":1.1393},"rot":{"x":0,"y":0,"z":25.7}}],
+        ["dbgvB2sck", ["covet_dash"],[],{"pos":{"x":0.5473,"y":-0.2448,"z":1.1393},"rot":{"x":0,"y":0,"z":25.7}}],
+        ["dbgvC2pod", ["covet_dash"],[],{"pos":{"x":0.4972,"y":-0.1483,"z":1.1426},"rot":{"x":0,"y":0,"z":25.2}}],
+        ["dbgvC2bzk", ["covet_dash"],[],{"pos":{"x":0.4972,"y":-0.1483,"z":1.1426},"rot":{"x":0,"y":0,"z":25.2}}],
+        ["dbgvC2sck", ["covet_dash"],[],{"pos":{"x":0.4972,"y":-0.1483,"z":1.1426},"rot":{"x":0,"y":0,"z":25.2}}],
+        ["dbgvD2pod", ["covet_dash"],[],{"pos":{"x":-0.5397,"y":-0.2291,"z":1.1372},"rot":{"x":0,"y":0,"z":-25.7}}],
+        ["dbgvD2bzk", ["covet_dash"],[],{"pos":{"x":-0.5397,"y":-0.2291,"z":1.1372},"rot":{"x":0,"y":0,"z":-25.7}}],
+        ["dbgvD2sck", ["covet_dash"],[],{"pos":{"x":-0.5397,"y":-0.2291,"z":1.1372},"rot":{"x":0,"y":0,"z":-25.7}}],
+        ["dbgvE2pod", ["covet_dash"],[],{"pos":{"x":-0.5473,"y":-0.2448,"z":1.1393},"rot":{"x":0,"y":0,"z":-25.7}}],
+        ["dbgvE2bzk", ["covet_dash"],[],{"pos":{"x":-0.5473,"y":-0.2448,"z":1.1393},"rot":{"x":0,"y":0,"z":-25.7}}],
+        ["dbgvE2sck", ["covet_dash"],[],{"pos":{"x":-0.5473,"y":-0.2448,"z":1.1393},"rot":{"x":0,"y":0,"z":-25.7}}],
+        ["dbgvF2pod", ["covet_dash"],[],{"pos":{"x":-0.4972,"y":-0.1483,"z":1.1426},"rot":{"x":0,"y":0,"z":-25.2}}],
+        ["dbgvF2bzk", ["covet_dash"],[],{"pos":{"x":-0.4972,"y":-0.1483,"z":1.1426},"rot":{"x":0,"y":0,"z":-25.2}}],
+        ["dbgvF2sck", ["covet_dash"],[],{"pos":{"x":-0.4972,"y":-0.1483,"z":1.1426},"rot":{"x":0,"y":0,"z":-25.2}}],
+    ],
+},
+"covet_dbg_oil_auto_silver": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Oil Temp - Automatic Mounting, Silver",
+        "value":180,
+    },
+    "slotType" : "covet_dbg_oil",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_oil_cold", "range", "C", "Gauges", 70, 0, 100, "Oil Temp Gauge: Cold Mark Below", "A blue COLD mark shows below this oil temperature (deg C). 0 = off", {"stepDis":1}],
+        ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
+        ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgOilGauge"}],
+    ],
+    "dbgOilGauge": {
+        "configuration": {
+            "materialName": "@dbg_oil_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"oiltemp",
+            "decimals":0,
+            //LED arc range in deg C (the digits follow the game's temperature unit setting)
+            "minValue":50,
+            "maxValue":150,
+            "titleLabel":"OIL TEMP",
+            //digits flash at or above this temperature (deg C)
+            "warnValue":"$dbg_oil_warn",
+            //a blue COLD mark shows below this oil temperature (deg C); 0 = off
+            "coldBelow":"$dbg_oil_cold",
+            "peakHold":0,
+            "nightBrightness":"$dbg_oil_night",
+            "face":"white",
+        },
+        "displayData": {
+            "electrics": [
+                "oiltemp",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //meshes for every mounting (A-F); dbgAmbient.lua hides all but the one matching the car's interior
+        ["dbgvA2pod", ["covet_dash"],[],{"pos":{"x":0.5397,"y":-0.2291,"z":1.1372},"rot":{"x":0,"y":0,"z":25.7}}],
+        ["dbgvA2bzs", ["covet_dash"],[],{"pos":{"x":0.5397,"y":-0.2291,"z":1.1372},"rot":{"x":0,"y":0,"z":25.7}}],
+        ["dbgvA2scs", ["covet_dash"],[],{"pos":{"x":0.5397,"y":-0.2291,"z":1.1372},"rot":{"x":0,"y":0,"z":25.7}}],
+        ["dbgvB2pod", ["covet_dash"],[],{"pos":{"x":0.5473,"y":-0.2448,"z":1.1393},"rot":{"x":0,"y":0,"z":25.7}}],
+        ["dbgvB2bzs", ["covet_dash"],[],{"pos":{"x":0.5473,"y":-0.2448,"z":1.1393},"rot":{"x":0,"y":0,"z":25.7}}],
+        ["dbgvB2scs", ["covet_dash"],[],{"pos":{"x":0.5473,"y":-0.2448,"z":1.1393},"rot":{"x":0,"y":0,"z":25.7}}],
+        ["dbgvC2pod", ["covet_dash"],[],{"pos":{"x":0.4972,"y":-0.1483,"z":1.1426},"rot":{"x":0,"y":0,"z":25.2}}],
+        ["dbgvC2bzs", ["covet_dash"],[],{"pos":{"x":0.4972,"y":-0.1483,"z":1.1426},"rot":{"x":0,"y":0,"z":25.2}}],
+        ["dbgvC2scs", ["covet_dash"],[],{"pos":{"x":0.4972,"y":-0.1483,"z":1.1426},"rot":{"x":0,"y":0,"z":25.2}}],
+        ["dbgvD2pod", ["covet_dash"],[],{"pos":{"x":-0.5397,"y":-0.2291,"z":1.1372},"rot":{"x":0,"y":0,"z":-25.7}}],
+        ["dbgvD2bzs", ["covet_dash"],[],{"pos":{"x":-0.5397,"y":-0.2291,"z":1.1372},"rot":{"x":0,"y":0,"z":-25.7}}],
+        ["dbgvD2scs", ["covet_dash"],[],{"pos":{"x":-0.5397,"y":-0.2291,"z":1.1372},"rot":{"x":0,"y":0,"z":-25.7}}],
+        ["dbgvE2pod", ["covet_dash"],[],{"pos":{"x":-0.5473,"y":-0.2448,"z":1.1393},"rot":{"x":0,"y":0,"z":-25.7}}],
+        ["dbgvE2bzs", ["covet_dash"],[],{"pos":{"x":-0.5473,"y":-0.2448,"z":1.1393},"rot":{"x":0,"y":0,"z":-25.7}}],
+        ["dbgvE2scs", ["covet_dash"],[],{"pos":{"x":-0.5473,"y":-0.2448,"z":1.1393},"rot":{"x":0,"y":0,"z":-25.7}}],
+        ["dbgvF2pod", ["covet_dash"],[],{"pos":{"x":-0.4972,"y":-0.1483,"z":1.1426},"rot":{"x":0,"y":0,"z":-25.2}}],
+        ["dbgvF2bzs", ["covet_dash"],[],{"pos":{"x":-0.4972,"y":-0.1483,"z":1.1426},"rot":{"x":0,"y":0,"z":-25.2}}],
+        ["dbgvF2scs", ["covet_dash"],[],{"pos":{"x":-0.4972,"y":-0.1483,"z":1.1426},"rot":{"x":0,"y":0,"z":-25.2}}],
+    ],
+},
+"covet_dbg_oil_std_lhd": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Oil Temp - A-Pillar, Standard Interior (LHD)",
+        "value":180,
+    },
+    "slotType" : "covet_dbg_oil",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_oil_cold", "range", "C", "Gauges", 70, 0, 100, "Oil Temp Gauge: Cold Mark Below", "A blue COLD mark shows below this oil temperature (deg C). 0 = off", {"stepDis":1}],
+        ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
+        ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgOilGauge"}],
+    ],
+    "dbgOilGauge": {
+        "configuration": {
+            "materialName": "@dbg_oil_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"oiltemp",
+            "decimals":0,
+            //LED arc range in deg C (the digits follow the game's temperature unit setting)
+            "minValue":50,
+            "maxValue":150,
+            "titleLabel":"OIL TEMP",
+            //digits flash at or above this temperature (deg C)
+            "warnValue":"$dbg_oil_warn",
+            //a blue COLD mark shows below this oil temperature (deg C); 0 = off
+            "coldBelow":"$dbg_oil_cold",
             "peakHold":0,
             "nightBrightness":"$dbg_oil_night",
             "face":"black",
@@ -942,6 +1337,7 @@
     //sliders in the Tuning menu
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_oil_cold", "range", "C", "Gauges", 70, 0, 100, "Oil Temp Gauge: Cold Mark Below", "A blue COLD mark shows below this oil temperature (deg C). 0 = off", {"stepDis":1}],
         ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
         ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
     ],
@@ -963,6 +1359,8 @@
             "titleLabel":"OIL TEMP",
             //digits flash at or above this temperature (deg C)
             "warnValue":"$dbg_oil_warn",
+            //a blue COLD mark shows below this oil temperature (deg C); 0 = off
+            "coldBelow":"$dbg_oil_cold",
             "peakHold":0,
             "nightBrightness":"$dbg_oil_night",
             "face":"black",
@@ -999,6 +1397,7 @@
     //sliders in the Tuning menu
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_oil_cold", "range", "C", "Gauges", 70, 0, 100, "Oil Temp Gauge: Cold Mark Below", "A blue COLD mark shows below this oil temperature (deg C). 0 = off", {"stepDis":1}],
         ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
         ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
     ],
@@ -1020,6 +1419,8 @@
             "titleLabel":"OIL TEMP",
             //digits flash at or above this temperature (deg C)
             "warnValue":"$dbg_oil_warn",
+            //a blue COLD mark shows below this oil temperature (deg C); 0 = off
+            "coldBelow":"$dbg_oil_cold",
             "peakHold":0,
             "nightBrightness":"$dbg_oil_night",
             "face":"black",
@@ -1056,6 +1457,7 @@
     //sliders in the Tuning menu
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_oil_cold", "range", "C", "Gauges", 70, 0, 100, "Oil Temp Gauge: Cold Mark Below", "A blue COLD mark shows below this oil temperature (deg C). 0 = off", {"stepDis":1}],
         ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
         ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
     ],
@@ -1077,6 +1479,8 @@
             "titleLabel":"OIL TEMP",
             //digits flash at or above this temperature (deg C)
             "warnValue":"$dbg_oil_warn",
+            //a blue COLD mark shows below this oil temperature (deg C); 0 = off
+            "coldBelow":"$dbg_oil_cold",
             "peakHold":0,
             "nightBrightness":"$dbg_oil_night",
             "face":"black",
@@ -1113,6 +1517,7 @@
     //sliders in the Tuning menu
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_oil_cold", "range", "C", "Gauges", 70, 0, 100, "Oil Temp Gauge: Cold Mark Below", "A blue COLD mark shows below this oil temperature (deg C). 0 = off", {"stepDis":1}],
         ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
         ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
     ],
@@ -1134,6 +1539,8 @@
             "titleLabel":"OIL TEMP",
             //digits flash at or above this temperature (deg C)
             "warnValue":"$dbg_oil_warn",
+            //a blue COLD mark shows below this oil temperature (deg C); 0 = off
+            "coldBelow":"$dbg_oil_cold",
             "peakHold":0,
             "nightBrightness":"$dbg_oil_night",
             "face":"black",
@@ -1170,6 +1577,7 @@
     //sliders in the Tuning menu
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_oil_cold", "range", "C", "Gauges", 70, 0, 100, "Oil Temp Gauge: Cold Mark Below", "A blue COLD mark shows below this oil temperature (deg C). 0 = off", {"stepDis":1}],
         ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
         ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
     ],
@@ -1191,6 +1599,8 @@
             "titleLabel":"OIL TEMP",
             //digits flash at or above this temperature (deg C)
             "warnValue":"$dbg_oil_warn",
+            //a blue COLD mark shows below this oil temperature (deg C); 0 = off
+            "coldBelow":"$dbg_oil_cold",
             "peakHold":0,
             "nightBrightness":"$dbg_oil_night",
             "face":"black",
@@ -1227,6 +1637,7 @@
     //sliders in the Tuning menu
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_oil_cold", "range", "C", "Gauges", 70, 0, 100, "Oil Temp Gauge: Cold Mark Below", "A blue COLD mark shows below this oil temperature (deg C). 0 = off", {"stepDis":1}],
         ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
         ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
     ],
@@ -1248,6 +1659,8 @@
             "titleLabel":"OIL TEMP",
             //digits flash at or above this temperature (deg C)
             "warnValue":"$dbg_oil_warn",
+            //a blue COLD mark shows below this oil temperature (deg C); 0 = off
+            "coldBelow":"$dbg_oil_cold",
             "peakHold":0,
             "nightBrightness":"$dbg_oil_night",
             "face":"white",
@@ -1284,6 +1697,7 @@
     //sliders in the Tuning menu
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_oil_cold", "range", "C", "Gauges", 70, 0, 100, "Oil Temp Gauge: Cold Mark Below", "A blue COLD mark shows below this oil temperature (deg C). 0 = off", {"stepDis":1}],
         ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
         ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
     ],
@@ -1305,6 +1719,8 @@
             "titleLabel":"OIL TEMP",
             //digits flash at or above this temperature (deg C)
             "warnValue":"$dbg_oil_warn",
+            //a blue COLD mark shows below this oil temperature (deg C); 0 = off
+            "coldBelow":"$dbg_oil_cold",
             "peakHold":0,
             "nightBrightness":"$dbg_oil_night",
             "face":"white",
@@ -1341,6 +1757,7 @@
     //sliders in the Tuning menu
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_oil_cold", "range", "C", "Gauges", 70, 0, 100, "Oil Temp Gauge: Cold Mark Below", "A blue COLD mark shows below this oil temperature (deg C). 0 = off", {"stepDis":1}],
         ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
         ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
     ],
@@ -1362,6 +1779,8 @@
             "titleLabel":"OIL TEMP",
             //digits flash at or above this temperature (deg C)
             "warnValue":"$dbg_oil_warn",
+            //a blue COLD mark shows below this oil temperature (deg C); 0 = off
+            "coldBelow":"$dbg_oil_cold",
             "peakHold":0,
             "nightBrightness":"$dbg_oil_night",
             "face":"white",
@@ -1398,6 +1817,7 @@
     //sliders in the Tuning menu
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_oil_cold", "range", "C", "Gauges", 70, 0, 100, "Oil Temp Gauge: Cold Mark Below", "A blue COLD mark shows below this oil temperature (deg C). 0 = off", {"stepDis":1}],
         ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
         ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
     ],
@@ -1419,6 +1839,8 @@
             "titleLabel":"OIL TEMP",
             //digits flash at or above this temperature (deg C)
             "warnValue":"$dbg_oil_warn",
+            //a blue COLD mark shows below this oil temperature (deg C); 0 = off
+            "coldBelow":"$dbg_oil_cold",
             "peakHold":0,
             "nightBrightness":"$dbg_oil_night",
             "face":"white",
@@ -1455,6 +1877,7 @@
     //sliders in the Tuning menu
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_oil_cold", "range", "C", "Gauges", 70, 0, 100, "Oil Temp Gauge: Cold Mark Below", "A blue COLD mark shows below this oil temperature (deg C). 0 = off", {"stepDis":1}],
         ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
         ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
     ],
@@ -1476,6 +1899,8 @@
             "titleLabel":"OIL TEMP",
             //digits flash at or above this temperature (deg C)
             "warnValue":"$dbg_oil_warn",
+            //a blue COLD mark shows below this oil temperature (deg C); 0 = off
+            "coldBelow":"$dbg_oil_cold",
             "peakHold":0,
             "nightBrightness":"$dbg_oil_night",
             "face":"white",
@@ -1512,6 +1937,7 @@
     //sliders in the Tuning menu
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_oil_cold", "range", "C", "Gauges", 70, 0, 100, "Oil Temp Gauge: Cold Mark Below", "A blue COLD mark shows below this oil temperature (deg C). 0 = off", {"stepDis":1}],
         ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
         ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
     ],
@@ -1533,6 +1959,8 @@
             "titleLabel":"OIL TEMP",
             //digits flash at or above this temperature (deg C)
             "warnValue":"$dbg_oil_warn",
+            //a blue COLD mark shows below this oil temperature (deg C); 0 = off
+            "coldBelow":"$dbg_oil_cold",
             "peakHold":0,
             "nightBrightness":"$dbg_oil_night",
             "face":"white",

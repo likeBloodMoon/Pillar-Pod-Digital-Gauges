@@ -9,6 +9,7 @@ These scripts produce or validate the mod's generated assets.
 | `export_dae.py` | Writes all pod, bezel and screen meshes into the Collada file |
 | `gen_jbeam.py` | Generates the Covet part file (all mountings, finishes, sliders) |
 | `fit_check_render.py` | Software render of the car interior with the gauges, used to check the fit |
+| `build_release.py` | Assembles the release folder and zip from the working files |
 | `bake_faceplates.html` | Bakes the printed face textures from the display page's own drawing code |
 | `validate_assets.py` | Checks JBeam structure, DAE mesh/material references, material texture paths, JavaScript syntax, Python syntax, and generated JBeam consistency |
 
