@@ -1,0 +1,1562 @@
+{
+//Pillar Pod Digital Gauges v1.0 - parts for the Ibishu Covet.
+//  Additional Modification -> Digital Pillar Gauges
+//      Boost Gauge:    empty, or one entry per interior type (standard / stripped / roll cage, LHD or RHD)
+//      Oil Temp Gauge: empty, or one entry per interior type
+//Fit one or both. Boost sits in the lower position, oil temp above it. Every entry has its own
+//position and its own pod shape, so pick the one that matches the car's interior.
+"covet_digital_boost_gauge_pillar": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Digital Pillar Gauges",
+        "value":0,
+    },
+    "slotType" : "covet_mod",
+    "slots2": [
+        ["name",            "allowTypes",        "denyTypes", "default",                 "description"],
+        ["covet_dbg_boost", ["covet_dbg_boost"], [],          "covet_dbg_boost_std_lhd", "Boost Gauge"],
+        ["covet_dbg_oil",   ["covet_dbg_oil"],   [],          "",                        "Oil Temp Gauge"],
+    ],
+    //ambient light for automatic display dimming (shared by both gauges)
+    "controller": [
+        ["fileName"],
+        ["gauges/customModules/dbgAmbient"],
+    ],
+},
+"covet_dbg_boost_std_lhd": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Boost - A-Pillar, Standard Interior (LHD)",
+        "value":180,
+    },
+    "slotType" : "covet_dbg_boost",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
+        ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],
+        ["$dbg_boost_night", "range", "%", "Gauges", 12, 3, 100, "Boost Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgGauge"}],
+    ],
+    "dbgGauge": {
+        "configuration": {
+            "materialName": "@dbg_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"boost",
+            //"auto" follows the game's pressure unit setting; or force "psi", "bar" or "kpa"
+            "unit":"auto",
+            //LED arc range in PSI; LEDs below zeroValue show vacuum
+            "minValue":-10,
+            //0 = automatic: 1.25 x the turbo wastegate limit, so the red LEDs start just above it. A number here fixes the scale
+            "maxValue":0,
+            "zeroValue":0,
+            //the zero mark stays on the 7th LED so it matches the printed face; the scale stretches around it
+            "zeroLed":6,
+            "titleLabel":"BOOST",
+            //after a pull, flash the peak value for recallTime seconds
+            "peakRecall":true,
+            "recallTime":"$dbg_boost_recall",
+            //digits flash at or above this boost
+            "warnValue":"$dbg_boost_warn_at",
+            //seconds the peak LED stays lit
+            "peakHold":1.5,
+            //display brightness at night or with headlights on (1 = no dimming)
+            "nightBrightness":"$dbg_boost_night",
+            "face":"black",
+        },
+        "displayData": {
+            "electrics": [
+                "turboBoost",
+                "superchargerBoost",
+                "engineRunning",
+                "rpm",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //pos = centre of the gauge face. The pod mesh is shaped for exactly this spot.
+        ["dbg_pod_std", ["covet_dash"],[],{"pos":{"x":0.5749,"y":-0.3246,"z":1.0758},"rot":{"x":0,"y":0,"z":24.8}}],
+        ["dbg_gauge_80", ["covet_dash"],[],{"pos":{"x":0.5749,"y":-0.3246,"z":1.0758},"rot":{"x":0,"y":0,"z":24.8}}],
+        ["dbg_screen_80", ["covet_dash"],[],{"pos":{"x":0.5749,"y":-0.3246,"z":1.0758},"rot":{"x":0,"y":0,"z":24.8}}],
+    ],
+},
+"covet_dbg_boost_stripped_lhd": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Boost - A-Pillar, Stripped / Race / Rally Interior (LHD)",
+        "value":180,
+    },
+    "slotType" : "covet_dbg_boost",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
+        ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],
+        ["$dbg_boost_night", "range", "%", "Gauges", 12, 3, 100, "Boost Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgGauge"}],
+    ],
+    "dbgGauge": {
+        "configuration": {
+            "materialName": "@dbg_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"boost",
+            //"auto" follows the game's pressure unit setting; or force "psi", "bar" or "kpa"
+            "unit":"auto",
+            //LED arc range in PSI; LEDs below zeroValue show vacuum
+            "minValue":-10,
+            //0 = automatic: 1.25 x the turbo wastegate limit, so the red LEDs start just above it. A number here fixes the scale
+            "maxValue":0,
+            "zeroValue":0,
+            //the zero mark stays on the 7th LED so it matches the printed face; the scale stretches around it
+            "zeroLed":6,
+            "titleLabel":"BOOST",
+            //after a pull, flash the peak value for recallTime seconds
+            "peakRecall":true,
+            "recallTime":"$dbg_boost_recall",
+            //digits flash at or above this boost
+            "warnValue":"$dbg_boost_warn_at",
+            //seconds the peak LED stays lit
+            "peakHold":1.5,
+            //display brightness at night or with headlights on (1 = no dimming)
+            "nightBrightness":"$dbg_boost_night",
+            "face":"black",
+        },
+        "displayData": {
+            "electrics": [
+                "turboBoost",
+                "superchargerBoost",
+                "engineRunning",
+                "rpm",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //pos = centre of the gauge face. The pod mesh is shaped for exactly this spot.
+        ["dbg_pod_stripped", ["covet_dash"],[],{"pos":{"x":0.5823,"y":-0.3407,"z":1.0756},"rot":{"x":0,"y":0,"z":24.8}}],
+        ["dbg_gauge_80", ["covet_dash"],[],{"pos":{"x":0.5823,"y":-0.3407,"z":1.0756},"rot":{"x":0,"y":0,"z":24.8}}],
+        ["dbg_screen_80", ["covet_dash"],[],{"pos":{"x":0.5823,"y":-0.3407,"z":1.0756},"rot":{"x":0,"y":0,"z":24.8}}],
+    ],
+},
+"covet_dbg_boost_cage_lhd": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Boost - Roll Cage Bar (LHD)",
+        "value":180,
+    },
+    "slotType" : "covet_dbg_boost",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
+        ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],
+        ["$dbg_boost_night", "range", "%", "Gauges", 12, 3, 100, "Boost Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgGauge"}],
+    ],
+    "dbgGauge": {
+        "configuration": {
+            "materialName": "@dbg_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"boost",
+            //"auto" follows the game's pressure unit setting; or force "psi", "bar" or "kpa"
+            "unit":"auto",
+            //LED arc range in PSI; LEDs below zeroValue show vacuum
+            "minValue":-10,
+            //0 = automatic: 1.25 x the turbo wastegate limit, so the red LEDs start just above it. A number here fixes the scale
+            "maxValue":0,
+            "zeroValue":0,
+            //the zero mark stays on the 7th LED so it matches the printed face; the scale stretches around it
+            "zeroLed":6,
+            "titleLabel":"BOOST",
+            //after a pull, flash the peak value for recallTime seconds
+            "peakRecall":true,
+            "recallTime":"$dbg_boost_recall",
+            //digits flash at or above this boost
+            "warnValue":"$dbg_boost_warn_at",
+            //seconds the peak LED stays lit
+            "peakHold":1.5,
+            //display brightness at night or with headlights on (1 = no dimming)
+            "nightBrightness":"$dbg_boost_night",
+            "face":"black",
+        },
+        "displayData": {
+            "electrics": [
+                "turboBoost",
+                "superchargerBoost",
+                "engineRunning",
+                "rpm",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //pos = centre of the gauge face. The pod mesh is shaped for exactly this spot.
+        ["dbg_pod_cage", ["covet_dash"],[],{"pos":{"x":0.5175,"y":-0.2189,"z":1.0961},"rot":{"x":0,"y":0,"z":23.8}}],
+        ["dbg_gauge_65", ["covet_dash"],[],{"pos":{"x":0.5175,"y":-0.2189,"z":1.0961},"rot":{"x":0,"y":0,"z":23.8}}],
+        ["dbg_screen_65", ["covet_dash"],[],{"pos":{"x":0.5175,"y":-0.2189,"z":1.0961},"rot":{"x":0,"y":0,"z":23.8}}],
+    ],
+},
+"covet_dbg_boost_std_rhd": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Boost - A-Pillar, Standard Interior (RHD)",
+        "value":180,
+    },
+    "slotType" : "covet_dbg_boost",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
+        ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],
+        ["$dbg_boost_night", "range", "%", "Gauges", 12, 3, 100, "Boost Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgGauge"}],
+    ],
+    "dbgGauge": {
+        "configuration": {
+            "materialName": "@dbg_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"boost",
+            //"auto" follows the game's pressure unit setting; or force "psi", "bar" or "kpa"
+            "unit":"auto",
+            //LED arc range in PSI; LEDs below zeroValue show vacuum
+            "minValue":-10,
+            //0 = automatic: 1.25 x the turbo wastegate limit, so the red LEDs start just above it. A number here fixes the scale
+            "maxValue":0,
+            "zeroValue":0,
+            //the zero mark stays on the 7th LED so it matches the printed face; the scale stretches around it
+            "zeroLed":6,
+            "titleLabel":"BOOST",
+            //after a pull, flash the peak value for recallTime seconds
+            "peakRecall":true,
+            "recallTime":"$dbg_boost_recall",
+            //digits flash at or above this boost
+            "warnValue":"$dbg_boost_warn_at",
+            //seconds the peak LED stays lit
+            "peakHold":1.5,
+            //display brightness at night or with headlights on (1 = no dimming)
+            "nightBrightness":"$dbg_boost_night",
+            "face":"black",
+        },
+        "displayData": {
+            "electrics": [
+                "turboBoost",
+                "superchargerBoost",
+                "engineRunning",
+                "rpm",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //pos = centre of the gauge face. The pod mesh is shaped for exactly this spot.
+        ["dbg_pod_std_rhd", ["covet_dash"],[],{"pos":{"x":-0.5749,"y":-0.3246,"z":1.0758},"rot":{"x":0,"y":0,"z":-24.8}}],
+        ["dbg_gauge_80", ["covet_dash"],[],{"pos":{"x":-0.5749,"y":-0.3246,"z":1.0758},"rot":{"x":0,"y":0,"z":-24.8}}],
+        ["dbg_screen_80", ["covet_dash"],[],{"pos":{"x":-0.5749,"y":-0.3246,"z":1.0758},"rot":{"x":0,"y":0,"z":-24.8}}],
+    ],
+},
+"covet_dbg_boost_stripped_rhd": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Boost - A-Pillar, Stripped / Race / Rally Interior (RHD)",
+        "value":180,
+    },
+    "slotType" : "covet_dbg_boost",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
+        ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],
+        ["$dbg_boost_night", "range", "%", "Gauges", 12, 3, 100, "Boost Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgGauge"}],
+    ],
+    "dbgGauge": {
+        "configuration": {
+            "materialName": "@dbg_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"boost",
+            //"auto" follows the game's pressure unit setting; or force "psi", "bar" or "kpa"
+            "unit":"auto",
+            //LED arc range in PSI; LEDs below zeroValue show vacuum
+            "minValue":-10,
+            //0 = automatic: 1.25 x the turbo wastegate limit, so the red LEDs start just above it. A number here fixes the scale
+            "maxValue":0,
+            "zeroValue":0,
+            //the zero mark stays on the 7th LED so it matches the printed face; the scale stretches around it
+            "zeroLed":6,
+            "titleLabel":"BOOST",
+            //after a pull, flash the peak value for recallTime seconds
+            "peakRecall":true,
+            "recallTime":"$dbg_boost_recall",
+            //digits flash at or above this boost
+            "warnValue":"$dbg_boost_warn_at",
+            //seconds the peak LED stays lit
+            "peakHold":1.5,
+            //display brightness at night or with headlights on (1 = no dimming)
+            "nightBrightness":"$dbg_boost_night",
+            "face":"black",
+        },
+        "displayData": {
+            "electrics": [
+                "turboBoost",
+                "superchargerBoost",
+                "engineRunning",
+                "rpm",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //pos = centre of the gauge face. The pod mesh is shaped for exactly this spot.
+        ["dbg_pod_stripped_rhd", ["covet_dash"],[],{"pos":{"x":-0.5823,"y":-0.3407,"z":1.0756},"rot":{"x":0,"y":0,"z":-24.8}}],
+        ["dbg_gauge_80", ["covet_dash"],[],{"pos":{"x":-0.5823,"y":-0.3407,"z":1.0756},"rot":{"x":0,"y":0,"z":-24.8}}],
+        ["dbg_screen_80", ["covet_dash"],[],{"pos":{"x":-0.5823,"y":-0.3407,"z":1.0756},"rot":{"x":0,"y":0,"z":-24.8}}],
+    ],
+},
+"covet_dbg_boost_cage_rhd": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Boost - Roll Cage Bar (RHD)",
+        "value":180,
+    },
+    "slotType" : "covet_dbg_boost",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
+        ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],
+        ["$dbg_boost_night", "range", "%", "Gauges", 12, 3, 100, "Boost Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgGauge"}],
+    ],
+    "dbgGauge": {
+        "configuration": {
+            "materialName": "@dbg_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"boost",
+            //"auto" follows the game's pressure unit setting; or force "psi", "bar" or "kpa"
+            "unit":"auto",
+            //LED arc range in PSI; LEDs below zeroValue show vacuum
+            "minValue":-10,
+            //0 = automatic: 1.25 x the turbo wastegate limit, so the red LEDs start just above it. A number here fixes the scale
+            "maxValue":0,
+            "zeroValue":0,
+            //the zero mark stays on the 7th LED so it matches the printed face; the scale stretches around it
+            "zeroLed":6,
+            "titleLabel":"BOOST",
+            //after a pull, flash the peak value for recallTime seconds
+            "peakRecall":true,
+            "recallTime":"$dbg_boost_recall",
+            //digits flash at or above this boost
+            "warnValue":"$dbg_boost_warn_at",
+            //seconds the peak LED stays lit
+            "peakHold":1.5,
+            //display brightness at night or with headlights on (1 = no dimming)
+            "nightBrightness":"$dbg_boost_night",
+            "face":"black",
+        },
+        "displayData": {
+            "electrics": [
+                "turboBoost",
+                "superchargerBoost",
+                "engineRunning",
+                "rpm",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //pos = centre of the gauge face. The pod mesh is shaped for exactly this spot.
+        ["dbg_pod_cage_rhd", ["covet_dash"],[],{"pos":{"x":-0.5175,"y":-0.2189,"z":1.0961},"rot":{"x":0,"y":0,"z":-23.8}}],
+        ["dbg_gauge_65", ["covet_dash"],[],{"pos":{"x":-0.5175,"y":-0.2189,"z":1.0961},"rot":{"x":0,"y":0,"z":-23.8}}],
+        ["dbg_screen_65", ["covet_dash"],[],{"pos":{"x":-0.5175,"y":-0.2189,"z":1.0961},"rot":{"x":0,"y":0,"z":-23.8}}],
+    ],
+},
+"covet_dbg_boost_std_lhd_silver": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Boost - A-Pillar, Standard Interior (LHD), Silver",
+        "value":180,
+    },
+    "slotType" : "covet_dbg_boost",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
+        ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],
+        ["$dbg_boost_night", "range", "%", "Gauges", 12, 3, 100, "Boost Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgGauge"}],
+    ],
+    "dbgGauge": {
+        "configuration": {
+            "materialName": "@dbg_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"boost",
+            //"auto" follows the game's pressure unit setting; or force "psi", "bar" or "kpa"
+            "unit":"auto",
+            //LED arc range in PSI; LEDs below zeroValue show vacuum
+            "minValue":-10,
+            //0 = automatic: 1.25 x the turbo wastegate limit, so the red LEDs start just above it. A number here fixes the scale
+            "maxValue":0,
+            "zeroValue":0,
+            //the zero mark stays on the 7th LED so it matches the printed face; the scale stretches around it
+            "zeroLed":6,
+            "titleLabel":"BOOST",
+            //after a pull, flash the peak value for recallTime seconds
+            "peakRecall":true,
+            "recallTime":"$dbg_boost_recall",
+            //digits flash at or above this boost
+            "warnValue":"$dbg_boost_warn_at",
+            //seconds the peak LED stays lit
+            "peakHold":1.5,
+            //display brightness at night or with headlights on (1 = no dimming)
+            "nightBrightness":"$dbg_boost_night",
+            "face":"white",
+        },
+        "displayData": {
+            "electrics": [
+                "turboBoost",
+                "superchargerBoost",
+                "engineRunning",
+                "rpm",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //pos = centre of the gauge face. The pod mesh is shaped for exactly this spot.
+        ["dbg_pod_std", ["covet_dash"],[],{"pos":{"x":0.5749,"y":-0.3246,"z":1.0758},"rot":{"x":0,"y":0,"z":24.8}}],
+        ["dbg_gauge_silver_80", ["covet_dash"],[],{"pos":{"x":0.5749,"y":-0.3246,"z":1.0758},"rot":{"x":0,"y":0,"z":24.8}}],
+        ["dbg_screen_w_80", ["covet_dash"],[],{"pos":{"x":0.5749,"y":-0.3246,"z":1.0758},"rot":{"x":0,"y":0,"z":24.8}}],
+    ],
+},
+"covet_dbg_boost_stripped_lhd_silver": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Boost - A-Pillar, Stripped / Race / Rally Interior (LHD), Silver",
+        "value":180,
+    },
+    "slotType" : "covet_dbg_boost",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
+        ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],
+        ["$dbg_boost_night", "range", "%", "Gauges", 12, 3, 100, "Boost Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgGauge"}],
+    ],
+    "dbgGauge": {
+        "configuration": {
+            "materialName": "@dbg_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"boost",
+            //"auto" follows the game's pressure unit setting; or force "psi", "bar" or "kpa"
+            "unit":"auto",
+            //LED arc range in PSI; LEDs below zeroValue show vacuum
+            "minValue":-10,
+            //0 = automatic: 1.25 x the turbo wastegate limit, so the red LEDs start just above it. A number here fixes the scale
+            "maxValue":0,
+            "zeroValue":0,
+            //the zero mark stays on the 7th LED so it matches the printed face; the scale stretches around it
+            "zeroLed":6,
+            "titleLabel":"BOOST",
+            //after a pull, flash the peak value for recallTime seconds
+            "peakRecall":true,
+            "recallTime":"$dbg_boost_recall",
+            //digits flash at or above this boost
+            "warnValue":"$dbg_boost_warn_at",
+            //seconds the peak LED stays lit
+            "peakHold":1.5,
+            //display brightness at night or with headlights on (1 = no dimming)
+            "nightBrightness":"$dbg_boost_night",
+            "face":"white",
+        },
+        "displayData": {
+            "electrics": [
+                "turboBoost",
+                "superchargerBoost",
+                "engineRunning",
+                "rpm",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //pos = centre of the gauge face. The pod mesh is shaped for exactly this spot.
+        ["dbg_pod_stripped", ["covet_dash"],[],{"pos":{"x":0.5823,"y":-0.3407,"z":1.0756},"rot":{"x":0,"y":0,"z":24.8}}],
+        ["dbg_gauge_silver_80", ["covet_dash"],[],{"pos":{"x":0.5823,"y":-0.3407,"z":1.0756},"rot":{"x":0,"y":0,"z":24.8}}],
+        ["dbg_screen_w_80", ["covet_dash"],[],{"pos":{"x":0.5823,"y":-0.3407,"z":1.0756},"rot":{"x":0,"y":0,"z":24.8}}],
+    ],
+},
+"covet_dbg_boost_cage_lhd_silver": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Boost - Roll Cage Bar (LHD), Silver",
+        "value":180,
+    },
+    "slotType" : "covet_dbg_boost",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
+        ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],
+        ["$dbg_boost_night", "range", "%", "Gauges", 12, 3, 100, "Boost Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgGauge"}],
+    ],
+    "dbgGauge": {
+        "configuration": {
+            "materialName": "@dbg_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"boost",
+            //"auto" follows the game's pressure unit setting; or force "psi", "bar" or "kpa"
+            "unit":"auto",
+            //LED arc range in PSI; LEDs below zeroValue show vacuum
+            "minValue":-10,
+            //0 = automatic: 1.25 x the turbo wastegate limit, so the red LEDs start just above it. A number here fixes the scale
+            "maxValue":0,
+            "zeroValue":0,
+            //the zero mark stays on the 7th LED so it matches the printed face; the scale stretches around it
+            "zeroLed":6,
+            "titleLabel":"BOOST",
+            //after a pull, flash the peak value for recallTime seconds
+            "peakRecall":true,
+            "recallTime":"$dbg_boost_recall",
+            //digits flash at or above this boost
+            "warnValue":"$dbg_boost_warn_at",
+            //seconds the peak LED stays lit
+            "peakHold":1.5,
+            //display brightness at night or with headlights on (1 = no dimming)
+            "nightBrightness":"$dbg_boost_night",
+            "face":"white",
+        },
+        "displayData": {
+            "electrics": [
+                "turboBoost",
+                "superchargerBoost",
+                "engineRunning",
+                "rpm",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //pos = centre of the gauge face. The pod mesh is shaped for exactly this spot.
+        ["dbg_pod_cage", ["covet_dash"],[],{"pos":{"x":0.5175,"y":-0.2189,"z":1.0961},"rot":{"x":0,"y":0,"z":23.8}}],
+        ["dbg_gauge_silver_65", ["covet_dash"],[],{"pos":{"x":0.5175,"y":-0.2189,"z":1.0961},"rot":{"x":0,"y":0,"z":23.8}}],
+        ["dbg_screen_w_65", ["covet_dash"],[],{"pos":{"x":0.5175,"y":-0.2189,"z":1.0961},"rot":{"x":0,"y":0,"z":23.8}}],
+    ],
+},
+"covet_dbg_boost_std_rhd_silver": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Boost - A-Pillar, Standard Interior (RHD), Silver",
+        "value":180,
+    },
+    "slotType" : "covet_dbg_boost",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
+        ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],
+        ["$dbg_boost_night", "range", "%", "Gauges", 12, 3, 100, "Boost Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgGauge"}],
+    ],
+    "dbgGauge": {
+        "configuration": {
+            "materialName": "@dbg_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"boost",
+            //"auto" follows the game's pressure unit setting; or force "psi", "bar" or "kpa"
+            "unit":"auto",
+            //LED arc range in PSI; LEDs below zeroValue show vacuum
+            "minValue":-10,
+            //0 = automatic: 1.25 x the turbo wastegate limit, so the red LEDs start just above it. A number here fixes the scale
+            "maxValue":0,
+            "zeroValue":0,
+            //the zero mark stays on the 7th LED so it matches the printed face; the scale stretches around it
+            "zeroLed":6,
+            "titleLabel":"BOOST",
+            //after a pull, flash the peak value for recallTime seconds
+            "peakRecall":true,
+            "recallTime":"$dbg_boost_recall",
+            //digits flash at or above this boost
+            "warnValue":"$dbg_boost_warn_at",
+            //seconds the peak LED stays lit
+            "peakHold":1.5,
+            //display brightness at night or with headlights on (1 = no dimming)
+            "nightBrightness":"$dbg_boost_night",
+            "face":"white",
+        },
+        "displayData": {
+            "electrics": [
+                "turboBoost",
+                "superchargerBoost",
+                "engineRunning",
+                "rpm",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //pos = centre of the gauge face. The pod mesh is shaped for exactly this spot.
+        ["dbg_pod_std_rhd", ["covet_dash"],[],{"pos":{"x":-0.5749,"y":-0.3246,"z":1.0758},"rot":{"x":0,"y":0,"z":-24.8}}],
+        ["dbg_gauge_silver_80", ["covet_dash"],[],{"pos":{"x":-0.5749,"y":-0.3246,"z":1.0758},"rot":{"x":0,"y":0,"z":-24.8}}],
+        ["dbg_screen_w_80", ["covet_dash"],[],{"pos":{"x":-0.5749,"y":-0.3246,"z":1.0758},"rot":{"x":0,"y":0,"z":-24.8}}],
+    ],
+},
+"covet_dbg_boost_stripped_rhd_silver": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Boost - A-Pillar, Stripped / Race / Rally Interior (RHD), Silver",
+        "value":180,
+    },
+    "slotType" : "covet_dbg_boost",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
+        ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],
+        ["$dbg_boost_night", "range", "%", "Gauges", 12, 3, 100, "Boost Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgGauge"}],
+    ],
+    "dbgGauge": {
+        "configuration": {
+            "materialName": "@dbg_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"boost",
+            //"auto" follows the game's pressure unit setting; or force "psi", "bar" or "kpa"
+            "unit":"auto",
+            //LED arc range in PSI; LEDs below zeroValue show vacuum
+            "minValue":-10,
+            //0 = automatic: 1.25 x the turbo wastegate limit, so the red LEDs start just above it. A number here fixes the scale
+            "maxValue":0,
+            "zeroValue":0,
+            //the zero mark stays on the 7th LED so it matches the printed face; the scale stretches around it
+            "zeroLed":6,
+            "titleLabel":"BOOST",
+            //after a pull, flash the peak value for recallTime seconds
+            "peakRecall":true,
+            "recallTime":"$dbg_boost_recall",
+            //digits flash at or above this boost
+            "warnValue":"$dbg_boost_warn_at",
+            //seconds the peak LED stays lit
+            "peakHold":1.5,
+            //display brightness at night or with headlights on (1 = no dimming)
+            "nightBrightness":"$dbg_boost_night",
+            "face":"white",
+        },
+        "displayData": {
+            "electrics": [
+                "turboBoost",
+                "superchargerBoost",
+                "engineRunning",
+                "rpm",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //pos = centre of the gauge face. The pod mesh is shaped for exactly this spot.
+        ["dbg_pod_stripped_rhd", ["covet_dash"],[],{"pos":{"x":-0.5823,"y":-0.3407,"z":1.0756},"rot":{"x":0,"y":0,"z":-24.8}}],
+        ["dbg_gauge_silver_80", ["covet_dash"],[],{"pos":{"x":-0.5823,"y":-0.3407,"z":1.0756},"rot":{"x":0,"y":0,"z":-24.8}}],
+        ["dbg_screen_w_80", ["covet_dash"],[],{"pos":{"x":-0.5823,"y":-0.3407,"z":1.0756},"rot":{"x":0,"y":0,"z":-24.8}}],
+    ],
+},
+"covet_dbg_boost_cage_rhd_silver": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Boost - Roll Cage Bar (RHD), Silver",
+        "value":180,
+    },
+    "slotType" : "covet_dbg_boost",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
+        ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],
+        ["$dbg_boost_night", "range", "%", "Gauges", 12, 3, 100, "Boost Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgGauge"}],
+    ],
+    "dbgGauge": {
+        "configuration": {
+            "materialName": "@dbg_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"boost",
+            //"auto" follows the game's pressure unit setting; or force "psi", "bar" or "kpa"
+            "unit":"auto",
+            //LED arc range in PSI; LEDs below zeroValue show vacuum
+            "minValue":-10,
+            //0 = automatic: 1.25 x the turbo wastegate limit, so the red LEDs start just above it. A number here fixes the scale
+            "maxValue":0,
+            "zeroValue":0,
+            //the zero mark stays on the 7th LED so it matches the printed face; the scale stretches around it
+            "zeroLed":6,
+            "titleLabel":"BOOST",
+            //after a pull, flash the peak value for recallTime seconds
+            "peakRecall":true,
+            "recallTime":"$dbg_boost_recall",
+            //digits flash at or above this boost
+            "warnValue":"$dbg_boost_warn_at",
+            //seconds the peak LED stays lit
+            "peakHold":1.5,
+            //display brightness at night or with headlights on (1 = no dimming)
+            "nightBrightness":"$dbg_boost_night",
+            "face":"white",
+        },
+        "displayData": {
+            "electrics": [
+                "turboBoost",
+                "superchargerBoost",
+                "engineRunning",
+                "rpm",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //pos = centre of the gauge face. The pod mesh is shaped for exactly this spot.
+        ["dbg_pod_cage_rhd", ["covet_dash"],[],{"pos":{"x":-0.5175,"y":-0.2189,"z":1.0961},"rot":{"x":0,"y":0,"z":-23.8}}],
+        ["dbg_gauge_silver_65", ["covet_dash"],[],{"pos":{"x":-0.5175,"y":-0.2189,"z":1.0961},"rot":{"x":0,"y":0,"z":-23.8}}],
+        ["dbg_screen_w_65", ["covet_dash"],[],{"pos":{"x":-0.5175,"y":-0.2189,"z":1.0961},"rot":{"x":0,"y":0,"z":-23.8}}],
+    ],
+},
+"covet_dbg_oil_std_lhd": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Oil Temp - A-Pillar, Standard Interior (LHD)",
+        "value":180,
+    },
+    "slotType" : "covet_dbg_oil",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
+        ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgOilGauge"}],
+    ],
+    "dbgOilGauge": {
+        "configuration": {
+            "materialName": "@dbg_oil_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"oiltemp",
+            "decimals":0,
+            //LED arc range in deg C (the digits follow the game's temperature unit setting)
+            "minValue":50,
+            "maxValue":150,
+            "titleLabel":"OIL TEMP",
+            //digits flash at or above this temperature (deg C)
+            "warnValue":"$dbg_oil_warn",
+            "peakHold":0,
+            "nightBrightness":"$dbg_oil_night",
+            "face":"black",
+        },
+        "displayData": {
+            "electrics": [
+                "oiltemp",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //pos = centre of the gauge face. The pod mesh is shaped for exactly this spot.
+        ["dbg_pod2_std", ["covet_dash"],[],{"pos":{"x":0.5397,"y":-0.2291,"z":1.1372},"rot":{"x":0,"y":0,"z":25.7}}],
+        ["dbg_gauge_80", ["covet_dash"],[],{"pos":{"x":0.5397,"y":-0.2291,"z":1.1372},"rot":{"x":0,"y":0,"z":25.7}}],
+        ["dbg_oil_screen_80", ["covet_dash"],[],{"pos":{"x":0.5397,"y":-0.2291,"z":1.1372},"rot":{"x":0,"y":0,"z":25.7}}],
+    ],
+},
+"covet_dbg_oil_stripped_lhd": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Oil Temp - A-Pillar, Stripped / Race / Rally Interior (LHD)",
+        "value":180,
+    },
+    "slotType" : "covet_dbg_oil",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
+        ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgOilGauge"}],
+    ],
+    "dbgOilGauge": {
+        "configuration": {
+            "materialName": "@dbg_oil_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"oiltemp",
+            "decimals":0,
+            //LED arc range in deg C (the digits follow the game's temperature unit setting)
+            "minValue":50,
+            "maxValue":150,
+            "titleLabel":"OIL TEMP",
+            //digits flash at or above this temperature (deg C)
+            "warnValue":"$dbg_oil_warn",
+            "peakHold":0,
+            "nightBrightness":"$dbg_oil_night",
+            "face":"black",
+        },
+        "displayData": {
+            "electrics": [
+                "oiltemp",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //pos = centre of the gauge face. The pod mesh is shaped for exactly this spot.
+        ["dbg_pod2_stripped", ["covet_dash"],[],{"pos":{"x":0.5473,"y":-0.2448,"z":1.1393},"rot":{"x":0,"y":0,"z":25.7}}],
+        ["dbg_gauge_80", ["covet_dash"],[],{"pos":{"x":0.5473,"y":-0.2448,"z":1.1393},"rot":{"x":0,"y":0,"z":25.7}}],
+        ["dbg_oil_screen_80", ["covet_dash"],[],{"pos":{"x":0.5473,"y":-0.2448,"z":1.1393},"rot":{"x":0,"y":0,"z":25.7}}],
+    ],
+},
+"covet_dbg_oil_cage_lhd": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Oil Temp - Roll Cage Bar (LHD)",
+        "value":180,
+    },
+    "slotType" : "covet_dbg_oil",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
+        ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgOilGauge"}],
+    ],
+    "dbgOilGauge": {
+        "configuration": {
+            "materialName": "@dbg_oil_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"oiltemp",
+            "decimals":0,
+            //LED arc range in deg C (the digits follow the game's temperature unit setting)
+            "minValue":50,
+            "maxValue":150,
+            "titleLabel":"OIL TEMP",
+            //digits flash at or above this temperature (deg C)
+            "warnValue":"$dbg_oil_warn",
+            "peakHold":0,
+            "nightBrightness":"$dbg_oil_night",
+            "face":"black",
+        },
+        "displayData": {
+            "electrics": [
+                "oiltemp",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //pos = centre of the gauge face. The pod mesh is shaped for exactly this spot.
+        ["dbg_pod2_cage", ["covet_dash"],[],{"pos":{"x":0.4972,"y":-0.1483,"z":1.1426},"rot":{"x":0,"y":0,"z":25.2}}],
+        ["dbg_gauge_65", ["covet_dash"],[],{"pos":{"x":0.4972,"y":-0.1483,"z":1.1426},"rot":{"x":0,"y":0,"z":25.2}}],
+        ["dbg_oil_screen_65", ["covet_dash"],[],{"pos":{"x":0.4972,"y":-0.1483,"z":1.1426},"rot":{"x":0,"y":0,"z":25.2}}],
+    ],
+},
+"covet_dbg_oil_std_rhd": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Oil Temp - A-Pillar, Standard Interior (RHD)",
+        "value":180,
+    },
+    "slotType" : "covet_dbg_oil",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
+        ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgOilGauge"}],
+    ],
+    "dbgOilGauge": {
+        "configuration": {
+            "materialName": "@dbg_oil_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"oiltemp",
+            "decimals":0,
+            //LED arc range in deg C (the digits follow the game's temperature unit setting)
+            "minValue":50,
+            "maxValue":150,
+            "titleLabel":"OIL TEMP",
+            //digits flash at or above this temperature (deg C)
+            "warnValue":"$dbg_oil_warn",
+            "peakHold":0,
+            "nightBrightness":"$dbg_oil_night",
+            "face":"black",
+        },
+        "displayData": {
+            "electrics": [
+                "oiltemp",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //pos = centre of the gauge face. The pod mesh is shaped for exactly this spot.
+        ["dbg_pod2_std_rhd", ["covet_dash"],[],{"pos":{"x":-0.5397,"y":-0.2291,"z":1.1372},"rot":{"x":0,"y":0,"z":-25.7}}],
+        ["dbg_gauge_80", ["covet_dash"],[],{"pos":{"x":-0.5397,"y":-0.2291,"z":1.1372},"rot":{"x":0,"y":0,"z":-25.7}}],
+        ["dbg_oil_screen_80", ["covet_dash"],[],{"pos":{"x":-0.5397,"y":-0.2291,"z":1.1372},"rot":{"x":0,"y":0,"z":-25.7}}],
+    ],
+},
+"covet_dbg_oil_stripped_rhd": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Oil Temp - A-Pillar, Stripped / Race / Rally Interior (RHD)",
+        "value":180,
+    },
+    "slotType" : "covet_dbg_oil",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
+        ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgOilGauge"}],
+    ],
+    "dbgOilGauge": {
+        "configuration": {
+            "materialName": "@dbg_oil_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"oiltemp",
+            "decimals":0,
+            //LED arc range in deg C (the digits follow the game's temperature unit setting)
+            "minValue":50,
+            "maxValue":150,
+            "titleLabel":"OIL TEMP",
+            //digits flash at or above this temperature (deg C)
+            "warnValue":"$dbg_oil_warn",
+            "peakHold":0,
+            "nightBrightness":"$dbg_oil_night",
+            "face":"black",
+        },
+        "displayData": {
+            "electrics": [
+                "oiltemp",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //pos = centre of the gauge face. The pod mesh is shaped for exactly this spot.
+        ["dbg_pod2_stripped_rhd", ["covet_dash"],[],{"pos":{"x":-0.5473,"y":-0.2448,"z":1.1393},"rot":{"x":0,"y":0,"z":-25.7}}],
+        ["dbg_gauge_80", ["covet_dash"],[],{"pos":{"x":-0.5473,"y":-0.2448,"z":1.1393},"rot":{"x":0,"y":0,"z":-25.7}}],
+        ["dbg_oil_screen_80", ["covet_dash"],[],{"pos":{"x":-0.5473,"y":-0.2448,"z":1.1393},"rot":{"x":0,"y":0,"z":-25.7}}],
+    ],
+},
+"covet_dbg_oil_cage_rhd": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Oil Temp - Roll Cage Bar (RHD)",
+        "value":180,
+    },
+    "slotType" : "covet_dbg_oil",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
+        ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgOilGauge"}],
+    ],
+    "dbgOilGauge": {
+        "configuration": {
+            "materialName": "@dbg_oil_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"oiltemp",
+            "decimals":0,
+            //LED arc range in deg C (the digits follow the game's temperature unit setting)
+            "minValue":50,
+            "maxValue":150,
+            "titleLabel":"OIL TEMP",
+            //digits flash at or above this temperature (deg C)
+            "warnValue":"$dbg_oil_warn",
+            "peakHold":0,
+            "nightBrightness":"$dbg_oil_night",
+            "face":"black",
+        },
+        "displayData": {
+            "electrics": [
+                "oiltemp",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //pos = centre of the gauge face. The pod mesh is shaped for exactly this spot.
+        ["dbg_pod2_cage_rhd", ["covet_dash"],[],{"pos":{"x":-0.4972,"y":-0.1483,"z":1.1426},"rot":{"x":0,"y":0,"z":-25.2}}],
+        ["dbg_gauge_65", ["covet_dash"],[],{"pos":{"x":-0.4972,"y":-0.1483,"z":1.1426},"rot":{"x":0,"y":0,"z":-25.2}}],
+        ["dbg_oil_screen_65", ["covet_dash"],[],{"pos":{"x":-0.4972,"y":-0.1483,"z":1.1426},"rot":{"x":0,"y":0,"z":-25.2}}],
+    ],
+},
+"covet_dbg_oil_std_lhd_silver": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Oil Temp - A-Pillar, Standard Interior (LHD), Silver",
+        "value":180,
+    },
+    "slotType" : "covet_dbg_oil",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
+        ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgOilGauge"}],
+    ],
+    "dbgOilGauge": {
+        "configuration": {
+            "materialName": "@dbg_oil_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"oiltemp",
+            "decimals":0,
+            //LED arc range in deg C (the digits follow the game's temperature unit setting)
+            "minValue":50,
+            "maxValue":150,
+            "titleLabel":"OIL TEMP",
+            //digits flash at or above this temperature (deg C)
+            "warnValue":"$dbg_oil_warn",
+            "peakHold":0,
+            "nightBrightness":"$dbg_oil_night",
+            "face":"white",
+        },
+        "displayData": {
+            "electrics": [
+                "oiltemp",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //pos = centre of the gauge face. The pod mesh is shaped for exactly this spot.
+        ["dbg_pod2_std", ["covet_dash"],[],{"pos":{"x":0.5397,"y":-0.2291,"z":1.1372},"rot":{"x":0,"y":0,"z":25.7}}],
+        ["dbg_gauge_silver_80", ["covet_dash"],[],{"pos":{"x":0.5397,"y":-0.2291,"z":1.1372},"rot":{"x":0,"y":0,"z":25.7}}],
+        ["dbg_oil_screen_w_80", ["covet_dash"],[],{"pos":{"x":0.5397,"y":-0.2291,"z":1.1372},"rot":{"x":0,"y":0,"z":25.7}}],
+    ],
+},
+"covet_dbg_oil_stripped_lhd_silver": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Oil Temp - A-Pillar, Stripped / Race / Rally Interior (LHD), Silver",
+        "value":180,
+    },
+    "slotType" : "covet_dbg_oil",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
+        ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgOilGauge"}],
+    ],
+    "dbgOilGauge": {
+        "configuration": {
+            "materialName": "@dbg_oil_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"oiltemp",
+            "decimals":0,
+            //LED arc range in deg C (the digits follow the game's temperature unit setting)
+            "minValue":50,
+            "maxValue":150,
+            "titleLabel":"OIL TEMP",
+            //digits flash at or above this temperature (deg C)
+            "warnValue":"$dbg_oil_warn",
+            "peakHold":0,
+            "nightBrightness":"$dbg_oil_night",
+            "face":"white",
+        },
+        "displayData": {
+            "electrics": [
+                "oiltemp",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //pos = centre of the gauge face. The pod mesh is shaped for exactly this spot.
+        ["dbg_pod2_stripped", ["covet_dash"],[],{"pos":{"x":0.5473,"y":-0.2448,"z":1.1393},"rot":{"x":0,"y":0,"z":25.7}}],
+        ["dbg_gauge_silver_80", ["covet_dash"],[],{"pos":{"x":0.5473,"y":-0.2448,"z":1.1393},"rot":{"x":0,"y":0,"z":25.7}}],
+        ["dbg_oil_screen_w_80", ["covet_dash"],[],{"pos":{"x":0.5473,"y":-0.2448,"z":1.1393},"rot":{"x":0,"y":0,"z":25.7}}],
+    ],
+},
+"covet_dbg_oil_cage_lhd_silver": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Oil Temp - Roll Cage Bar (LHD), Silver",
+        "value":180,
+    },
+    "slotType" : "covet_dbg_oil",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
+        ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgOilGauge"}],
+    ],
+    "dbgOilGauge": {
+        "configuration": {
+            "materialName": "@dbg_oil_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"oiltemp",
+            "decimals":0,
+            //LED arc range in deg C (the digits follow the game's temperature unit setting)
+            "minValue":50,
+            "maxValue":150,
+            "titleLabel":"OIL TEMP",
+            //digits flash at or above this temperature (deg C)
+            "warnValue":"$dbg_oil_warn",
+            "peakHold":0,
+            "nightBrightness":"$dbg_oil_night",
+            "face":"white",
+        },
+        "displayData": {
+            "electrics": [
+                "oiltemp",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //pos = centre of the gauge face. The pod mesh is shaped for exactly this spot.
+        ["dbg_pod2_cage", ["covet_dash"],[],{"pos":{"x":0.4972,"y":-0.1483,"z":1.1426},"rot":{"x":0,"y":0,"z":25.2}}],
+        ["dbg_gauge_silver_65", ["covet_dash"],[],{"pos":{"x":0.4972,"y":-0.1483,"z":1.1426},"rot":{"x":0,"y":0,"z":25.2}}],
+        ["dbg_oil_screen_w_65", ["covet_dash"],[],{"pos":{"x":0.4972,"y":-0.1483,"z":1.1426},"rot":{"x":0,"y":0,"z":25.2}}],
+    ],
+},
+"covet_dbg_oil_std_rhd_silver": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Oil Temp - A-Pillar, Standard Interior (RHD), Silver",
+        "value":180,
+    },
+    "slotType" : "covet_dbg_oil",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
+        ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgOilGauge"}],
+    ],
+    "dbgOilGauge": {
+        "configuration": {
+            "materialName": "@dbg_oil_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"oiltemp",
+            "decimals":0,
+            //LED arc range in deg C (the digits follow the game's temperature unit setting)
+            "minValue":50,
+            "maxValue":150,
+            "titleLabel":"OIL TEMP",
+            //digits flash at or above this temperature (deg C)
+            "warnValue":"$dbg_oil_warn",
+            "peakHold":0,
+            "nightBrightness":"$dbg_oil_night",
+            "face":"white",
+        },
+        "displayData": {
+            "electrics": [
+                "oiltemp",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //pos = centre of the gauge face. The pod mesh is shaped for exactly this spot.
+        ["dbg_pod2_std_rhd", ["covet_dash"],[],{"pos":{"x":-0.5397,"y":-0.2291,"z":1.1372},"rot":{"x":0,"y":0,"z":-25.7}}],
+        ["dbg_gauge_silver_80", ["covet_dash"],[],{"pos":{"x":-0.5397,"y":-0.2291,"z":1.1372},"rot":{"x":0,"y":0,"z":-25.7}}],
+        ["dbg_oil_screen_w_80", ["covet_dash"],[],{"pos":{"x":-0.5397,"y":-0.2291,"z":1.1372},"rot":{"x":0,"y":0,"z":-25.7}}],
+    ],
+},
+"covet_dbg_oil_stripped_rhd_silver": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Oil Temp - A-Pillar, Stripped / Race / Rally Interior (RHD), Silver",
+        "value":180,
+    },
+    "slotType" : "covet_dbg_oil",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
+        ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgOilGauge"}],
+    ],
+    "dbgOilGauge": {
+        "configuration": {
+            "materialName": "@dbg_oil_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"oiltemp",
+            "decimals":0,
+            //LED arc range in deg C (the digits follow the game's temperature unit setting)
+            "minValue":50,
+            "maxValue":150,
+            "titleLabel":"OIL TEMP",
+            //digits flash at or above this temperature (deg C)
+            "warnValue":"$dbg_oil_warn",
+            "peakHold":0,
+            "nightBrightness":"$dbg_oil_night",
+            "face":"white",
+        },
+        "displayData": {
+            "electrics": [
+                "oiltemp",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //pos = centre of the gauge face. The pod mesh is shaped for exactly this spot.
+        ["dbg_pod2_stripped_rhd", ["covet_dash"],[],{"pos":{"x":-0.5473,"y":-0.2448,"z":1.1393},"rot":{"x":0,"y":0,"z":-25.7}}],
+        ["dbg_gauge_silver_80", ["covet_dash"],[],{"pos":{"x":-0.5473,"y":-0.2448,"z":1.1393},"rot":{"x":0,"y":0,"z":-25.7}}],
+        ["dbg_oil_screen_w_80", ["covet_dash"],[],{"pos":{"x":-0.5473,"y":-0.2448,"z":1.1393},"rot":{"x":0,"y":0,"z":-25.7}}],
+    ],
+},
+"covet_dbg_oil_cage_rhd_silver": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Oil Temp - Roll Cage Bar (RHD), Silver",
+        "value":180,
+    },
+    "slotType" : "covet_dbg_oil",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
+        ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgOilGauge"}],
+    ],
+    "dbgOilGauge": {
+        "configuration": {
+            "materialName": "@dbg_oil_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"oiltemp",
+            "decimals":0,
+            //LED arc range in deg C (the digits follow the game's temperature unit setting)
+            "minValue":50,
+            "maxValue":150,
+            "titleLabel":"OIL TEMP",
+            //digits flash at or above this temperature (deg C)
+            "warnValue":"$dbg_oil_warn",
+            "peakHold":0,
+            "nightBrightness":"$dbg_oil_night",
+            "face":"white",
+        },
+        "displayData": {
+            "electrics": [
+                "oiltemp",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //pos = centre of the gauge face. The pod mesh is shaped for exactly this spot.
+        ["dbg_pod2_cage_rhd", ["covet_dash"],[],{"pos":{"x":-0.4972,"y":-0.1483,"z":1.1426},"rot":{"x":0,"y":0,"z":-25.2}}],
+        ["dbg_gauge_silver_65", ["covet_dash"],[],{"pos":{"x":-0.4972,"y":-0.1483,"z":1.1426},"rot":{"x":0,"y":0,"z":-25.2}}],
+        ["dbg_oil_screen_w_65", ["covet_dash"],[],{"pos":{"x":-0.4972,"y":-0.1483,"z":1.1426},"rot":{"x":0,"y":0,"z":-25.2}}],
+    ],
+},
+}

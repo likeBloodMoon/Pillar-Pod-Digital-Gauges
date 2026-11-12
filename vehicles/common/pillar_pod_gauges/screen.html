@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>pillar_pod_gauges</title>
+<script>
+if (typeof beamng !== 'undefined') {
+  window.onerror = function () {
+    var s = "";
+    for (var i = 0; i < arguments.length; i++) {
+      if (arguments[i] !== null && arguments[i] !== undefined) s += arguments[i].toString() + " ";
+    }
+    s = s.replace(/'/g, "\\'").replace(/\n/g, " ");
+    beamng.sendEngineLua("log('E','htmlTexture.pillar_pod_gauges','" + s + "')");
+  };
+}
+</script>
+<style>
+  html, body { margin: 0; padding: 0; background: #000; overflow: hidden; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="c" width="512" height="512"></canvas>
+<script>
+"use strict";
+// ---- configuration (overridable from the jbeam "configuration" section) ----
+var NUMERIC = {zeroValue: 1, zeroLed: 1};   // null by default but numeric when set
+var cfg = {
+  source: "boost",    // "boost" (turbo/supercharger; min/max/warn given in PSI) or "oiltemp" (given in deg C)
+  decimals: 1,        // digits after the point (set automatically for boost from the unit)
+  unit: "auto",       // boost only: "auto" follows the game's pressure unit setting, or force "psi", "bar", "kpa"
+  zeroLed: null,      // fix the zero mark at this LED index (the scale above and below it stretches to fit)
+  zeroValue: null,    // LEDs light outwards from this value; below it they show vacuum. null = same as minValue
+  face: "black",      // "black", or "white" for the silver-bezel version (white faceplate is in the material)
+  peakRecall: false,  // after a pull, flash the peak value on the display
+  recallTime: 2.5,    // seconds the peak is shown
+  recallMin: 3,       // a pull must exceed zero by this much to count
+  minValue: 0,        // value at the first LED
+  maxValue: 30,       // value at the last LED
+  ledCount: 24,
+  warnLeds: 3,        // last N LEDs are red
+  unitLabel: "PSI",
+  titleLabel: "BOOST",
+  unitScale: 1,       // electrics boost is in PSI; 0.0689476 would give bar
+  warnValue: 26,      // overboost: digits flash at or above this value
+  peakHold: 1.5,      // seconds the peak LED stays lit after boost drops
+  nightBrightness: 0.25, // display brightness with the headlights on (1 = no dimming)
+  bootTime: 1.3       // seconds of start-up sweep when the ignition comes on
+};
+
+var cv = document.getElementById("c");
+var ctx = cv.getContext("2d");
+var W = 512, CX = 256, CY = 256;
+var A0 = Math.PI * 0.75, SWEEP = Math.PI * 1.5;
+var RED = "#ff1f14";
+
+// 7-segment digit map: segments a b c d e f g
+var SEG = {
+  "0": "abcdef", "1": "bc", "2": "abdeg", "3": "abcdg", "4": "bcfg",
+  "5": "acdfg", "6": "acdefg", "7": "abc", "8": "abcdefg", "9": "abcdfg",
+  "-": "g", " ": ""
+};
+var DW = 72, DH = 146, DT = 21, GAP = 24, PAD = 34;
+
+function layer(w, h) {
+  var c = document.createElement("canvas"); c.width = w; c.height = h; return c;
+}
+
+function segPoly(g, x0, y0, x1, y1, t) {
+  var h = t / 2;
+  g.beginPath();
+  if (y0 === y1) {
+    g.moveTo(x0, y0); g.lineTo(x0 + h, y0 - h); g.lineTo(x1 - h, y0 - h);
+    g.lineTo(x1, y0); g.lineTo(x1 - h, y0 + h); g.lineTo(x0 + h, y0 + h);
+  } else {
+    g.moveTo(x0, y0); g.lineTo(x0 + h, y0 + h); g.lineTo(x0 + h, y1 - h);
+    g.lineTo(x0, y1); g.lineTo(x0 - h, y1 - h); g.lineTo(x0 - h, y0 + h);
+  }
+  g.closePath(); g.fill();
+}
+
+function drawDigit(g, ch, x, y, onCol, offCol) {
+  var on = SEG[ch] || "", w = DW, h = DH, t = DT, q = t * 0.12, m = y + h / 2;
+  var segs = {
+    a: [x + q, y, x + w - q, y], g: [x + q, m, x + w - q, m], d: [x + q, y + h, x + w - q, y + h],
+    f: [x, y + q, x, m - q], b: [x + w, y + q, x + w, m - q],
+    e: [x, m + q, x, y + h - q], c: [x + w, m + q, x + w, y + h - q]
+  };
+  g.save();
+  g.transform(1, 0, -0.10, 1, 0.10 * (y + h / 2), 0);
+  for (var k in segs) {
+    var lit = on.indexOf(k) >= 0;
+    if (lit ? !onCol : !offCol) continue;
+    g.fillStyle = lit ? onCol : offCol;
+    if (lit) { g.shadowColor = onCol; g.shadowBlur = 18; } else { g.shadowBlur = 0; }
+    var s = segs[k];
+    segPoly(g, s[0], s[1], s[2], s[3], t);
+  }
+  g.restore();
+}
+
+// digit x positions
+var TOTAL = DW * 3 + GAP * 2 + 14;
+var DX = [CX - TOTAL / 2 + 6, CX - TOTAL / 2 + 6 + DW + GAP, CX - TOTAL / 2 + 6 + DW * 2 + GAP * 2 + 14];
+var DY = 181;
+
+// ---- pre-rendered layers: everything expensive (glow) is drawn once ----
+var bgOn, bgOff, ledSprites = [], digitSprites = {};
+
+function zeroLed() {     // index of the first LED above zero (0 when there is no vacuum zone)
+  if (typeof cfg.zeroLed === "number") return cfg.zeroLed;   // fixed, so it matches the printed faceplate
+  var z = (cfg.zeroValue === null || cfg.zeroValue === undefined) ? cfg.minValue : cfg.zeroValue;
+  return Math.max(0, Math.round((z - cfg.minValue) / (cfg.maxValue - cfg.minValue) * cfg.ledCount));
+}
+
+function ledAngle(i) { return A0 + SWEEP * (i / (cfg.ledCount - 1)); }
+
+function drawLed(g, i, col, glow) {
+  var a = ledAngle(i);
+  g.save();
+  g.translate(CX + Math.cos(a) * 216, CY + Math.sin(a) * 216);
+  g.rotate(a);
+  g.fillStyle = col;
+  if (glow) { g.shadowColor = col; g.shadowBlur = 22; }
+  g.fillRect(-17, -11, 34, 22);
+  g.restore();
+}
+
+function isMajor(i) {
+  var n = cfg.ledCount, z = zeroLed();
+  return z > 0 ? ((i - z) % 6 === 0 || i === n - 1) : ((i % 4 === 0) || i === n - 1);
+}
+
+// The emissive layer: ONLY things that actually give off light. The background is pure black so the
+// gauge face does not glow at night; unlit LEDs, unlit segments and the faceplate are printed in the
+// material's static base-colour texture instead (see buildStaticFace).
+function buildBackground(on) {
+  var c = layer(W, W), g = c.getContext("2d"), n = cfg.ledCount;
+  g.fillStyle = "#000"; g.fillRect(0, 0, W, W);
+  if (!on) return c;
+  if (cfg.face !== "white") {                    // backlit tick marks (printed on the white faceplate)
+    var z = zeroLed();
+    for (var i = 0; i < n; i++) {
+      var a = ledAngle(i), major = isMajor(i);
+      g.save();
+      g.translate(CX + Math.cos(a) * (major ? 184 : 187), CY + Math.sin(a) * (major ? 184 : 187));
+      g.rotate(a);
+      g.fillStyle = (z > 0 && i === z) ? "#ffb300" : "#e8e8e8";
+      g.fillRect(major ? -9 : -5, -2, major ? 18 : 10, 4);
+      g.restore();
+    }
+  }
+  g.textAlign = "center";
+  g.fillStyle = "#f2f2f2";
+  g.font = "bold 22px Arial, Helvetica, sans-serif";
+  g.fillText(cfg.titleLabel, CX, DY + DH + 46);
+  g.fillStyle = "#ffb300";
+  g.font = "bold 20px Arial, Helvetica, sans-serif";
+  g.fillText(cfg.unitLabel, CX, DY - 24);
+  return c;
+}
+
+// The printed face, used to bake the material's base-colour textures (not used at runtime).
+function buildStaticFace(white) {
+  var c = layer(W, W), g = c.getContext("2d"), n = cfg.ledCount, z = zeroLed(), i, a;
+  g.fillStyle = "#000"; g.fillRect(0, 0, W, W);
+  if (white) {
+    g.beginPath(); g.arc(CX, CY, 255, 0, 7); g.fillStyle = "#c9c9c5"; g.fill();      // faceplate
+    g.beginPath(); g.arc(CX, CY, 172, 0, 7); g.fillStyle = "#080808"; g.fill();      // display window
+    g.lineWidth = 3; g.strokeStyle = "#7a7a76"; g.stroke();
+  } else {
+    g.beginPath(); g.arc(CX, CY, 255, 0, 7); g.fillStyle = "#0b0b0c"; g.fill();
+  }
+  for (i = 0; i < n; i++) {
+    a = ledAngle(i);
+    if (white) {                                  // dark window behind each LED + printed ticks
+      g.save(); g.translate(CX + Math.cos(a) * 216, CY + Math.sin(a) * 216); g.rotate(a);
+      g.fillStyle = "#060606"; g.fillRect(-20, -14, 40, 28); g.restore();
+      var major = isMajor(i);
+      g.save(); g.translate(CX + Math.cos(a) * (major ? 186 : 188), CY + Math.sin(a) * (major ? 186 : 188)); g.rotate(a);
+      g.fillStyle = (z > 0 && i === z) ? "#c03000" : "#111"; g.fillRect(major ? -9 : -5, -2, major ? 18 : 10, 4); g.restore();
+    }
+    drawLed(g, i, i >= n - cfg.warnLeds ? "#3a0f0b" : (i < z ? "#0c2540" : "#12380f"), false);   // unlit LEDs
+  }
+  for (var d = 0; d < 3; d++) drawDigit(g, "8", DX[d], DY, "#210606", null);       // unlit segments
+  g.shadowBlur = 0;
+  return c;
+}
+
+function buildLayers() {
+  bgOn = buildBackground(true);
+  bgOff = buildBackground(false);
+  ledSprites = [];
+  for (var i = 0; i < cfg.ledCount; i++) {
+    var c = layer(W, W), g = c.getContext("2d");
+    drawLed(g, i, i >= cfg.ledCount - cfg.warnLeds ? "#ff2a1a" : (i < zeroLed() ? "#3aa8ff" : "#35ff2e"), true);
+    // crop to the LED's neighbourhood so blits stay small
+    var a = ledAngle(i), x = Math.round(CX + Math.cos(a) * 216 - 50), y = Math.round(CY + Math.sin(a) * 216 - 50);
+    var s = layer(100, 100); s.getContext("2d").drawImage(c, -x, -y);
+    ledSprites.push({img: s, x: x, y: y});
+  }
+  digitSprites = {};
+  for (var ch in SEG) {
+    if (ch === " ") continue;
+    var dc = layer(DW + PAD * 2 + 16, DH + PAD * 2), dg = dc.getContext("2d");
+    drawDigit(dg, ch, PAD + 8, PAD, RED, null);
+    digitSprites[ch] = dc;
+  }
+  var pc = layer(60, 60), pg = pc.getContext("2d");
+  pg.fillStyle = RED; pg.shadowColor = RED; pg.shadowBlur = 16;
+  pg.beginPath(); pg.arc(30, 30, 11, 0, Math.PI * 2); pg.fill();
+  digitSprites["."] = pc;
+}
+
+// ---- state ----
+var target = 0;          // latest boost from the game
+var arcVal = 0;          // eased value driving the LED arc
+var digitVal = 0;        // value shown on the digits (refreshed ~12x per second)
+var digitTimer = 0;
+var powered = false, wasPowered = false;
+var lights = 0;          // headlights on -> dimmed display
+var bootT = -1;          // >= 0 while the start-up sweep is running
+var peakPos = 0;         // peak-hold marker, in LED units
+var peakTimer = 0;
+var clock = 0;           // seconds, for the overboost flash
+var ambient = 1;         // 1 = daylight .. 0 = night (from the mod's ambient light module)
+var runPeak = -1e9;      // highest value of the current pull
+var storedPeak = -1e9;   // highest value since the car was spawned
+var offBoost = 0;        // seconds spent back at/below zero
+var recallT = -1;        // >= 0 while the peak is being shown
+var recallVal = 0;
+var lastT = 0;
+var lastKey = "";
+
+var tempF = false;       // oil temp follows the game's temperature unit setting
+var pUnit = "psi";       // boost follows the game's pressure unit setting (or cfg.unit)
+function shown(value) {
+  if (cfg.source === "oiltemp") return tempF ? value * 9 / 5 + 32 : value;
+  if (pUnit === "bar") return value * 0.0689476;
+  if (pUnit === "kpa") return value * 6.89476;
+  return value;
+}
+
+// returns three characters plus the index of the digit the decimal point follows (-1 = none)
+function digitText(value) {
+  value = shown(value);
+  var d = cfg.decimals;
+  if (d >= 2 && (value < -0.004 || Math.abs(value) >= 9.995)) d = 1;   // "-0.3", "12.5"
+  if (d < 1) {
+    var w = Math.round(value), t = String(Math.min(999, Math.abs(w)));
+    if (w < 0) t = "-" + t.slice(0, 2);
+    while (t.length < 3) t = " " + t;
+    return [t, -1];
+  }
+  if (d >= 2) {
+    var h = Math.round(value * 100);
+    return [String(Math.floor(h / 100)) + ("0" + (h % 100)).slice(-2), 0];
+  }
+  var v = Math.round(value * 10) / 10;
+  if (Math.abs(v) < 0.05) v = 0;
+  var neg = v < 0, parts = Math.abs(v).toFixed(1).split("."), ip = parts[0];
+  if (ip.length > 2) { ip = "99"; parts[1] = "9"; }
+  if (ip.length < 2) ip = (neg ? "-" : " ") + ip;
+  return [ip + parts[1], 1];
+}
+
+// LED scale maximum and overboost warning: a slider value above 0 wins; 0 means automatic, taken from
+// the turbo's wastegate limit (red LEDs then start just above it); with no turbo data, fixed defaults.
+var autoLimit = 0;       // wastegate limit in PSI from the car's jbeam data (0 = unknown)
+function effMax() {
+  if (cfg.source !== "boost") return cfg.maxValue;
+  if (cfg.maxValue > 0) return cfg.maxValue;
+  return autoLimit > 0 ? Math.max(8, Math.round(autoLimit * 1.25 * 2) / 2) : 30;
+}
+function effWarn() {
+  if (cfg.source !== "boost") return cfg.warnValue;
+  if (cfg.warnValue > 0) return cfg.warnValue;
+  return autoLimit > 0 ? Math.max(autoLimit * 1.1, autoLimit + 2) : 26;
+}
+
+function ledPos(value) {
+  var n = cfg.ledCount, z = zeroLed();
+  var zv = (cfg.zeroValue === null || cfg.zeroValue === undefined) ? cfg.minValue : cfg.zeroValue;
+  var p;
+  if (z > 0 && value < zv) p = z * (value - cfg.minValue) / (zv - cfg.minValue);        // vacuum zone
+  else p = z + (n - z) * (value - zv) / (effMax() - zv);                           // from zero up to max
+  return Math.max(0, Math.min(n, p));
+}
+
+function render() {
+  var n = cfg.ledCount, z = zeroLed();
+  var booting = powered && bootT >= 0, recalling = powered && !booting && recallT >= 0;
+  var pos = 0, txt = "", dot = -1, peak = -1, digitsOn = true, ledsOn = true, sweep = false;
+  if (booting) {
+    // LEDs run up and back down, digits show 88.8
+    var u = bootT / cfg.bootTime;
+    var tri = u < 0.5 ? u * 2 : (1 - u) * 2;
+    pos = n * (tri * tri * (3 - 2 * tri));
+    txt = "888"; sweep = true;
+    digitsOn = u < 0.8 || Math.floor(u * 40) % 2 === 0;
+  } else if (recalling) {
+    // peak recall: digits hold the peak, the outer LEDs flash up to it
+    pos = ledPos(recallVal);
+    var dt0 = digitText(recallVal); txt = dt0[0]; dot = dt0[1];
+    ledsOn = Math.floor(recallT * 6) % 2 === 0;
+  } else if (powered) {
+    pos = ledPos(arcVal);                        // e.g. 13.4 = 13 LEDs full, the 14th at 40%
+    var dt1 = digitText(digitVal); txt = dt1[0]; dot = dt1[1];
+    if (cfg.peakHold > 0 && peakPos > Math.max(pos, z) + 0.6) peak = Math.min(n - 1, Math.ceil(peakPos) - 1);
+    if (arcVal >= effWarn()) digitsOn = Math.floor(clock * 12) % 2 === 0;   // overboost flash
+  }
+  // brightness: headlights on -> night level; otherwise follow the ambient light
+  var dim = 1;
+  if (powered) dim = lights > 0 ? cfg.nightBrightness : cfg.nightBrightness + (1 - cfg.nightBrightness) * ambient;
+  var key = (powered ? "1" : "0") + Math.round(pos * 25) + txt + dot + peak + (digitsOn ? "d" : "x") + (ledsOn ? "l" : "o") +
+            (recalling ? "r" : "") + Math.round(dim * 50);
+  if (key === lastKey) return;                  // nothing visible changed
+  lastKey = key;
+
+  ctx.globalAlpha = 1;
+  ctx.drawImage(powered ? bgOn : bgOff, 0, 0);
+  if (!powered) return;
+  if (ledsOn) {
+    for (var i = 0; i < n; i++) {
+      var b;
+      if (sweep) b = pos - i;                              // start-up: everything from the first LED
+      else if (i >= z) b = pos - i;                        // boost side: fills upwards from zero
+      else b = (pos < z) ? (i + 1 - pos) : 0;              // vacuum side: fills downwards from zero
+      if (b <= 0) continue;
+      ctx.globalAlpha = b >= 1 ? 1 : b;
+      var s = ledSprites[i];
+      ctx.drawImage(s.img, s.x, s.y);
+    }
+  }
+  ctx.globalAlpha = 1;
+  if (peak >= 0) { var ps = ledSprites[peak]; ctx.drawImage(ps.img, ps.x, ps.y); }
+  if (digitsOn) {
+    for (var d = 0; d < 3; d++) {
+      var sp = digitSprites[txt[d]];
+      if (sp) ctx.drawImage(sp, DX[d] - PAD - 8, DY - PAD);
+    }
+    if (booting) dot = 1;
+    if (dot >= 0) ctx.drawImage(digitSprites["."], DX[dot] + DW + (dot === 0 ? 9 : 12) - 30, DY + DH + 1 - 30);
+  }
+  if (recalling) {                              // swap the title for "PEAK"
+    ctx.fillStyle = "#000"; ctx.fillRect(CX - 90, DY + DH + 24, 180, 30);
+    ctx.fillStyle = "#ffb300"; ctx.textAlign = "center";
+    ctx.font = "bold 22px Arial, Helvetica, sans-serif";
+    ctx.fillText("PEAK", CX, DY + DH + 46);
+  }
+  if (dim < 0.99) {                             // darken the whole display
+    ctx.globalAlpha = 1 - dim;
+    ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, W);
+    ctx.globalAlpha = 1;
+  }
+}
+
+function tick() {
+  var now = (window.performance && performance.now) ? performance.now() : Date.now();
+  var dt = lastT ? Math.min(0.1, (now - lastT) / 1000) : 0.016;
+  if (lastT && now - lastT < 4) return;          // called from both the timer and the game; skip doubles
+  lastT = now;
+  clock += dt;
+
+  if (powered && !wasPowered) { bootT = 0; arcVal = 0; digitVal = 0; peakPos = 0; }
+  wasPowered = powered;
+  if (bootT >= 0) { bootT += dt; if (bootT >= cfg.bootTime || !powered) bootT = -1; }
+
+  // time-based easing: same feel at any frame rate
+  arcVal += (target - arcVal) * (1 - Math.exp(-dt / 0.07));
+  if (Math.abs(target - arcVal) < 0.005) arcVal = target;
+  digitTimer += dt;
+  if (digitTimer >= 0.08) { digitTimer = 0; digitVal = arcVal; }
+
+  // peak recall: once a pull is over (back at or below zero), show its peak for a moment
+  if (cfg.peakRecall && cfg.recallTime > 0 && powered && bootT < 0) {
+    var zv = (cfg.zeroValue === null || cfg.zeroValue === undefined) ? cfg.minValue : cfg.zeroValue;
+    if (arcVal > runPeak) runPeak = arcVal;
+    if (target <= zv + 0.5) offBoost += dt; else { offBoost = 0; if (target > zv + 1.5) recallT = -1; }
+    if (recallT < 0 && offBoost > 0.6 && runPeak >= zv + cfg.recallMin) {
+      recallT = 0; recallVal = runPeak; storedPeak = Math.max(storedPeak, runPeak); runPeak = -1e9;
+    }
+    if (recallT >= 0) { recallT += dt; if (recallT >= cfg.recallTime) recallT = -1; }
+  } else { recallT = -1; }
+
+  // peak hold: follows the arc up, waits, then falls back
+  var pos = (powered && bootT < 0) ? ledPos(arcVal) : 0;
+  if (pos >= peakPos) { peakPos = pos; peakTimer = 0; }
+  else {
+    peakTimer += dt;
+    if (peakTimer > cfg.peakHold) peakPos = Math.max(pos, peakPos - dt * cfg.ledCount * 1.2);
+  }
+  render();
+}
+
+// ---- BeamNG gauge API (called by lua/vehicle/controller/gauges/genericGauges.lua) ----
+function setup(config) {
+  if (config) {
+    for (var k in cfg) {
+      if (config[k] !== undefined && config[k] !== null) {
+        cfg[k] = (typeof cfg[k] === "number" || NUMERIC[k]) && !isNaN(Number(config[k])) ? Number(config[k]) : config[k];
+      }
+    }
+  }
+  if (cfg.source === "oiltemp") {
+    tempF = !!config && String(config.uiUnitTemperature || "c").toLowerCase() === "f";
+    cfg.unitLabel = tempF ? "\u00b0F" : "\u00b0C";
+  } else {
+    var u = String(cfg.unit || "auto").toLowerCase();
+    if (u === "auto") u = String((config && config.uiUnitPressure) || "psi").toLowerCase();
+    pUnit = (u === "bar") ? "bar" : (u === "kpa" ? "kpa" : "psi");      // anything else (psi, inHg) reads in PSI
+    cfg.decimals = pUnit === "bar" ? 2 : (pUnit === "kpa" ? 0 : 1);
+    cfg.unitLabel = pUnit === "bar" ? "BAR" : (pUnit === "kpa" ? "kPa" : "PSI");
+  }
+  if (cfg.nightBrightness > 1) cfg.nightBrightness = cfg.nightBrightness / 100;   // tuning slider is in percent
+  buildLayers();
+  lastKey = "";
+  render();
+}
+
+function updateData(data) {
+  var e = (data && data.electrics) || {};
+  var turbo = Number(e.turboBoost) || 0, sc = Number(e.superchargerBoost) || 0;
+  target = (sc > 0 ? Math.max(turbo, sc) : turbo) * cfg.unitScale;
+  // engine not turning: the manifold is at atmospheric pressure, so the gauge must read zero
+  // (the game keeps reporting a little vacuum with the engine stopped)
+  var stopped = (e.engineRunning !== undefined && e.engineRunning !== null && !(Number(e.engineRunning) > 0)) ||
+                (e.rpm !== undefined && e.rpm !== null && Number(e.rpm) < 50);
+  if (stopped) target = 0;
+  if (cfg.source === "oiltemp") target = Number(e.oiltemp) || 0;
+  lights = Math.max(Number(e.lights) || 0, Number(e.lowhighbeam) || 0);
+  var am = data && data.customModules && data.customModules.dbgAmbient;
+  ambient = (am && typeof am.light === "number") ? Math.max(0, Math.min(1, am.light)) : 1;
+  var lim = (am && typeof am.maxBoost === "number" && am.maxBoost > 0) ? am.maxBoost : 0;
+  if (cfg.source === "boost" && lim !== autoLimit) {
+    autoLimit = lim; lastKey = "";
+  }
+  var ign = e.ignitionLevel;
+  powered = (ign === undefined || ign === null) ? true : (Number(ign) >= 1);
+  tick();
+}
+
+function updateMode(data) {}
+
+buildLayers();
+render();
+// animate between game updates so the arc glides instead of stepping
+setInterval(tick, 16);
+</script>
+</body>
+</html>

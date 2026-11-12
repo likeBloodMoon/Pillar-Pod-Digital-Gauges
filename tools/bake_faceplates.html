@@ -1,0 +1,7 @@
+<html><body style="margin:0;background:#000"><iframe id=f src="mod/vehicles/common/digital_boost_gauge/screen.html" width=512 height=512 style="border:0"></iframe>
+<script>
+var h=location.hash.slice(1).split(','),white=h[1]==='white';
+var cfgs={boost:{source:"boost",minValue:-10,maxValue:30,zeroValue:0,titleLabel:"BOOST"},oil:{source:"oiltemp",decimals:0,minValue:50,maxValue:150,titleLabel:"OIL TEMP"}};
+var f=document.getElementById('f');f.onload=function(){var w=f.contentWindow;w.setup(cfgs[h[0]]);w.render=function(){};
+  var g=w.document.getElementById('c').getContext('2d');g.setTransform(1,0,0,1,0,0);g.globalAlpha=1;g.drawImage(w.buildStaticFace(white),0,0);};
+</script></body></html>

@@ -1,0 +1,3 @@
+*.npy
+*.cdae
+__pycache__/
