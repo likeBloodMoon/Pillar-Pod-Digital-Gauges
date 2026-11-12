@@ -1,8 +1,9 @@
 {
-//Pillar Pod Digital Gauges v1.0 - parts for the Ibishu Covet.
+//Pillar Pod Digital Gauges v1.1 - parts for the Ibishu Covet.
 //  Additional Modification -> Digital Pillar Gauges
 //      Boost Gauge:    empty, or one entry per interior type (standard / stripped / roll cage, LHD or RHD)
 //      Oil Temp Gauge: empty, or one entry per interior type
+//      Additional Modification (other mods): pass-through slot for another mod's part
 //Fit one or both. Boost sits in the lower position, oil temp above it. Every entry has its own
 //position and its own pod shape, so pick the one that matches the car's interior.
 "covet_digital_boost_gauge_pillar": {
@@ -11,11 +12,14 @@
         "name":"Digital Pillar Gauges",
         "value":0,
     },
-    "slotType" : "covet_mod",
+    //second type is private: the pass-through slot below denies it, so this part can't be fitted inside itself
+    "slotType" : ["covet_mod", "pillar_pod_gauges_host"],
     "slots2": [
-        ["name",            "allowTypes",        "denyTypes", "default",                 "description"],
-        ["covet_dbg_boost", ["covet_dbg_boost"], [],          "covet_dbg_boost_std_lhd", "Boost Gauge"],
-        ["covet_dbg_oil",   ["covet_dbg_oil"],   [],          "",                        "Oil Temp Gauge"],
+        ["name",            "allowTypes",        "denyTypes",                "default",                 "description"],
+        ["covet_dbg_boost", ["covet_dbg_boost"], [],                         "covet_dbg_boost_std_lhd", "Boost Gauge"],
+        ["covet_dbg_oil",   ["covet_dbg_oil"],   [],                         "",                        "Oil Temp Gauge"],
+        //pass-through: lets another mod's Additional Modification part be fitted alongside the gauges
+        ["covet_mod_other", ["covet_mod"],       ["pillar_pod_gauges_host"], "",                        "Additional Modification (other mods)", {"maxRecursion":1}],
     ],
     //ambient light for automatic display dimming (shared by both gauges)
     "controller": [

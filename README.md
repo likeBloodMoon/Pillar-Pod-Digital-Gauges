@@ -23,6 +23,9 @@ Parts selector → **Additional Modification** → **Digital Pillar Gauges**.
 Each comes in left- and right-hand drive, and in black or silver (silver bezel, white face).
 Fit one gauge or both; boost sits in the lower position and oil temperature above it.
 
+**Additional Modification (other mods)** is a pass-through slot: it accepts any part made for the
+Covet's Additional Modification slot, so another mod can be fitted alongside the gauges.
+
 ## Features
 
 - Live display with a 24-LED sweep: vacuum in blue, boost in green, red overboost zone
@@ -35,8 +38,9 @@ Fit one gauge or both; boost sits in the lower position and oil temperature abov
 
 ## Known limits
 
-- It uses the Covet's single "Additional Modification" slot, so it cannot be combined with another
-  mod that uses that slot.
+- It sits in the Covet's single "Additional Modification" slot. To use another mod that needs that
+  slot at the same time, fit that mod's part in **Additional Modification (other mods)** inside
+  Digital Pillar Gauges. That gives room for one other mod.
 - The right-hand-drive mountings are mirrored from the left-hand ones and have not been checked
   against the right-hand interior.
 - Each mounting has its own pod mesh shaped to that interior, so moving a gauge by editing
