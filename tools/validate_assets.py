@@ -257,16 +257,28 @@ def check_javascript() -> None:
                 error("screen.html JavaScript syntax error:\n" + (result.stderr.strip() or result.stdout.strip()))
 
 
+def check_python_syntax() -> None:
+    for path in sorted((ROOT / "tools").glob("*.py")):
+        result = subprocess.run(
+            [sys.executable, "-m", "py_compile", str(path)],
+            cwd=ROOT, text=True, capture_output=True
+        )
+        if result.returncode:
+            error(f"{path.relative_to(ROOT)} Python syntax error: " +
+                  (result.stderr.strip() or result.stdout.strip()))
+
+
 def main() -> int:
     if not check_required_files():
         return 1
     document = parse_jbeam(JBEAM)
-    check_jbeam_structure(document)
     check_materials()
+    check_jbeam_structure(document)
     meshes = collect_flexbody_meshes(document)
     check_dae(meshes)
     check_html_and_generator()
     check_javascript()
+    check_python_syntax()
 
     for message in WARNINGS:
         print(f"WARNING: {message}")
