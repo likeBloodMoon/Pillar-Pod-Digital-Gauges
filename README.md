@@ -5,10 +5,13 @@ Currently for the Ibishu Covet.
 
 ## Install
 
-Zip the `vehicles` and `lua` folders together so that both sit at the top level of the zip, name
-it `pillar_pod_gauges.zip`, and put it in your BeamNG `mods` folder. Do not unpack it.
+Download `pillar_pod_gauges.zip` from the
+[latest release](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/releases/latest) and
+put it in your BeamNG `mods` folder. Do not unpack it.
 
-GitHub's own "Download ZIP" will not work as it is, because it wraps everything in an extra folder.
+GitHub's own "Download ZIP" of the source will not work as a mod, because it wraps everything in
+an extra folder. To build the mod zip yourself, zip the `vehicles` and `lua` folders together so
+that both sit at the top level.
 
 ## Use
 
@@ -50,3 +53,8 @@ yourself. Fit one gauge or both; boost sits in the lower position and oil temper
 - `lua/vehicle/controller/gauges/customModules/` — ambient light, wastegate limit and automatic
   mounting
 - `tools/` — the scripts the generated files came from
+
+## Licence
+
+MIT, see [LICENSE](LICENSE). The licence covers this mod's own files. BeamNG.drive and its
+vehicles belong to BeamNG GmbH and are not part of this repository.
