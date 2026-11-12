@@ -14,24 +14,25 @@ GitHub's own "Download ZIP" will not work as it is, because it wraps everything 
 
 Parts selector → **Additional Modification** → **Digital Pillar Gauges**.
 
-**Boost Gauge** and **Oil Temp Gauge** each list one entry per interior type:
+**Boost Gauge** and **Oil Temp Gauge** each offer **Automatic Mounting** in black or silver
+(silver bezel, white face). It looks at the car's interior and puts the gauge in the right place:
+on the A-pillar trim, on the bare pillar of a stripped / race / rally interior, or on the roll
+cage bar, for left- or right-hand drive.
 
-- A-Pillar, Standard Interior
-- A-Pillar, Stripped / Race / Rally Interior
-- Roll Cage Bar
-
-Each comes in left- and right-hand drive, and in black or silver (silver bezel, white face).
-Fit one gauge or both; boost sits in the lower position and oil temperature above it.
+The fixed mountings are still listed below it, one per interior type, if you want to choose
+yourself. Fit one gauge or both; boost sits in the lower position and oil temperature above it.
 
 ## Features
 
 - Live display with a 24-LED sweep: vacuum in blue, boost in green, red overboost zone
 - LED scale and overboost warning set themselves from the turbo's wastegate limit
 - Peak recall after each pull, start-up sweep, reads zero with the engine stopped
+- Shift light: the whole LED ring flashes red near the rev limit
+- Blue COLD mark on the oil gauge until the oil is up to temperature
 - PSI / bar / kPa and °C / °F follow the game's unit settings
 - Dims automatically at night and with the headlights on
-- Tuning menu sliders (category **Gauges**): overboost warning, peak recall time, night
-  brightness, oil temperature warning
+- Tuning menu sliders (category **Gauges**): overboost warning, peak recall time, shift light
+  on/off, night brightness, oil temperature warning, cold-mark temperature
 
 ## Known limits
 
@@ -46,5 +47,6 @@ Fit one gauge or both; boost sits in the lower position and oil temperature abov
 
 - `vehicles/common/pillar_pod_gauges/` — meshes, materials, face textures and the display page
 - `vehicles/covet/` — the Covet parts
-- `lua/vehicle/controller/gauges/customModules/` — ambient light and wastegate-limit module
+- `lua/vehicle/controller/gauges/customModules/` — ambient light, wastegate limit and automatic
+  mounting
 - `tools/` — the scripts the generated files came from

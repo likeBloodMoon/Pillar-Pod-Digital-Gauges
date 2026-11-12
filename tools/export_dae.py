@@ -65,6 +65,20 @@ for n in names:
     nm=("dbg_pod2_"+n[:-2]) if n.endswith("_2") else ("dbg_pod_"+n)
     geoms+=geom(nm,[("dbg_body",D[n]['pod'])]); nodes+=node(nm,["dbg_body"])
     geoms+=geom(nm+"_rhd",[("dbg_body",mirror(D[n]['pod']))]); nodes+=node(nm+"_rhd",["dbg_body"])
+# ---- automatic mounting: every mounting of every gauge gets its own uniquely named meshes, so the
+# mod's script can show one set and hide the rest. Names are all 9 characters and none is a
+# substring of another: dbgv + mounting (A-F) + gauge (1 boost, 2 oil) + pod / bzk / bzs / sck / scs
+AUTO=(("A","std",False,0.8,"std"),("B","stripped",False,0.8,"std"),("C","cage",False,0.65,"cage"),
+      ("D","std",True,0.8,"std"),("E","stripped",True,0.8,"std"),("F","cage",True,0.65,"cage"))
+for code,var,rhd,sc,gsrc in AUTO:
+    g=D[gsrc]['gauge']
+    for gi,(suffix,scr_k,scr_s) in enumerate((("","dbg_screen","dbg_screen_w"),("_2","dbg_oil_screen","dbg_oil_screen_w")),1):
+        pod=D[var+suffix]['pod']
+        if rhd: pod=mirror(pod)
+        base="dbgv%s%d"%(code,gi)
+        for nm,mat,part in ((base+"pod","dbg_body",pod),(base+"bzk","dbg_bezel",g),(base+"bzs","dbg_bezel_silver",g),
+                            (base+"sck",scr_k,(sp*sc,sn,st,suv)),(base+"scs",scr_s,(sp*sc,sn,st,suv))):
+            geoms+=geom(nm,[(mat,part)]); nodes+=node(nm,[mat])
 xml=f'''<?xml version="1.0" encoding="utf-8"?>
 <COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <asset>

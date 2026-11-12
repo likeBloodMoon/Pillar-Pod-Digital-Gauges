@@ -33,6 +33,9 @@ var cfg = {
   zeroLed: null,      // fix the zero mark at this LED index (the scale above and below it stretches to fit)
   zeroValue: null,    // LEDs light outwards from this value; below it they show vacuum. null = same as minValue
   face: "black",      // "black", or "white" for the silver-bezel version (white faceplate is in the material)
+  shiftLight: 0,      // boost gauge: 1 = the whole LED ring flashes red near the rev limit
+  shiftAt: 0.96,      // fraction of the engine's maximum RPM where the shift light starts
+  coldBelow: 0,       // oil gauge: show a blue COLD mark below this temperature in deg C (0 = off)
   peakRecall: false,  // after a pull, flash the peak value on the display
   recallTime: 2.5,    // seconds the peak is shown
   recallMin: 3,       // a pull must exceed zero by this much to count
@@ -106,7 +109,7 @@ var DX = [CX - TOTAL / 2 + 6, CX - TOTAL / 2 + 6 + DW + GAP, CX - TOTAL / 2 + 6 
 var DY = 181;
 
 // ---- pre-rendered layers: everything expensive (glow) is drawn once ----
-var bgOn, bgOff, ledSprites = [], digitSprites = {};
+var bgOn, bgOff, ledSprites = [], ledSpritesRed = [], digitSprites = {};
 
 function zeroLed() {     // index of the first LED above zero (0 when there is no vacuum zone)
   if (typeof cfg.zeroLed === "number") return cfg.zeroLed;   // fixed, so it matches the printed faceplate
@@ -166,7 +169,7 @@ function buildStaticFace(white) {
   var c = layer(W, W), g = c.getContext("2d"), n = cfg.ledCount, z = zeroLed(), i, a;
   g.fillStyle = "#000"; g.fillRect(0, 0, W, W);
   if (white) {
-    g.beginPath(); g.arc(CX, CY, 255, 0, 7); g.fillStyle = "#c9c9c5"; g.fill();      // faceplate
+    g.beginPath(); g.arc(CX, CY, 255, 0, 7); g.fillStyle = "#b2b2ae"; g.fill();      // faceplate
     g.beginPath(); g.arc(CX, CY, 172, 0, 7); g.fillStyle = "#080808"; g.fill();      // display window
     g.lineWidth = 3; g.strokeStyle = "#7a7a76"; g.stroke();
   } else {
@@ -191,14 +194,17 @@ function buildStaticFace(white) {
 function buildLayers() {
   bgOn = buildBackground(true);
   bgOff = buildBackground(false);
-  ledSprites = [];
+  ledSprites = []; ledSpritesRed = [];
   for (var i = 0; i < cfg.ledCount; i++) {
-    var c = layer(W, W), g = c.getContext("2d");
-    drawLed(g, i, i >= cfg.ledCount - cfg.warnLeds ? "#ff2a1a" : (i < zeroLed() ? "#3aa8ff" : "#35ff2e"), true);
     // crop to the LED's neighbourhood so blits stay small
     var a = ledAngle(i), x = Math.round(CX + Math.cos(a) * 216 - 50), y = Math.round(CY + Math.sin(a) * 216 - 50);
-    var s = layer(100, 100); s.getContext("2d").drawImage(c, -x, -y);
-    ledSprites.push({img: s, x: x, y: y});
+    var cols = [i >= cfg.ledCount - cfg.warnLeds ? "#ff2a1a" : (i < zeroLed() ? "#3aa8ff" : "#35ff2e"), "#ff2a1a"];
+    for (var k = 0; k < 2; k++) {                 // normal colour, and all-red for the shift light
+      var c = layer(W, W), g = c.getContext("2d");
+      drawLed(g, i, cols[k], true);
+      var s = layer(100, 100); s.getContext("2d").drawImage(c, -x, -y);
+      (k === 0 ? ledSprites : ledSpritesRed).push({img: s, x: x, y: y});
+    }
   }
   digitSprites = {};
   for (var ch in SEG) {
@@ -224,6 +230,7 @@ var bootT = -1;          // >= 0 while the start-up sweep is running
 var peakPos = 0;         // peak-hold marker, in LED units
 var peakTimer = 0;
 var clock = 0;           // seconds, for the overboost flash
+var shifting = false;    // engine speed is at the shift point
 var ambient = 1;         // 1 = daylight .. 0 = night (from the mod's ambient light module)
 var runPeak = -1e9;      // highest value of the current pull
 var storedPeak = -1e9;   // highest value since the car was spawned
@@ -310,18 +317,25 @@ function render() {
     if (cfg.peakHold > 0 && peakPos > Math.max(pos, z) + 0.6) peak = Math.min(n - 1, Math.ceil(peakPos) - 1);
     if (arcVal >= effWarn()) digitsOn = Math.floor(clock * 12) % 2 === 0;   // overboost flash
   }
+  var shiftOn = powered && !booting && shifting;
+  var shiftPhase = shiftOn ? Math.floor(clock * 10) % 2 : 0;
+  var cold = powered && !booting && cfg.source === "oiltemp" && cfg.coldBelow > 0 && target < cfg.coldBelow;
   // brightness: headlights on -> night level; otherwise follow the ambient light
   var dim = 1;
   if (powered) dim = lights > 0 ? cfg.nightBrightness : cfg.nightBrightness + (1 - cfg.nightBrightness) * ambient;
   var key = (powered ? "1" : "0") + Math.round(pos * 25) + txt + dot + peak + (digitsOn ? "d" : "x") + (ledsOn ? "l" : "o") +
-            (recalling ? "r" : "") + Math.round(dim * 50);
+            (recalling ? "r" : "") + Math.round(dim * 50) + (shiftOn ? "s" + shiftPhase : "") + (cold ? "c" : "");
   if (key === lastKey) return;                  // nothing visible changed
   lastKey = key;
 
   ctx.globalAlpha = 1;
   ctx.drawImage(powered ? bgOn : bgOff, 0, 0);
   if (!powered) return;
-  if (ledsOn) {
+  if (shiftOn) {                                // shift light: the whole ring flashes red
+    if (shiftPhase === 0) {
+      for (var q = 0; q < n; q++) { var rs = ledSpritesRed[q]; ctx.drawImage(rs.img, rs.x, rs.y); }
+    }
+  } else if (ledsOn) {
     for (var i = 0; i < n; i++) {
       var b;
       if (sweep) b = pos - i;                              // start-up: everything from the first LED
@@ -334,7 +348,12 @@ function render() {
     }
   }
   ctx.globalAlpha = 1;
-  if (peak >= 0) { var ps = ledSprites[peak]; ctx.drawImage(ps.img, ps.x, ps.y); }
+  if (peak >= 0 && !shiftOn) { var ps = ledSprites[peak]; ctx.drawImage(ps.img, ps.x, ps.y); }
+  if (cold) {                                   // oil not up to temperature yet
+    ctx.fillStyle = "#3aa8ff"; ctx.textAlign = "center";
+    ctx.font = "bold 20px Arial, Helvetica, sans-serif";
+    ctx.fillText("COLD", CX, DY + DH + 72);
+  }
   if (digitsOn) {
     for (var d = 0; d < 3; d++) {
       var sp = digitSprites[txt[d]];
@@ -428,6 +447,8 @@ function updateData(data) {
   var stopped = (e.engineRunning !== undefined && e.engineRunning !== null && !(Number(e.engineRunning) > 0)) ||
                 (e.rpm !== undefined && e.rpm !== null && Number(e.rpm) < 50);
   if (stopped) target = 0;
+  var rpm = Number(e.rpm) || 0, maxRpm = Number(e.maxrpm) || 0;
+  shifting = cfg.source === "boost" && cfg.shiftLight > 0 && !stopped && maxRpm > 0 && rpm >= maxRpm * cfg.shiftAt;
   if (cfg.source === "oiltemp") target = Number(e.oiltemp) || 0;
   lights = Math.max(Number(e.lights) || 0, Number(e.lowhighbeam) || 0);
   var am = data && data.customModules && data.customModules.dbgAmbient;
