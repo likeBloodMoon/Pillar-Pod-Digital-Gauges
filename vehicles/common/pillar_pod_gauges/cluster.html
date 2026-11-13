@@ -442,13 +442,20 @@ function updateData(d) {
   if (pc !== pageCounter) { page = (page + ((pc - pageCounter) % PAGES.length) + PAGES.length) % PAGES.length; pageCounter = pc; }
   lights = Math.max(Number(e.lights) || 0, Number(e.lowhighbeam) || 0);
   ambient = typeof m.light === "number" ? Math.max(0, Math.min(1, m.light)) : 1;
+  tick();
 }
 
 function updateMode(d) {}
 
 buildBackground();
 render();
-setInterval(tick, 16);
+// The game streams updateData every graphics frame and each call draws a frame (see the end of
+// updateData). This timer only keeps the screen animating when no data arrives for a while; inside
+// the game's HTML textures page timers can be throttled or stopped, so they never drive the frames.
+setInterval(function () {
+  var now = (window.performance && performance.now) ? performance.now() : Date.now();
+  if (now - lastT > 60) tick();
+}, 33);
 if (document.fonts && document.fonts.load) {             // redraw once the bundled typeface is in
   Promise.all([document.fonts.load('500 20px "Barlow SC"'), document.fonts.load('600 20px "Barlow SC"'), document.fonts.load('700 20px "Barlow SC"')])
     .then(function () { render(); }, function () {});
