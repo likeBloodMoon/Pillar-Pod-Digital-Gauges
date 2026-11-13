@@ -3338,7 +3338,7 @@
     "slotType" : "covet_gauges",
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
-        ["$dbg_cluster_page", "range", "", "Gauges", 0, 0, 4, "Digital Cluster: First Page", "Page shown at start on the right of the cluster: 0 boost, 1 tyres, 2 engine, 3 brakes, 4 g-force", {"stepDis":1}],
+        ["$dbg_cluster_page", "range", "", "Gauges", 0, 0, 5, "Digital Cluster: First Page", "Page shown at start on the right of the cluster: 0 boost, 1 tyres, 2 engine, 3 brakes, 4 g-force, 5 trip", {"stepDis":1}],
         ["$dbg_cluster_night", "range", "%", "Gauges", 25, 3, 100, "Digital Cluster: Night Brightness", "Cluster brightness at night or with the headlights on", {"stepDis":1}],
     ],
     "controller": [
@@ -3398,7 +3398,7 @@
     "slotType" : "covet_gauges_rhd",
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
-        ["$dbg_cluster_page", "range", "", "Gauges", 0, 0, 4, "Digital Cluster: First Page", "Page shown at start on the right of the cluster: 0 boost, 1 tyres, 2 engine, 3 brakes, 4 g-force", {"stepDis":1}],
+        ["$dbg_cluster_page", "range", "", "Gauges", 0, 0, 5, "Digital Cluster: First Page", "Page shown at start on the right of the cluster: 0 boost, 1 tyres, 2 engine, 3 brakes, 4 g-force, 5 trip", {"stepDis":1}],
         ["$dbg_cluster_night", "range", "%", "Gauges", 25, 3, 100, "Digital Cluster: Night Brightness", "Cluster brightness at night or with the headlights on", {"stepDis":1}],
     ],
     "controller": [
@@ -3458,7 +3458,7 @@
     "slotType" : "covet_gauges_race_lhd",
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
-        ["$dbg_cluster_page", "range", "", "Gauges", 0, 0, 4, "Digital Cluster: First Page", "Page shown at start on the right of the cluster: 0 boost, 1 tyres, 2 engine, 3 brakes, 4 g-force", {"stepDis":1}],
+        ["$dbg_cluster_page", "range", "", "Gauges", 0, 0, 5, "Digital Cluster: First Page", "Page shown at start on the right of the cluster: 0 boost, 1 tyres, 2 engine, 3 brakes, 4 g-force, 5 trip", {"stepDis":1}],
         ["$dbg_cluster_night", "range", "%", "Gauges", 25, 3, 100, "Digital Cluster: Night Brightness", "Cluster brightness at night or with the headlights on", {"stepDis":1}],
     ],
     "controller": [
@@ -3521,7 +3521,7 @@
     "slotType" : "covet_gauges_race_rhd",
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
-        ["$dbg_cluster_page", "range", "", "Gauges", 0, 0, 4, "Digital Cluster: First Page", "Page shown at start on the right of the cluster: 0 boost, 1 tyres, 2 engine, 3 brakes, 4 g-force", {"stepDis":1}],
+        ["$dbg_cluster_page", "range", "", "Gauges", 0, 0, 5, "Digital Cluster: First Page", "Page shown at start on the right of the cluster: 0 boost, 1 tyres, 2 engine, 3 brakes, 4 g-force, 5 trip", {"stepDis":1}],
         ["$dbg_cluster_night", "range", "%", "Gauges", 25, 3, 100, "Digital Cluster: Night Brightness", "Cluster brightness at night or with the headlights on", {"stepDis":1}],
     ],
     "controller": [

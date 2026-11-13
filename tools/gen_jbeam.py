@@ -325,7 +325,7 @@ if "MFD" in CAR:
 '''
 # digital cluster: a part for each of the car's own Gauges slots (no Additional Modification needed).
 # Touching the page panel on the right of the screen, or the "Display: next page" binding, flips pages.
-CLUSTER_VARS='''        ["$dbg_cluster_page", "range", "", "Gauges", 0, 0, 4, "Digital Cluster: First Page", "Page shown at start on the right of the cluster: 0 boost, 1 tyres, 2 engine, 3 brakes, 4 g-force", {"stepDis":1}],
+CLUSTER_VARS='''        ["$dbg_cluster_page", "range", "", "Gauges", 0, 0, 5, "Digital Cluster: First Page", "Page shown at start on the right of the cluster: 0 boost, 1 tyres, 2 engine, 3 brakes, 4 g-force, 5 trip", {"stepDis":1}],
         ["$dbg_cluster_night", "range", "%", "Gauges", 25, 3, 100, "Digital Cluster: Night Brightness", "Cluster brightness at night or with the headlights on", {"stepDis":1}],'''
 for slot,kind,sx,meshes in CAR.get("CLUSTER",()):
     tx,ty,tz=CAR["CLUSTER_TOUCH"][kind]; n1,n2,n3=CAR["TRIGGER_NODES"][1]
