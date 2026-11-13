@@ -30,7 +30,7 @@ local function requestLight()
     end
     local veh = be:getObjectByID(]] .. id .. [[)
     if veh then
-      veh:queueLuaCommand("local c = controller.getController('gauges/customModules/dbgAmbient') if c and c.setLight then c.setLight(" .. l .. ") end")
+      veh:queueLuaCommand("local c = controller.getController(']] .. (M.name or "gauges/customModules/dbgAmbient") .. [[') if c and c.setLight then c.setLight(" .. l .. ") end")
     end
   ]]
   obj:queueGameEngineLua(cmd)

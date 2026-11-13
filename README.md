@@ -32,6 +32,23 @@ On the 200BX the A-pillar has the same shape with every interior, coupe or liftb
 one pillar mounting plus the roll cage one. With the derby cage, which has no bar along the
 A-pillar, the gauges stay on the pillar.
 
+## Digital cluster (Covet)
+
+**Gauges → Pillar Pod Digital Cluster** replaces the Covet's instrument cluster with a wide screen,
+using the car's own Gauges slot, so it combines with anything in Additional Modification. On the
+standard dashboard the screen takes the exact shape of the old gauge face; on the race dashboard
+(**Pillar Pod Digital Cluster (Race Dash)**) a screen unit sits on the carbon panel, inside the
+steering wheel's view. Left- and right-hand drive.
+
+- Middle: speed, gear, and a bar tachometer that turns amber near the limit and flashes at the shift point
+- Left: fuel with level bar, coolant temperature, range, outside temperature and time
+- Right: one page of the multi-function display (boost, tyres, engine, brakes, g-force). Touch the
+  page panel in the cabin, or use the **Display: next page** binding, to flip pages
+- First page and night brightness are in the Tuning menu
+
+The layout keeps everything inside the part of the cluster the driver can see past the steering
+wheel rim.
+
 ## Multi-function display (Covet)
 
 **Lower Gauge → Multi-Function Display** puts a portrait colour screen on the A-pillar instead of the

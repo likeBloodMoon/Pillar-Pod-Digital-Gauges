@@ -554,5 +554,39 @@
     "materialTag1": "vehicle",
     "translucentBlendOp": "None",
     "version": 1.5
+  },
+  "dbg_cluster_screen": {
+    "name": "dbg_cluster_screen",
+    "mapTo": "dbg_cluster_screen",
+    "class": "Material",
+    "Stages": [
+      {
+        "baseColorFactor": [
+          0.02,
+          0.02,
+          0.025,
+          1
+        ],
+        "emissive": true,
+        "emissiveFactor": [
+          1,
+          1,
+          1
+        ],
+        "emissiveIntensityNits": 1600,
+        "emissiveMap": "@dbg_cluster_screen",
+        "metallicFactor": 0,
+        "roughnessFactor": 0.12
+      },
+      {},
+      {},
+      {}
+    ],
+    "dynamicCubemap": true,
+    "materialTag0": "beamng",
+    "materialTag1": "vehicle",
+    "translucentBlendOp": "None",
+    "version": 1.5,
+    "castShadows": false
   }
 }

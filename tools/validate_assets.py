@@ -25,6 +25,7 @@ DAE = ROOT / "vehicles/common/pillar_pod_gauges/pillar_pod_gauges.dae"
 MATERIALS = ROOT / "vehicles/common/pillar_pod_gauges/main.materials.json"
 SCREEN = ROOT / "vehicles/common/pillar_pod_gauges/screen.html"
 MFD_PAGE = ROOT / "vehicles/common/pillar_pod_gauges/mfd.html"
+CLUSTER_PAGE = ROOT / "vehicles/common/pillar_pod_gauges/cluster.html"
 GENERATOR = ROOT / "tools/gen_jbeam.py"
 BAKER = ROOT / "tools/bake_faceplates.html"
 EXPECTED_HTML = "local://local/vehicles/common/pillar_pod_gauges/screen.html"
@@ -139,7 +140,7 @@ def check_jbeam_structure(document: dict, root_part: str) -> None:
             if len(rows) < 2 or not isinstance(rows[0], list) or rows[0][:1] != ["mesh"]:
                 error(f"{name}: flexbodies is missing its mesh header row")
             for row in rows[1:]:
-                if not isinstance(row, list) or len(row) < 4:
+                if not isinstance(row, list) or len(row) < 2 or not isinstance(row[1], list):
                     error(f"{name}: invalid flexbody entry: {row!r}")
         # Check the custom gauge config, including paths and material aliases.
         for ctrl_name in ("dbgGauge", "dbgOilGauge"):
@@ -199,7 +200,8 @@ def check_dae(meshes: set[str]) -> None:
         node.attrib.get("name") or node.attrib.get("id", "").removesuffix("-mesh")
         for node in root.findall(".//c:library_geometries/c:geometry", ns)
     }
-    missing = sorted(meshes - dae_meshes)
+    # meshes that don't start with dbg are the game's own (e.g. a car's instrument panel), not ours
+    missing = sorted(m for m in meshes - dae_meshes if m.startswith("dbg"))
     for mesh in missing:
         error(f"JBeam flexbody mesh {mesh!r} is absent from the Collada file")
     dae_materials = {
@@ -247,7 +249,7 @@ def check_javascript() -> None:
     if not node:
         warning("Node.js is not installed; skipped embedded JavaScript syntax check")
         return
-    for page in (SCREEN, MFD_PAGE):
+    for page in (SCREEN, MFD_PAGE, CLUSTER_PAGE):
         html = page.read_text(encoding="utf-8")
         scripts = re.findall(r"<script\b[^>]*>(.*?)</script\s*>", html, flags=re.I | re.S)
         inline = [script for script in scripts if script.strip()]

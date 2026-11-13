@@ -19,12 +19,18 @@ SHARP_DEG = 38.0
 # The housing is a 12 mm deep rounded tray; behind it a narrower neck tapers into the pillar.
 SX, SZ = 0.02625, 0.035                     # screen half sizes
 OX0, OX1, OZ0, OZ1, OR = -0.0298, 0.0298, -0.0442, 0.0385, 0.009
+# other units (e.g. the wide cluster screen) override the sizes: DBG_SCREEN_HALF=sx,sz DBG_OUTER=x0,x1,z0,z1,r
+if os.environ.get('DBG_SCREEN_HALF'): SX, SZ = [float(v) for v in os.environ['DBG_SCREEN_HALF'].split(',')]
+if os.environ.get('DBG_OUTER'): OX0, OX1, OZ0, OZ1, OR = [float(v) for v in os.environ['DBG_OUTER'].split(',')]
+NO_BUTTON = os.environ.get('DBG_NOBUTTON') == '1'
+PITCH = float(os.environ.get('DBG_PITCH', '0'))  # tilt back, degrees (the unit faces up the panel)
 SCREEN_Y = -0.0015                          # screen sits 1.5 mm behind the front face
 FRONT_Y, BACK_Y = 0.001, -0.012
-NECK = -0.0085                              # the neck is the housing outline pulled in by this much
+NECK = float(os.environ.get('DBG_NECK', '-0.0085'))                              # the neck is the housing outline pulled in by this much
 BUTTON = (0.0, (OZ0 + -SZ) / 2)             # page button centre (x, z) in the chin
 BUTTON_R = 0.0032
-K, M_LONG, M_SHORT = 8, 9, 6                # outline samples: arc steps per corner, points along sides
+K, M_LONG, M_SHORT = 8, 9, 6
+if os.environ.get('DBG_SIDES'): M_LONG, M_SHORT = [int(v) for v in os.environ['DBG_SIDES'].split(',')]                # outline samples: arc steps per corner, points along sides
 
 def rz(deg):
     a = math.radians(deg); c, s = math.cos(a), math.sin(a)
@@ -79,7 +85,11 @@ frame = new_obj("frame", fv, ff)
 pv = [tuple(p) for p in ring(out(-0.0005), SCREEN_Y - 0.0006)] + [((OX0 + OX1) / 2, SCREEN_Y - 0.0006, (OZ0 + OZ1) / 2)]
 plate = new_obj("plate", pv, [(i, (i + 1) % N, N) for i in range(N)])
 # ---------------------------------------------------------------- shell (pod material): sides + pod onto the pillar
-Rinv = rz(-YAW)
+def rx(deg):
+    a = math.radians(deg); c, s_ = math.cos(a), math.sin(a)
+    return np.array([[1, 0, 0], [0, c, -s_], [0, s_, c]])
+ROT = rz(YAW) @ rx(PITCH)                  # model -> car
+Rinv = ROT.T
 _cab = np.load(os.environ['DBG_CABIN'], allow_pickle=True).item()
 _T = np.vstack([(_cab[k][0].astype(float)[_cab[k][1]] - C) @ Rinv.T for k in os.environ['DBG_OCC'].split(',')]) / SCALE
 _A = _T[:, 0]; _E1 = _T[:, 1] - _A; _E2 = _T[:, 2] - _A
@@ -177,6 +187,8 @@ fn = np.cross(sp[st[0, 1]] - sp[st[0, 0]], sp[st[0, 2]] - sp[st[0, 0]])
 if fn[1] < 0: st = st[:, ::-1].copy()
 parts["screen"] = (sp * SCALE, np.tile([0, 1.0, 0], (4, 1)), st, suv)
 parts["button_pos"] = np.array([bx, FRONT_Y + 0.0018, bz]) * SCALE
+if NO_BUTTON: parts.pop("button")
+parts["rot"] = ROT
 for k, v in parts.items():
     if k != "button_pos": print(k, "verts", len(v[0]), "tris", len(v[2]))
 print("pod length min/max", round(min(length) * SCALE, 4), round(max(length) * SCALE, 4))

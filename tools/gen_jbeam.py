@@ -20,7 +20,14 @@ CARS={
   # and the body nodes the page button's click trigger hangs from, per side
   MFD={"std":((0.5474,-0.2651,1.1024),24.8,1.0),"stripped":((0.5523,-0.2756,1.1029),24.8,1.0),
        "cage":((0.5165,-0.1981,1.0992),24.8,0.85)},
-  TRIGGER_NODES={1:("p1l","rf1l","p2l"),-1:("p1r","rf1r","p2r")}),
+  TRIGGER_NODES={1:("p1l","rf1l","p2l"),-1:("p1r","rf1r","p2r")},
+  # digital cluster in the car's own Gauges slots: (slot type, kind, side, meshes, touch point on the
+  # page panel for LHD). Meshes are in car coordinates (build_cluster_mesh.py).
+  CLUSTER=(("covet_gauges","std",1,["dbg_cluster_covet"]),
+           ("covet_gauges_rhd","std",-1,["dbg_cluster_covet_rhd"]),
+           ("covet_gauges_race_lhd","race",1,["covet_grp_dash_instrumentpanel","dbg_cluster_race_shl","dbg_cluster_race_frm","dbg_cluster_race_scr"]),
+           ("covet_gauges_race_rhd","race",-1,["covet_grp_dash_instrumentpanel_rhd","dbg_cluster_race_shl_rhd","dbg_cluster_race_frm_rhd","dbg_cluster_race_scr_rhd"])),
+  CLUSTER_TOUCH={"std":(0.2334,-0.6415,0.8186),"race":(0.2676,-0.5404,0.8312)}),
  "bx":dict(
   label="Ibishu 200BX", root="bx_pillar_pod_gauges", mod_slot="bx_mod", group="bx_body",
   out="vehicles/bx/bx_pillar_pod_gauges.jbeam",
@@ -313,6 +320,74 @@ if "MFD" in CAR:
     "triggerEventLinks2":[
         ["triggerId:triggers2", "triggerInput", "inputAction"],
 {chr(10).join(links)}
+    ],
+}},
+'''
+# digital cluster: a part for each of the car's own Gauges slots (no Additional Modification needed).
+# Touching the page panel on the right of the screen, or the "Display: next page" binding, flips pages.
+CLUSTER_VARS='''        ["$dbg_cluster_page", "range", "", "Gauges", 0, 0, 4, "Digital Cluster: First Page", "Page shown at start on the right of the cluster: 0 boost, 1 tyres, 2 engine, 3 brakes, 4 g-force", {"stepDis":1}],
+        ["$dbg_cluster_night", "range", "%", "Gauges", 25, 3, 100, "Digital Cluster: Night Brightness", "Cluster brightness at night or with the headlights on", {"stepDis":1}],'''
+for slot,kind,sx,meshes in CAR.get("CLUSTER",()):
+    tx,ty,tz=CAR["CLUSTER_TOUCH"][kind]; n1,n2,n3=CAR["TRIGGER_NODES"][1]
+    fb="\n".join('        ["%s", ["%s"]],'%(m,GROUP) for m in meshes)
+    name="Pillar Pod Digital Cluster" + (" (Race Dash)" if kind=="race" else "")
+    out+=f'''"{slot}_dbg_cluster": {{
+    "information":{{
+        "authors":"Kristof",
+        "name":"{name}",
+        "value":650,
+    }},
+    "slotType" : "{slot}",
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+{CLUSTER_VARS}
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/customModules/dbgCluster"],
+        ["gauges/genericGauges", {{"name":"dbgClusterScreen"}}],
+    ],
+    "dbgClusterScreen": {{
+        "configuration": {{
+            "materialName": "@dbg_cluster_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/cluster.html",
+            "displayWidth":1024,
+            "displayHeight":272,
+            "startPage":"$dbg_cluster_page",
+            "nightBrightness":"$dbg_cluster_night",
+            "shiftAt":0.92,
+        }},
+        "displayData": {{
+            "electrics": [
+                "dbg_mfd_page", "turboBoost", "superchargerBoost", "rpm", "maxrpm", "oiltemp", "watertemp",
+                "fuel", "fuelVolume", "lowfuel", "wheelspeed", "gear", "checkengine", "parkingbrake",
+                "ignitionLevel", "lights", "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgCluster", "light"],
+                ["dbgCluster", "maxBoost"],
+                ["dbgCluster", "egt"],
+                ["dbgCluster", "mfd"],
+            ],
+        }},
+    }},
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+{fb}
+    ],
+    //touch the page panel on the right of the screen to flip pages
+    "triggers2":[
+        ["id", "idRef:", "idX:", "idY:", "type", "size", "baseRotation", "rotation", "translation", "baseTranslation"],
+        ["dbg_cluster_page", "{n1}","{n2}","{n3}", "sphere", 0.04, {{"x":0,"y":0,"z":0}},{{"x":0,"y":0,"z":0}},{{"x":0,"y":0,"z":0}},{{"x":0,"y":0,"z":0}}, {{"baseTranslationGlobal":{{"x":{sx*tx:.4f},"y":{ty:.4f},"z":{tz:.4f}}}}}],
+    ],
+    "actionsEnabled": [
+        ["id"],
+        ["dbgMfdNextPage"],
+    ],
+    "triggerEventLinks2":[
+        ["triggerId:triggers2", "triggerInput", "inputAction"],
+        ["dbg_cluster_page", "action0", "dbgMfdNextPage"],
     ],
 }},
 '''

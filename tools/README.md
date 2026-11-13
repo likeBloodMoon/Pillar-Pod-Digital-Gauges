@@ -9,6 +9,7 @@ These scripts produce or validate the mod's generated assets.
 | `find_positions_bx.py` | `find_positions.py` set up for the 200BX |
 | `find_mfd_position.py` | Finds the multi-function display's position on the Covet's A-pillar |
 | `build_mfd_mesh.py` | Builds the display housing, page button and the pod onto the pillar |
+| `build_cluster_mesh.py` | Builds the digital cluster screens: the gauge-face screen and the race-dash screen unit |
 | `build_pod_mesh.py` | Builds one gauge + pod mesh (Blender `bpy`), ray-casting each of the pod's 40 columns onto the interior surface |
 | `export_dae.py` | Writes all pod, bezel and screen meshes into the Collada file |
 | `gen_jbeam.py` | Generates a car's part file (all mountings, finishes, sliders): `gen_jbeam.py --car covet\|bx <out>` |

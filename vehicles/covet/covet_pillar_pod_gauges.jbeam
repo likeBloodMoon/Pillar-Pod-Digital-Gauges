@@ -3329,4 +3329,250 @@
         ["dbg_mfd_F", "action0", "dbgMfdNextPage"],
     ],
 },
+"covet_gauges_dbg_cluster": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Pillar Pod Digital Cluster",
+        "value":650,
+    },
+    "slotType" : "covet_gauges",
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_cluster_page", "range", "", "Gauges", 0, 0, 4, "Digital Cluster: First Page", "Page shown at start on the right of the cluster: 0 boost, 1 tyres, 2 engine, 3 brakes, 4 g-force", {"stepDis":1}],
+        ["$dbg_cluster_night", "range", "%", "Gauges", 25, 3, 100, "Digital Cluster: Night Brightness", "Cluster brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/customModules/dbgCluster"],
+        ["gauges/genericGauges", {"name":"dbgClusterScreen"}],
+    ],
+    "dbgClusterScreen": {
+        "configuration": {
+            "materialName": "@dbg_cluster_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/cluster.html",
+            "displayWidth":1024,
+            "displayHeight":272,
+            "startPage":"$dbg_cluster_page",
+            "nightBrightness":"$dbg_cluster_night",
+            "shiftAt":0.92,
+        },
+        "displayData": {
+            "electrics": [
+                "dbg_mfd_page", "turboBoost", "superchargerBoost", "rpm", "maxrpm", "oiltemp", "watertemp",
+                "fuel", "fuelVolume", "lowfuel", "wheelspeed", "gear", "checkengine", "parkingbrake",
+                "ignitionLevel", "lights", "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgCluster", "light"],
+                ["dbgCluster", "maxBoost"],
+                ["dbgCluster", "egt"],
+                ["dbgCluster", "mfd"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        ["dbg_cluster_covet", ["covet_dash"]],
+    ],
+    //touch the page panel on the right of the screen to flip pages
+    "triggers2":[
+        ["id", "idRef:", "idX:", "idY:", "type", "size", "baseRotation", "rotation", "translation", "baseTranslation"],
+        ["dbg_cluster_page", "p1l","rf1l","p2l", "sphere", 0.04, {"x":0,"y":0,"z":0},{"x":0,"y":0,"z":0},{"x":0,"y":0,"z":0},{"x":0,"y":0,"z":0}, {"baseTranslationGlobal":{"x":0.2334,"y":-0.6415,"z":0.8186}}],
+    ],
+    "actionsEnabled": [
+        ["id"],
+        ["dbgMfdNextPage"],
+    ],
+    "triggerEventLinks2":[
+        ["triggerId:triggers2", "triggerInput", "inputAction"],
+        ["dbg_cluster_page", "action0", "dbgMfdNextPage"],
+    ],
+},
+"covet_gauges_rhd_dbg_cluster": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Pillar Pod Digital Cluster",
+        "value":650,
+    },
+    "slotType" : "covet_gauges_rhd",
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_cluster_page", "range", "", "Gauges", 0, 0, 4, "Digital Cluster: First Page", "Page shown at start on the right of the cluster: 0 boost, 1 tyres, 2 engine, 3 brakes, 4 g-force", {"stepDis":1}],
+        ["$dbg_cluster_night", "range", "%", "Gauges", 25, 3, 100, "Digital Cluster: Night Brightness", "Cluster brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/customModules/dbgCluster"],
+        ["gauges/genericGauges", {"name":"dbgClusterScreen"}],
+    ],
+    "dbgClusterScreen": {
+        "configuration": {
+            "materialName": "@dbg_cluster_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/cluster.html",
+            "displayWidth":1024,
+            "displayHeight":272,
+            "startPage":"$dbg_cluster_page",
+            "nightBrightness":"$dbg_cluster_night",
+            "shiftAt":0.92,
+        },
+        "displayData": {
+            "electrics": [
+                "dbg_mfd_page", "turboBoost", "superchargerBoost", "rpm", "maxrpm", "oiltemp", "watertemp",
+                "fuel", "fuelVolume", "lowfuel", "wheelspeed", "gear", "checkengine", "parkingbrake",
+                "ignitionLevel", "lights", "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgCluster", "light"],
+                ["dbgCluster", "maxBoost"],
+                ["dbgCluster", "egt"],
+                ["dbgCluster", "mfd"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        ["dbg_cluster_covet_rhd", ["covet_dash"]],
+    ],
+    //touch the page panel on the right of the screen to flip pages
+    "triggers2":[
+        ["id", "idRef:", "idX:", "idY:", "type", "size", "baseRotation", "rotation", "translation", "baseTranslation"],
+        ["dbg_cluster_page", "p1l","rf1l","p2l", "sphere", 0.04, {"x":0,"y":0,"z":0},{"x":0,"y":0,"z":0},{"x":0,"y":0,"z":0},{"x":0,"y":0,"z":0}, {"baseTranslationGlobal":{"x":-0.2334,"y":-0.6415,"z":0.8186}}],
+    ],
+    "actionsEnabled": [
+        ["id"],
+        ["dbgMfdNextPage"],
+    ],
+    "triggerEventLinks2":[
+        ["triggerId:triggers2", "triggerInput", "inputAction"],
+        ["dbg_cluster_page", "action0", "dbgMfdNextPage"],
+    ],
+},
+"covet_gauges_race_lhd_dbg_cluster": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Pillar Pod Digital Cluster (Race Dash)",
+        "value":650,
+    },
+    "slotType" : "covet_gauges_race_lhd",
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_cluster_page", "range", "", "Gauges", 0, 0, 4, "Digital Cluster: First Page", "Page shown at start on the right of the cluster: 0 boost, 1 tyres, 2 engine, 3 brakes, 4 g-force", {"stepDis":1}],
+        ["$dbg_cluster_night", "range", "%", "Gauges", 25, 3, 100, "Digital Cluster: Night Brightness", "Cluster brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/customModules/dbgCluster"],
+        ["gauges/genericGauges", {"name":"dbgClusterScreen"}],
+    ],
+    "dbgClusterScreen": {
+        "configuration": {
+            "materialName": "@dbg_cluster_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/cluster.html",
+            "displayWidth":1024,
+            "displayHeight":272,
+            "startPage":"$dbg_cluster_page",
+            "nightBrightness":"$dbg_cluster_night",
+            "shiftAt":0.92,
+        },
+        "displayData": {
+            "electrics": [
+                "dbg_mfd_page", "turboBoost", "superchargerBoost", "rpm", "maxrpm", "oiltemp", "watertemp",
+                "fuel", "fuelVolume", "lowfuel", "wheelspeed", "gear", "checkengine", "parkingbrake",
+                "ignitionLevel", "lights", "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgCluster", "light"],
+                ["dbgCluster", "maxBoost"],
+                ["dbgCluster", "egt"],
+                ["dbgCluster", "mfd"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        ["covet_grp_dash_instrumentpanel", ["covet_dash"]],
+        ["dbg_cluster_race_shl", ["covet_dash"]],
+        ["dbg_cluster_race_frm", ["covet_dash"]],
+        ["dbg_cluster_race_scr", ["covet_dash"]],
+    ],
+    //touch the page panel on the right of the screen to flip pages
+    "triggers2":[
+        ["id", "idRef:", "idX:", "idY:", "type", "size", "baseRotation", "rotation", "translation", "baseTranslation"],
+        ["dbg_cluster_page", "p1l","rf1l","p2l", "sphere", 0.04, {"x":0,"y":0,"z":0},{"x":0,"y":0,"z":0},{"x":0,"y":0,"z":0},{"x":0,"y":0,"z":0}, {"baseTranslationGlobal":{"x":0.2676,"y":-0.5404,"z":0.8312}}],
+    ],
+    "actionsEnabled": [
+        ["id"],
+        ["dbgMfdNextPage"],
+    ],
+    "triggerEventLinks2":[
+        ["triggerId:triggers2", "triggerInput", "inputAction"],
+        ["dbg_cluster_page", "action0", "dbgMfdNextPage"],
+    ],
+},
+"covet_gauges_race_rhd_dbg_cluster": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Pillar Pod Digital Cluster (Race Dash)",
+        "value":650,
+    },
+    "slotType" : "covet_gauges_race_rhd",
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_cluster_page", "range", "", "Gauges", 0, 0, 4, "Digital Cluster: First Page", "Page shown at start on the right of the cluster: 0 boost, 1 tyres, 2 engine, 3 brakes, 4 g-force", {"stepDis":1}],
+        ["$dbg_cluster_night", "range", "%", "Gauges", 25, 3, 100, "Digital Cluster: Night Brightness", "Cluster brightness at night or with the headlights on", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/customModules/dbgCluster"],
+        ["gauges/genericGauges", {"name":"dbgClusterScreen"}],
+    ],
+    "dbgClusterScreen": {
+        "configuration": {
+            "materialName": "@dbg_cluster_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/cluster.html",
+            "displayWidth":1024,
+            "displayHeight":272,
+            "startPage":"$dbg_cluster_page",
+            "nightBrightness":"$dbg_cluster_night",
+            "shiftAt":0.92,
+        },
+        "displayData": {
+            "electrics": [
+                "dbg_mfd_page", "turboBoost", "superchargerBoost", "rpm", "maxrpm", "oiltemp", "watertemp",
+                "fuel", "fuelVolume", "lowfuel", "wheelspeed", "gear", "checkengine", "parkingbrake",
+                "ignitionLevel", "lights", "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgCluster", "light"],
+                ["dbgCluster", "maxBoost"],
+                ["dbgCluster", "egt"],
+                ["dbgCluster", "mfd"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        ["covet_grp_dash_instrumentpanel_rhd", ["covet_dash"]],
+        ["dbg_cluster_race_shl_rhd", ["covet_dash"]],
+        ["dbg_cluster_race_frm_rhd", ["covet_dash"]],
+        ["dbg_cluster_race_scr_rhd", ["covet_dash"]],
+    ],
+    //touch the page panel on the right of the screen to flip pages
+    "triggers2":[
+        ["id", "idRef:", "idX:", "idY:", "type", "size", "baseRotation", "rotation", "translation", "baseTranslation"],
+        ["dbg_cluster_page", "p1l","rf1l","p2l", "sphere", 0.04, {"x":0,"y":0,"z":0},{"x":0,"y":0,"z":0},{"x":0,"y":0,"z":0},{"x":0,"y":0,"z":0}, {"baseTranslationGlobal":{"x":-0.2676,"y":-0.5404,"z":0.8312}}],
+    ],
+    "actionsEnabled": [
+        ["id"],
+        ["dbgMfdNextPage"],
+    ],
+    "triggerEventLinks2":[
+        ["triggerId:triggers2", "triggerInput", "inputAction"],
+        ["dbg_cluster_page", "action0", "dbgMfdNextPage"],
+    ],
+},
 }
