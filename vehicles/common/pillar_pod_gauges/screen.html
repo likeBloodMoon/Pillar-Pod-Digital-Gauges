@@ -27,7 +27,7 @@ if (typeof beamng !== 'undefined') {
 // ---- configuration (overridable from the jbeam "configuration" section) ----
 var NUMERIC = {zeroValue: 1, zeroLed: 1};   // null by default but numeric when set
 var cfg = {
-  source: "boost",    // "boost" (turbo/supercharger; min/max/warn in PSI), "oiltemp" or "watertemp" (deg C), "fuel" (percent)
+  source: "boost",    // "boost" (turbo/supercharger; min/max/warn in PSI), "oiltemp", "watertemp" or "egt" (deg C), "fuel" (percent)
   decimals: 1,        // digits after the point (set automatically for boost from the unit)
   unit: "auto",       // boost only: "auto" follows the game's pressure unit setting, or force "psi", "bar", "kpa"
   zeroLed: null,      // fix the zero mark at this LED index (the scale above and below it stretches to fit)
@@ -242,12 +242,16 @@ var lastT = 0;
 var lastKey = "";
 
 var tempF = false;       // temperatures follow the game's temperature unit setting
-function isTemp() { return cfg.source === "oiltemp" || cfg.source === "watertemp"; }
+function isTemp() { return cfg.source === "oiltemp" || cfg.source === "watertemp" || cfg.source === "egt"; }
+var egtHundreds = false; // exhaust temp in deg F needs 4 digits, so it is shown in hundreds (16.5 = 1650 deg F)
 function isRed(i) { return cfg.warnLow > 0 ? i < cfg.warnLeds : i >= cfg.ledCount - cfg.warnLeds; }
 function warning(v) { return cfg.warnLow > 0 ? (cfg.warnValue > 0 && v <= cfg.warnValue) : v >= effWarn(); }
 var pUnit = "psi";       // boost follows the game's pressure unit setting (or cfg.unit)
 function shown(value) {
-  if (isTemp()) return tempF ? value * 9 / 5 + 32 : value;
+  if (isTemp()) {
+    var t = tempF ? value * 9 / 5 + 32 : value;
+    return egtHundreds ? t / 100 : t;
+  }
   if (cfg.source === "fuel") return value;
   if (pUnit === "bar") return value * 0.0689476;
   if (pUnit === "kpa") return value * 6.89476;
@@ -430,6 +434,8 @@ function setup(config) {
   if (isTemp()) {
     tempF = !!config && String(config.uiUnitTemperature || "c").toLowerCase() === "f";
     cfg.unitLabel = tempF ? "\u00b0F" : "\u00b0C";
+    egtHundreds = cfg.source === "egt" && tempF;
+    if (egtHundreds) { cfg.decimals = 1; cfg.unitLabel = "\u00b0F x100"; }
   } else if (cfg.source === "fuel") {
     cfg.decimals = 0;
     cfg.unitLabel = "%";
@@ -459,6 +465,10 @@ function updateData(data) {
   shifting = cfg.source === "boost" && cfg.shiftLight > 0 && !stopped && maxRpm > 0 && rpm >= maxRpm * cfg.shiftAt;
   if (cfg.source === "oiltemp") target = Number(e.oiltemp) || 0;
   if (cfg.source === "watertemp") target = Number(e.watertemp) || 0;
+  if (cfg.source === "egt") {
+    var em = data && data.customModules && data.customModules.dbgAmbient;
+    target = (em && Number(em.egt)) || 0;
+  }
   if (cfg.source === "fuel") {
     var f = Number(e.fuel) || 0;               // the game gives the tank level as 0..1
     target = f > 1.5 ? f : f * 100;

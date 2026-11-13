@@ -19,7 +19,7 @@ that both sit at the top level.
 Parts selector → **Additional Modification** → **Digital Pillar Gauges**.
 
 There are two positions, **Lower Gauge** and **Upper Gauge**. Each can hold any of the gauge
-types: boost, oil temperature, coolant temperature or fuel level. By default the lower one is boost
+types: boost, oil temperature, coolant temperature, exhaust gas temperature (EGT) or fuel level. By default the lower one is boost
 and the upper one is empty.
 
 Every gauge type comes with **Automatic Mounting** in black or silver (silver bezel, white face).
@@ -38,12 +38,14 @@ A-pillar, the gauges stay on the pillar.
 - LED scale and overboost warning set themselves from the turbo's wastegate limit
 - Peak recall after each pull, start-up sweep, reads zero with the engine stopped
 - Shift light: the whole LED ring flashes red near the rev limit
-- Coolant temperature and fuel level gauges, alongside boost and oil temperature
+- Coolant temperature, exhaust gas temperature and fuel level gauges, alongside boost and oil
+  temperature. EGT comes from the game's engine heat simulation; in °F it reads in hundreds
+  (13.7 = 1370 °F) because the display has three digits
 - Blue COLD mark on the temperature gauges until the engine is warm; low-fuel warning on the fuel gauge
 - PSI / bar / kPa and °C / °F follow the game's unit settings
 - Dims automatically at night and with the headlights on
 - Tuning menu sliders (category **Gauges**): overboost warning, peak recall time, shift light
-  on/off, night brightness, oil and coolant warning and cold-mark temperatures, low-fuel warning
+  on/off, night brightness, oil, coolant and exhaust warning temperatures, cold-mark temperatures, low-fuel warning
 
 ## Known limits
 
