@@ -48,6 +48,7 @@ def node(name,mats):
 '''
 mats=[("dbg_body","0.03 0.03 0.03"),("dbg_bezel","0.01 0.01 0.01"),("dbg_screen","0.05 0.05 0.05"),("dbg_oil_screen","0.05 0.05 0.05"),("dbg_bezel_silver","0.7 0.7 0.7"),("dbg_screen_w","0.8 0.8 0.8"),("dbg_oil_screen_w","0.8 0.8 0.8")]
 # screens with the other printed faces, for any gauge type in either position (automatic mounting only)
+mats+=[("dbg_mfd_screen","0.02 0.02 0.025"),("dbg_mfd_frame","0.025 0.025 0.028"),("dbg_cluster_screen","0.02 0.02 0.025")]   # display, cluster
 mats+=[(m,"0.05 0.05 0.05" if not m.endswith("_w") else "0.8 0.8 0.8") for m in
        ("dbg_screen_t","dbg_screen_t_w","dbg_screen_f","dbg_screen_f_w","dbg_oil_screen_b","dbg_oil_screen_b_w","dbg_oil_screen_f","dbg_oil_screen_f_w")]
 eff="".join(f'''    <effect id="{m}-effect"><profile_COMMON><technique sid="common"><lambert>
@@ -95,6 +96,26 @@ for code,var,rhd,sc,gsrc in AUTO:
             items+=[(base+"s"+face+"k",mk,(sp*sc,sn,st,suv)),(base+"s"+face+"s",ms,(sp*sc,sn,st,suv))]
         for nm,mat,part in items:
             geoms+=geom(nm,[(mat,part)]); nodes+=node(nm,[mat])
+# multi-function display (automatic mounting only): dbgv + mounting + "3" + shl (housing and pod),
+# frm (front frame), btn (page button), scr (screen). Built per mounting by build_mfd_mesh.py.
+MFD_AUTO=(("A","std",False),("B","stripped",False),("C","cage",False),("D","std",True),("E","stripped",True),("F","cage",True))
+for code,var,rhd in MFD_AUTO:
+    M=np.load("mfd_%s.npy"%var,allow_pickle=True).item()
+    base="dbgv%s3"%code
+    for suf,key,mat in (("shl","shell","dbg_body"),("frm","frame","dbg_mfd_frame"),("btn","button","dbg_bezel_silver"),("scr","screen","dbg_mfd_screen")):
+        part=M[key]
+        if rhd and key=="shell": part=mirror(part)     # only the pod is shaped to one side; the housing is symmetric
+        geoms+=geom(base+suf,[(mat,part)]); nodes+=node(base+suf,[mat])
+# digital cluster (Covet), already in car coordinates (build_cluster_mesh.py): the standard
+# dashboard's screen replaces the gauge face; the race dashboard gets a screen unit on its panel
+K=np.load("cluster_covet.npy",allow_pickle=True).item()
+for side in ("lhd","rhd"):
+    sfx="" if side=="lhd" else "_rhd"
+    geoms+=geom("dbg_cluster_covet"+sfx,[("dbg_cluster_screen",K["std_"+side])]); nodes+=node("dbg_cluster_covet"+sfx,["dbg_cluster_screen"])
+    R=K["race_"+side]
+    for suf,key,mat in (("shl","shell","dbg_body"),("frm","frame","dbg_mfd_frame"),("scr","screen","dbg_cluster_screen")):
+        nm="dbg_cluster_race_"+suf+sfx
+        geoms+=geom(nm,[(mat,R[key])]); nodes+=node(nm,[mat])
 xml=f'''<?xml version="1.0" encoding="utf-8"?>
 <COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <asset>

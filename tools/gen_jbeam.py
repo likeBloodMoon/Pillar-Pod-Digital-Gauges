@@ -1,3 +1,4 @@
+import math
 import re,sys
 import argparse
 # Per-car setup. POS: mounting -> (boost position, oil position) -> ((x,y,z) centre of the gauge face, yaw).
@@ -14,7 +15,19 @@ CARS={
   SIZE={"std":"80","stripped":"80","cage":"65"},
   NAMES={"std":"A-Pillar, Standard Interior","stripped":"A-Pillar, Stripped / Race / Rally Interior","cage":"Roll Cage Bar"},
   MESH={"std":"std","stripped":"stripped","cage":"cage"},
-  AUTO=(("A","std",1),("B","stripped",1),("C","cage",1),("D","std",-1),("E","stripped",-1),("F","cage",-1))),
+  AUTO=(("A","std",1),("B","stripped",1),("C","cage",1),("D","std",-1),("E","stripped",-1),("F","cage",-1)),
+  # multi-function display: screen centre, yaw and scale per mounting (tools/find_mfd_position.py),
+  # and the body nodes the page button's click trigger hangs from, per side
+  MFD={"std":((0.5474,-0.2651,1.1024),24.8,1.0),"stripped":((0.5523,-0.2756,1.1029),24.8,1.0),
+       "cage":((0.5165,-0.1981,1.0992),24.8,0.85)},
+  TRIGGER_NODES={1:("p1l","rf1l","p2l"),-1:("p1r","rf1r","p2r")},
+  # digital cluster in the car's own Gauges slots: (slot type, kind, side, meshes, touch point on the
+  # page panel for LHD). Meshes are in car coordinates (build_cluster_mesh.py).
+  CLUSTER=(("covet_gauges","std",1,["dbg_cluster_covet"]),
+           ("covet_gauges_rhd","std",-1,["dbg_cluster_covet_rhd"]),
+           ("covet_gauges_race_lhd","race",1,["covet_grp_dash_instrumentpanel","dbg_cluster_race_shl","dbg_cluster_race_frm","dbg_cluster_race_scr"]),
+           ("covet_gauges_race_rhd","race",-1,["covet_grp_dash_instrumentpanel_rhd","dbg_cluster_race_shl_rhd","dbg_cluster_race_frm_rhd","dbg_cluster_race_scr_rhd"])),
+  CLUSTER_TOUCH={"std":(0.2334,-0.6415,0.8186),"race":(0.2676,-0.5404,0.8312)}),
  "bx":dict(
   label="Ibishu 200BX", root="bx_pillar_pod_gauges", mod_slot="bx_mod", group="bx_body",
   out="vehicles/bx/bx_pillar_pod_gauges.jbeam",
@@ -231,6 +244,153 @@ for gi,(slot,ctrl,mat,pod,screen,own,others) in enumerate(POSITIONS):
         ["{screen}{scr_suffix}_{SIZE[key]}", ["{GROUP}"],[],{pr}],'''
             out+=part(f"{slot}_{key}_{side}{fkey}", f"{gname} - {NAMES[key]} ({label}){fname}", slot, gvars, ctrl, cfgf, el, fb)
 
+# multi-function display: a lower-gauge option with automatic mounting; the page button on its chin
+# is an in-cabin click trigger (one per mounting, since the mounting is only known in game) that runs
+# the dbgMfdNextPage action from pillar_pod_gauges.interaction.json
+MFD_VARS='''        ["$dbg_mfd_page", "range", "", "Gauges", 0, 0, 4, "Display: First Page", "Page shown at start: 0 boost, 1 tyres, 2 engine, 3 brakes, 4 g-force", {"stepDis":1}],
+        ["$dbg_mfd_night", "range", "%", "Gauges", 12, 3, 100, "Display: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],'''
+BUTTON=(0.0,0.0028,-0.0396)            # page button centre in the display's own space, before scaling
+if "MFD" in CAR:
+    fb=["        //meshes for every mounting; dbgAmbient.lua hides all but the one matching the car's interior"]
+    trig=[]; links=[]
+    for code,key,sx in CAR["AUTO"]:
+        (x,y,z),yaw,sc=CAR["MFD"][key]
+        pr='{"pos":{"x":%g,"y":%g,"z":%g},"rot":{"x":0,"y":0,"z":%g}}'%(sx*x,y,z,sx*yaw)
+        for suf in ("shl","frm","btn","scr"):
+            fb.append('        ["dbgv%s3%s", ["%s"],[],%s],'%(code,suf,GROUP,pr))
+        a=math.radians(yaw); bx,by,bz=[c*sc for c in BUTTON]
+        wx=x+bx*math.cos(a)-by*math.sin(a); wy=y+bx*math.sin(a)+by*math.cos(a); wz=z+bz
+        n1,n2,n3=CAR["TRIGGER_NODES"][sx]
+        trig.append('        ["dbg_mfd_%s", "%s","%s","%s", "sphere", %g, {"x":0,"y":0,"z":0},{"x":0,"y":0,"z":0},{"x":0,"y":0,"z":0},{"x":0,"y":0,"z":0}, {"baseTranslationGlobal":{"x":%.4f,"y":%.4f,"z":%.4f},"mesh":"dbgv%s3btn"}],'%(code,n1,n2,n3,round(0.011*sc/0.8,4),sx*wx,wy,wz,code))
+        links.append('        ["dbg_mfd_%s", "action0", "dbgMfdNextPage"],'%code)
+    slot=P+"_dbg_boost"
+    out+=f'''"{slot}_mfd_auto": {{
+    "information":{{
+        "authors":"Kristof",
+        "name":"Multi-Function Display - Automatic Mounting",
+        "value":420,
+    }},
+    "slotType" : "{slot}",
+    //takes the whole pillar: leave the Upper Gauge empty with this one
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+{MFD_VARS}
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {{"name":"dbgMfd"}}],
+    ],
+    "dbgMfd": {{
+        "configuration": {{
+            "materialName": "@dbg_mfd_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/mfd.html",
+            "displayWidth":384,
+            "displayHeight":512,
+            "startPage":"$dbg_mfd_page",
+            "nightBrightness":"$dbg_mfd_night",
+        }},
+        "displayData": {{
+            "electrics": [
+                "dbg_mfd_page", "turboBoost", "superchargerBoost", "rpm", "maxrpm", "oiltemp", "watertemp",
+                "fuel", "fuelVolume", "lowfuel", "wheelspeed", "gear", "checkengine", "parkingbrake",
+                "ignitionLevel", "lights", "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+                ["dbgAmbient", "egt"],
+                ["dbgAmbient", "mfd"],
+            ],
+        }},
+    }},
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+{chr(10).join(fb)}
+    ],
+    //page button: click it in the cabin, or bind "Display: next page" in the controls
+    "triggers2":[
+        ["id", "idRef:", "idX:", "idY:", "type", "size", "baseRotation", "rotation", "translation", "baseTranslation"],
+{chr(10).join(trig)}
+    ],
+    "actionsEnabled": [
+        ["id"],
+        ["dbgMfdNextPage"],
+    ],
+    "triggerEventLinks2":[
+        ["triggerId:triggers2", "triggerInput", "inputAction"],
+{chr(10).join(links)}
+    ],
+}},
+'''
+# digital cluster: a part for each of the car's own Gauges slots (no Additional Modification needed).
+# Touching the page panel on the right of the screen, or the "Display: next page" binding, flips pages.
+CLUSTER_VARS='''        ["$dbg_cluster_page", "range", "", "Gauges", 0, 0, 5, "Digital Cluster: First Page", "Page shown at start on the right of the cluster: 0 boost, 1 tyres, 2 engine, 3 brakes, 4 g-force, 5 trip", {"stepDis":1}],
+        ["$dbg_cluster_night", "range", "%", "Gauges", 25, 3, 100, "Digital Cluster: Night Brightness", "Cluster brightness at night or with the headlights on", {"stepDis":1}],'''
+for slot,kind,sx,meshes in CAR.get("CLUSTER",()):
+    tx,ty,tz=CAR["CLUSTER_TOUCH"][kind]; n1,n2,n3=CAR["TRIGGER_NODES"][1]
+    fb="\n".join('        ["%s", ["%s"]],'%(m,GROUP) for m in meshes)
+    name="Pillar Pod Digital Cluster" + (" (Race Dash)" if kind=="race" else "")
+    out+=f'''"{slot}_dbg_cluster": {{
+    "information":{{
+        "authors":"Kristof",
+        "name":"{name}",
+        "value":650,
+    }},
+    "slotType" : "{slot}",
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+{CLUSTER_VARS}
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/customModules/dbgCluster"],
+        ["gauges/genericGauges", {{"name":"dbgClusterScreen"}}],
+    ],
+    "dbgClusterScreen": {{
+        "configuration": {{
+            "materialName": "@dbg_cluster_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/cluster.html",
+            "displayWidth":1024,
+            "displayHeight":272,
+            "startPage":"$dbg_cluster_page",
+            "nightBrightness":"$dbg_cluster_night",
+            "shiftAt":0.92,
+        }},
+        "displayData": {{
+            "electrics": [
+                "dbg_mfd_page", "turboBoost", "superchargerBoost", "rpm", "maxrpm", "oiltemp", "watertemp",
+                "fuel", "fuelVolume", "lowfuel", "wheelspeed", "gear", "checkengine", "parkingbrake",
+                "ignitionLevel", "lights", "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgCluster", "light"],
+                ["dbgCluster", "maxBoost"],
+                ["dbgCluster", "egt"],
+                ["dbgCluster", "mfd"],
+            ],
+        }},
+    }},
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+{fb}
+    ],
+    //touch the page panel on the right of the screen to flip pages
+    "triggers2":[
+        ["id", "idRef:", "idX:", "idY:", "type", "size", "baseRotation", "rotation", "translation", "baseTranslation"],
+        ["dbg_cluster_page", "{n1}","{n2}","{n3}", "sphere", 0.04, {{"x":0,"y":0,"z":0}},{{"x":0,"y":0,"z":0}},{{"x":0,"y":0,"z":0}},{{"x":0,"y":0,"z":0}}, {{"baseTranslationGlobal":{{"x":{sx*tx:.4f},"y":{ty:.4f},"z":{tz:.4f}}}}}],
+    ],
+    "actionsEnabled": [
+        ["id"],
+        ["dbgMfdNextPage"],
+    ],
+    "triggerEventLinks2":[
+        ["triggerId:triggers2", "triggerInput", "inputAction"],
+        ["dbg_cluster_page", "action0", "dbgMfdNextPage"],
+    ],
+}},
+'''
 out+='}\n'
 open(args.out,'w').write(out)
 print(len(re.findall(r'^"%s_'%P,out,re.M)),'parts; braces',out.count('{'),out.count('}'),'brackets',out.count('['),out.count(']'))

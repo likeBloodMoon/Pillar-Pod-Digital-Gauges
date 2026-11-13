@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>pillar_pod_gauges multi-function display</title>
+<script>
+if (typeof beamng !== 'undefined') {
+  window.onerror = function () {
+    var s = "";
+    for (var i = 0; i < arguments.length; i++) {
+      if (arguments[i] !== null && arguments[i] !== undefined) s += arguments[i].toString() + " ";
+    }
+    s = s.replace(/'/g, "\\'").replace(/\n/g, " ");
+    beamng.sendEngineLua("log('E','htmlTexture.pillar_pod_gauges_mfd','" + s + "')");
+  };
+}
+</script>
+<style>
+  /* Barlow Semi Condensed, SIL Open Font License 1.1 (fonts/OFL.txt) */
+  @font-face { font-family: "Barlow SC"; font-weight: 500; src: url("fonts/barlow-semi-condensed-latin-500-normal.woff2") format("woff2"); }
+  @font-face { font-family: "Barlow SC"; font-weight: 600; src: url("fonts/barlow-semi-condensed-latin-600-normal.woff2") format("woff2"); }
+  @font-face { font-family: "Barlow SC"; font-weight: 700; src: url("fonts/barlow-semi-condensed-latin-700-normal.woff2") format("woff2"); }
+  html, body { margin: 0; padding: 0; background: #000; overflow: hidden; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="c" width="384" height="512"></canvas>
+<script>
+"use strict";
+// Multi-function display: a portrait colour screen with five pages. The page button on the
+// housing (an in-cabin click trigger) bumps the electrics value dbg_mfd_page; each press shows
+// the next page.
+var W = 384, H = 512;
+var PAGES = ["Boost", "Tyres", "Engine", "Brakes", "G-Force"];
+var cfg = { startPage: 0, nightBrightness: 0.25, egtWarn: 900, oilWarn: 130, waterWarn: 110, lowFuel: 10 };
+var units = { p: "bar", t: "c", metric: true, gal: false };
+var FONT = '"Barlow SC", "Arial Narrow", Arial, sans-serif';
+
+var cv = document.getElementById("c"), ctx = cv.getContext("2d");
+var bg = document.createElement("canvas"); bg.width = W; bg.height = H;
+
+var data = { e: {}, m: {} };
+var powered = true, lights = 0, ambient = 1, page = 0, pageCounter = null;
+var boostPeak = 0, gPeak = { lat: 0, lon: 0 }, gTrail = [], nominal = {};
+var last = 0, clock = 0, bootT = -1, wasPowered = false, boost = 0, runT = 0;
+
+// ---- colours, close to an automotive TFT: navy ground, white type, blue and red accents ----
+var C = { white: "#f4f6f8", grey: "#8d99a8", dim: "#3b4757", blue: "#2e7cf6", sky: "#7cc4ff", red: "#e8262d",
+          amber: "#f5b31a", green: "#7ed321", line: "#e8262d" };
+
+// ---- units ----
+function fmt(v, d) { return (isFinite(v) ? v : 0).toFixed(d); }
+function tC(c) { return units.t === "f" ? c * 9 / 5 + 32 : c; }
+function deg() { return units.t === "f" ? "°F" : "°C"; }
+function pKpa(kpa) {
+  if (units.p === "psi") return [kpa * 0.145038, 1, "psi"];
+  if (units.p === "kpa") return [kpa, 0, "kPa"];
+  return [kpa / 100, 1, "bar"];
+}
+function pPsi(psi) {
+  if (units.p === "psi") return [psi, 1, "psi"];
+  if (units.p === "kpa") return [psi * 6.89476, 0, "kPa"];
+  return [psi * 0.0689476, 2, "bar"];
+}
+function dist(km) { return units.metric ? [km, "km"] : [km * 0.621371, "mi"]; }
+function spd(ms) { return units.metric ? [ms * 3.6, "km/h"] : [ms * 2.23694, "mph"]; }
+function vol(l) { return units.gal ? [l * 0.264172, "gal"] : [l, "L"]; }
+
+// ---- drawing helpers ----
+function font(size, weight) { ctx.font = (weight || 600) + " " + size + "px " + FONT; }
+function txt(s, x, y, size, col, align, weight) {
+  font(size, weight); ctx.fillStyle = col; ctx.textAlign = align || "center"; ctx.textBaseline = "alphabetic"; ctx.fillText(s, x, y);
+}
+function width(s, size, weight) { font(size, weight); return ctx.measureText(s).width; }
+// a big number with a small unit after it, the pair centred / aligned as one
+function valueUnit(v, u, x, y, size, col, align) {
+  var wv = width(v, size, 700), wu = u ? width(u, size * 0.42, 600) + 4 : 0, w = wv + wu;
+  var x0 = align === "left" ? x : (align === "right" ? x - w : x - w / 2);
+  txt(v, x0, y, size, col, "left", 700);
+  if (u) txt(u, x0 + wv + 4, y, size * 0.42, C.grey, "left", 600);
+}
+function rr(x, y, w, h, r) {
+  ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+function heat(c, cold, warm, hot) { return c < cold ? C.sky : (c < warm ? C.white : (c < hot ? C.amber : C.red)); }
+
+// background: dark navy with a faint hex texture, darker towards the edges
+function buildBackground() {
+  var g = bg.getContext("2d");
+  g.fillStyle = "#070c15"; g.fillRect(0, 0, W, H);
+  var rad = g.createRadialGradient(W / 2, H * 0.45, 40, W / 2, H * 0.45, H * 0.7);
+  rad.addColorStop(0, "rgba(28,48,78,0.40)"); rad.addColorStop(1, "rgba(0,0,0,0)");
+  g.fillStyle = rad; g.fillRect(0, 0, W, H);
+  g.strokeStyle = "rgba(150,175,210,0.022)"; g.lineWidth = 1;
+  var s = 7, h = s * Math.sqrt(3);
+  for (var row = -1; row * h * 0.5 < H + h; row++) {
+    for (var col = -1; col * s * 3 < W + s * 3; col++) {
+      var cx = col * s * 3 + (row % 2 ? s * 1.5 : 0), cy = row * h * 0.5;
+      g.beginPath();
+      for (var k = 0; k < 6; k++) { var a = Math.PI / 3 * k; g[k ? "lineTo" : "moveTo"](cx + s * Math.cos(a), cy + s * Math.sin(a)); }
+      g.closePath(); g.stroke();
+    }
+  }
+}
+
+// ---- small status icons ----
+function icoTemp(x, y, col) {           // thermometer in waves (coolant)
+  ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(x, y - 10); ctx.lineTo(x, y + 2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(x, y + 4, 3.2, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(x + 2, y - 7); ctx.lineTo(x + 6, y - 7); ctx.moveTo(x + 2, y - 3); ctx.lineTo(x + 6, y - 3); ctx.stroke();
+  ctx.lineWidth = 1.6; ctx.beginPath();
+  for (var i = 0; i <= 16; i++) { var xx = x - 9 + i * 1.15; ctx[i ? "lineTo" : "moveTo"](xx, y + 10 + Math.sin(i * 0.8) * 1.4); }
+  ctx.stroke();
+}
+function icoEngine(x, y, col) {
+  ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.lineJoin = "round"; ctx.beginPath();
+  ctx.moveTo(x - 11, y - 1); ctx.lineTo(x - 8, y - 1); ctx.lineTo(x - 8, y - 5); ctx.lineTo(x - 3, y - 5); ctx.lineTo(x - 3, y - 8);
+  ctx.lineTo(x + 3, y - 8); ctx.lineTo(x + 3, y - 5); ctx.lineTo(x + 7, y - 5); ctx.lineTo(x + 10, y - 8); ctx.lineTo(x + 12, y - 8);
+  ctx.lineTo(x + 12, y + 6); ctx.lineTo(x + 10, y + 6); ctx.lineTo(x + 7, y + 3); ctx.lineTo(x + 6, y + 7); ctx.lineTo(x - 6, y + 7);
+  ctx.lineTo(x - 8, y + 3); ctx.lineTo(x - 11, y + 3); ctx.closePath(); ctx.stroke();
+}
+function icoBrake(x, y, col) {
+  ctx.strokeStyle = col; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(x, y, 11, Math.PI * 0.7, Math.PI * 1.3); ctx.stroke();
+  ctx.beginPath(); ctx.arc(x, y, 11, -Math.PI * 0.3, Math.PI * 0.3); ctx.stroke();
+  font(10, 700); ctx.fillStyle = col; ctx.textAlign = "center"; ctx.fillText("P", x, y + 4);
+}
+function icoLights(x, y, col) {
+  ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(x + 1, y - 7); ctx.quadraticCurveTo(x + 10, y, x + 1, y + 7); ctx.closePath(); ctx.stroke();
+  for (var i = -1; i <= 1; i++) { ctx.beginPath(); ctx.moveTo(x - 2, y + i * 4.5); ctx.lineTo(x - 10, y + i * 4.5 + 1.5); ctx.stroke(); }
+}
+function icoFuel(x, y, col) {
+  ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 2;
+  rr(x - 7, y - 9, 10, 17, 1.5); ctx.stroke(); ctx.fillRect(x - 5, y - 7, 6, 5);
+  ctx.beginPath(); ctx.moveTo(x + 3, y - 5); ctx.lineTo(x + 7, y - 2); ctx.lineTo(x + 7, y + 5); ctx.lineTo(x + 5, y + 5); ctx.stroke();
+}
+function icoClock(x, y, col) {
+  ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x, y - 5); ctx.lineTo(x, y); ctx.lineTo(x + 4, y + 2); ctx.stroke();
+}
+function icoOutside(x, y, col) {
+  ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(x - 3, y - 9); ctx.lineTo(x - 3, y + 3); ctx.stroke();
+  ctx.beginPath(); ctx.arc(x - 3, y + 5, 3.2, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + 6, y - 5, 3, 0, Math.PI * 2); ctx.stroke();
+}
+
+// car seen from above, drawn light like a studio render
+function carTop(cx, cy, w, h) {
+  ctx.save(); ctx.translate(cx, cy);
+  ctx.shadowColor = "rgba(0,0,0,0.6)"; ctx.shadowBlur = 18;
+  var body = ctx.createLinearGradient(-w / 2, 0, w / 2, 0);
+  body.addColorStop(0, "#9aa6b4"); body.addColorStop(0.18, "#e9eef3"); body.addColorStop(0.5, "#ffffff");
+  body.addColorStop(0.82, "#e9eef3"); body.addColorStop(1, "#9aa6b4");
+  ctx.fillStyle = body;
+  ctx.beginPath();                                       // body: rounded nose, slight waist, square tail
+  ctx.moveTo(0, -h / 2);
+  ctx.bezierCurveTo(w * 0.42, -h / 2, w / 2, -h * 0.44, w / 2, -h * 0.3);
+  ctx.bezierCurveTo(w * 0.47, -h * 0.05, w * 0.47, h * 0.1, w / 2, h * 0.3);
+  ctx.bezierCurveTo(w / 2, h * 0.45, w * 0.42, h / 2, 0, h / 2);
+  ctx.bezierCurveTo(-w * 0.42, h / 2, -w / 2, h * 0.45, -w / 2, h * 0.3);
+  ctx.bezierCurveTo(-w * 0.47, h * 0.1, -w * 0.47, -h * 0.05, -w / 2, -h * 0.3);
+  ctx.bezierCurveTo(-w / 2, -h * 0.44, -w * 0.42, -h / 2, 0, -h / 2);
+  ctx.fill(); ctx.shadowBlur = 0;
+  ctx.fillStyle = "#1b2430";                             // glass
+  ctx.beginPath(); ctx.moveTo(-w * 0.36, -h * 0.13); ctx.quadraticCurveTo(0, -h * 0.24, w * 0.36, -h * 0.13);
+  ctx.lineTo(w * 0.31, -h * 0.02); ctx.quadraticCurveTo(0, -h * 0.07, -w * 0.31, -h * 0.02); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-w * 0.32, h * 0.25); ctx.quadraticCurveTo(0, h * 0.3, w * 0.32, h * 0.25);
+  ctx.lineTo(w * 0.28, h * 0.17); ctx.quadraticCurveTo(0, h * 0.2, -w * 0.28, h * 0.17); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "#c5cfd9";                             // roof shading
+  rr(-w * 0.3, -h * 0.01, w * 0.6, h * 0.17, 10); ctx.fill();
+  ctx.fillStyle = "#cdd6df";                             // mirrors
+  ctx.fillRect(-w / 2 - 6, -h * 0.13, 7, 8); ctx.fillRect(w / 2 - 1, -h * 0.13, 7, 8);
+  ctx.strokeStyle = "rgba(0,0,0,0.12)"; ctx.lineWidth = 1;   // bonnet lines
+  ctx.beginPath(); ctx.moveTo(-w * 0.18, -h * 0.46); ctx.lineTo(-w * 0.12, -h * 0.2); ctx.moveTo(w * 0.18, -h * 0.46); ctx.lineTo(w * 0.12, -h * 0.2); ctx.stroke();
+  ctx.restore();
+}
+
+// ---- layout: 8 px grid, 24 px side margins, wider gaps between sections than inside them ----
+var G = 8, M = 24;
+var TOP = 88, BOTTOM = 408;                              // content area between the title and the page dots
+function label(s, x, y, align, col) { txt(s.toUpperCase(), x, y, 12, col || C.grey, align || "left", 600); }
+function bandColour(c, cold, warm, hot) { return c < cold ? C.sky : (c < warm ? C.white : (c < hot ? C.amber : C.red)); }
+
+// ---- pages ----
+function pageBoost() {
+  var m = data.m, psi = boost;
+  var lim = (typeof m.maxBoost === "number" && m.maxBoost > 0) ? m.maxBoost : 15;
+  var u1 = pPsi(1)[0];
+  var step = units.p === "psi" ? 5 : (units.p === "kpa" ? 50 : 0.5);
+  var minor = units.p === "psi" ? 1 : (units.p === "kpa" ? 10 : 0.1);
+  var top = Math.max(step * 2, Math.ceil(lim * 1.3 * u1 / step) * step);
+  var vac = units.p === "psi" ? -10 : (units.p === "kpa" ? -60 : -0.8);
+  var cx = W / 2, cy = 248, R = 136;
+  var a0 = Math.PI * 0.75, span = Math.PI * 1.5;
+  function frac(vd) { return vd < 0 ? 0.2 * (1 - vd / vac) : 0.2 + 0.8 * Math.min(1, vd / top); }   // vacuum compressed
+  function ang(vd) { return a0 + span * Math.max(0, Math.min(1, frac(vd))); }
+  function pt(a, r) { return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; }
+  var vNow = psi * u1, vLim = lim * u1;
+  // band: dim track, lit up to the value, red past the wastegate limit
+  ctx.lineCap = "butt"; ctx.lineWidth = 8;
+  ctx.strokeStyle = "#13294a"; ctx.beginPath(); ctx.arc(cx, cy, R, a0, a0 + span); ctx.stroke();
+  var lit = ctx.createLinearGradient(cx - R, cy + R, cx + R, cy - R);
+  lit.addColorStop(0, "#1d5fd6"); lit.addColorStop(0.6, "#4aa3ff"); lit.addColorStop(1, "#bfe3ff");
+  ctx.strokeStyle = lit; ctx.beginPath(); ctx.arc(cx, cy, R, a0, ang(vNow)); ctx.stroke();
+  ctx.strokeStyle = C.red; ctx.beginPath(); ctx.arc(cx, cy, R, ang(vLim), a0 + span); ctx.stroke();
+  // scale: fine minor ticks, longer majors, numerals inside
+  function tick(vd, len, lw, col) {
+    var a = ang(vd), p1 = pt(a, R - 8), p2 = pt(a, R - 8 - len);
+    ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.beginPath(); ctx.moveTo(p1[0], p1[1]); ctx.lineTo(p2[0], p2[1]); ctx.stroke();
+  }
+  for (var v = vac; v <= 1e-6; v += Math.abs(vac) / 4) tick(v, 6, 1.5, C.grey);
+  for (v = minor; v <= top + 1e-6; v += minor) tick(v, 6, 1.5, v > vLim ? C.red : C.grey);
+  var majors = [vac, vac / 2, 0];
+  for (v = step; v <= top + 1e-6; v += step) majors.push(v);
+  for (var i = 0; i < majors.length; i++) {
+    var vd = majors[i], hot = vd > vLim + 1e-6;
+    tick(vd, 14, 2.5, hot ? C.red : C.white);
+    var lp = pt(ang(vd), R - 40);
+    txt(vd === 0 ? "0" : fmt(vd, units.p === "bar" ? 1 : 0), lp[0], lp[1] + 6, 16, hot ? C.red : C.white, "center", 600);
+  }
+  // tapered needle with a short tail, pivoting behind the readout
+  var na = ang(vNow), nx = Math.cos(na), ny = Math.sin(na), px = -ny, py = nx;
+  ctx.fillStyle = C.red; ctx.beginPath();
+  ctx.moveTo(cx + nx * (R - 4), cy + ny * (R - 4));
+  ctx.lineTo(cx + nx * 56 + px * 3.5, cy + ny * 56 + py * 3.5);
+  ctx.lineTo(cx + nx * 56 - px * 3.5, cy + ny * 56 - py * 3.5); ctx.closePath(); ctx.fill();
+  // readout in the centre
+  ctx.fillStyle = "#0a1220"; ctx.beginPath(); ctx.arc(cx, cy, 64, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = "#24456f"; ctx.lineWidth = 1.5; ctx.stroke();
+  var b = pPsi(psi), pk = pPsi(boostPeak);
+  label("Turbo " + b[2], cx, cy - 24, "center");
+  txt(fmt(b[0], b[1]), cx, cy + 16, 44, psi > lim ? C.red : C.white, "center", 700);
+  label("max", cx - 4, cy + 40, "right"); txt(fmt(pk[0], pk[1]), cx + 4, cy + 41, 17, C.white, "left", 700);
+}
+
+// wheel positions on the car drawing, and the reading column each one leads to
+var CAR = { cx: W / 2, cy: 248, w: 96, h: 216 };
+function wheelXY(n) {
+  var dx = CAR.w / 2 - 2, dy = CAR.h * 0.29;
+  return [CAR.cx + (n[1] === "L" ? -dx : dx), CAR.cy + (n[0] === "F" ? -dy : dy)];
+}
+function wheel(n, col) {
+  var p = wheelXY(n); ctx.fillStyle = col; rr(p[0] - 7, p[1] - 20, 14, 40, 4); ctx.fill();
+}
+function leader(n, toX) {                                  // hairline from the wheel to its reading
+  var p = wheelXY(n), x0 = p[0] + (n[1] === "L" ? -11 : 11);
+  ctx.strokeStyle = "rgba(141,153,168,0.45)"; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(x0, p[1]); ctx.lineTo(toX, p[1]); ctx.stroke();
+}
+function cornerReading(n, lines) {                         // stacked lines, centred on the wheel's height
+  var left = n[1] === "L", x = left ? M : W - M, p = wheelXY(n);
+  var total = 0; for (var i = 0; i < lines.length; i++) total += lines[i].h;
+  var y = p[1] - total / 2;
+  for (i = 0; i < lines.length; i++) {
+    var l = lines[i]; y += l.h;
+    if (l.label) label(l.v, x, y - 4, left ? "left" : "right", l.col);
+    else txt(l.v, x, y - 4, l.size, l.col, left ? "left" : "right", l.w || 700);
+  }
+  leader(n, left ? x + 76 : x - 76);
+}
+function pageTyres() {
+  var m = data.m, tp = m.tp || {}, tt = m.tt || {}, ws = m.ws || {};
+  carTop(CAR.cx, CAR.cy, CAR.w, CAR.h);
+  ["FL", "FR", "RL", "RR"].forEach(function (n) {
+    var p = tp[n], t = tt[n], s = ws[n], hasP = typeof p === "number";
+    var flat = hasP && p < 20, low = hasP && !flat && nominal[n] && p < nominal[n] * 0.8;
+    var pv = pKpa(hasP ? p : 0), pc = flat ? C.red : (low ? C.amber : C.white);
+    wheel(n, flat ? C.red : (low ? C.amber : "#2a3442"));
+    var sp = spd(Math.abs(s || 0));
+    cornerReading(n, [
+      { v: n + "  " + pv[2], label: true, h: 16, col: C.grey },
+      { v: hasP ? (flat ? "0.0" : fmt(pv[0], pv[1])) : "---", size: 36, col: pc, h: 40 },
+      { v: typeof t === "number" ? fmt(tC(t), 0) + deg() : "---", size: 18, col: typeof t === "number" ? bandColour(t, 40, 100, 120) : C.dim, h: 24, w: 600 },
+      { v: typeof s === "number" ? fmt(sp[0], 0) + " " + sp[1] : "---", size: 15, col: C.grey, h: 20, w: 500 }]);
+  });
+}
+
+function pageBrakes() {
+  var bt = data.m.bt || {};
+  carTop(CAR.cx, CAR.cy, CAR.w, CAR.h);
+  ["FL", "FR", "RL", "RR"].forEach(function (n) {
+    var b = bt[n], has = typeof b === "number", col = has ? bandColour(b, 80, 450, 700) : C.dim;
+    wheel(n, has && b >= 450 ? col : "#2a3442");
+    cornerReading(n, [
+      { v: n + "  " + deg(), label: true, h: 16, col: C.grey },
+      { v: has ? fmt(tC(b), 0) : "---", size: 36, col: col, h: 40 }]);
+    // small scale under the reading: 0 .. 900 deg C, amber from 450, red from 700
+    var left = n[1] === "L", x = left ? M : W - M - 72, y = wheelXY(n)[1] + 36;
+    ctx.fillStyle = "#16263d"; ctx.fillRect(x, y, 72, 4);
+    ctx.fillStyle = has ? col : C.dim; ctx.fillRect(x, y, 72 * Math.max(0, Math.min(1, (b || 0) / 900)), 4);
+    ctx.fillStyle = C.red; ctx.fillRect(x + 72 * 700 / 900, y - 2, 2, 8);
+  });
+}
+
+function row(y, name, v, unit, lo, hi, val, warn, col) {
+  label(name, M, y);
+  valueUnit(v, unit, W - M, y + 2, 32, col, "right");
+  var x = M, w = W - 2 * M, by = y + 16;
+  var f = Math.max(0, Math.min(1, (val - lo) / (hi - lo)));
+  ctx.fillStyle = "#16263d"; ctx.fillRect(x, by, w, 4);
+  var g = ctx.createLinearGradient(x, 0, x + w, 0); g.addColorStop(0, "#1d5fd6"); g.addColorStop(1, "#7cc4ff");
+  ctx.fillStyle = col === C.red ? C.red : g; ctx.fillRect(x, by, w * f, 4);
+  if (warn !== null) {
+    var wf = (warn - lo) / (hi - lo);
+    ctx.fillStyle = "rgba(232,38,45,0.55)"; ctx.fillRect(x + w * wf, by, w * (1 - wf), 4);
+    ctx.fillStyle = C.red; ctx.fillRect(x + w * wf - 1, by - 3, 2, 10);
+  }
+  txt(String(lo), x, by + 20, 12, C.dim, "left", 600);
+  txt(String(hi), x + w, by + 20, 12, C.dim, "right", 600);
+}
+function pageEngine() {
+  var e = data.e, m = data.m;
+  var oil = Number(e.oiltemp) || 0, water = Number(e.watertemp) || 0, egt = Number(m.egt) || 0, rpm = Number(e.rpm) || 0;
+  var maxR = Math.max(1000, Number(e.maxrpm) || 7000);
+  var lt = function (c) { return Math.round(tC(c)); };
+  row(120, "Oil temperature", fmt(tC(oil), 0), deg(), lt(40), lt(150), tC(oil), tC(cfg.oilWarn), oil >= cfg.oilWarn ? C.red : C.white);
+  row(200, "Coolant", fmt(tC(water), 0), deg(), lt(40), lt(130), tC(water), tC(cfg.waterWarn), water >= cfg.waterWarn ? C.red : C.white);
+  row(280, "Exhaust gas", fmt(tC(egt), 0), deg(), lt(100), lt(1000), tC(egt), tC(cfg.egtWarn), egt >= cfg.egtWarn ? C.red : C.white);
+  row(360, "Engine speed", fmt(rpm, 0), "rpm", 0, Math.round(maxR / 1000) * 1000, rpm, null, C.white);
+}
+
+function pageG() {
+  var m = data.m, cx = W / 2, cy = 224, R = 112, scale = 1.5;   // outer ring = 1.5 g
+  ctx.strokeStyle = "#24456f"; ctx.lineWidth = 1;
+  for (var k = 1; k <= 3; k++) { ctx.lineWidth = k === 2 ? 1.5 : 1; ctx.beginPath(); ctx.arc(cx, cy, R * k / 3, 0, Math.PI * 2); ctx.stroke(); }
+  ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(cx - R - 8, cy); ctx.lineTo(cx + R + 8, cy); ctx.moveTo(cx, cy - R - 8); ctx.lineTo(cx, cy + R + 8); ctx.stroke();
+  txt("0.5", cx + 4, cy - R / 3 - 4, 12, C.dim, "left", 600);
+  txt("1.0", cx + 4, cy - R * 2 / 3 - 4, 12, C.dim, "left", 600);
+  label("Accel", cx, cy - R - 16, "center", C.dim); label("Brake", cx, cy + R + 26, "center", C.dim);
+  var cl = function (v) { return Math.max(-1, Math.min(1, v / scale)); };
+  if (gTrail.length > 1) {                                   // trace of the last few seconds
+    ctx.strokeStyle = "rgba(124,196,255,0.7)"; ctx.lineWidth = 1.5; ctx.beginPath();
+    for (var i = 0; i < gTrail.length; i++) {
+      var q = gTrail[i]; ctx[i ? "lineTo" : "moveTo"](cx + cl(q[0]) * R, cy - cl(q[1]) * R);
+    }
+    ctx.stroke();
+  }
+  var gx = Number(m.glat) || 0, gy = Number(m.glon) || 0;
+  ctx.fillStyle = C.red; ctx.beginPath(); ctx.arc(cx + cl(gx) * R, cy - cl(gy) * R, 6, 0, Math.PI * 2); ctx.fill();
+  // readings: peak lateral, combined now, peak longitudinal
+  var y = 384;
+  label("Max lat", M, y - 24); txt(fmt(gPeak.lat, 2), M, y, 22, C.white, "left", 700);
+  label("Combined", cx, y - 24, "center"); valueUnit(fmt(Math.sqrt(gx * gx + gy * gy), 2), "g", cx, y, 22, C.white, "center");
+  label("Max long", W - M, y - 24, "right"); txt(fmt(gPeak.lon, 2), W - M, y, 22, C.white, "right", 700);
+}
+
+// ---- frame: status row, title, page, page dots, status strip ----
+function gearText(g) {
+  if (g === undefined || g === null || g === "") return "-";
+  if (typeof g === "number") return g === 0 ? "N" : (g < 0 ? "R" : String(g));
+  return String(g).toUpperCase();
+}
+function footCell(x, align, name, v, unit) {                // label over value, one column of the strip
+  label(name, x, 466, align);
+  valueUnit(v, unit, x, 494, 20, C.white, align);
+}
+function render() {
+  ctx.globalAlpha = 1; ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H);
+  if (!powered) return;
+  ctx.drawImage(bg, 0, 0);
+  var e = data.e, m = data.m;
+  if (bootT >= 0) {
+    var a = Math.min(1, bootT * 1.6); ctx.globalAlpha = a;
+    txt("Pillar Pod", W / 2, H / 2 - 8, 32, C.white, "center", 700);
+    label("Digital Gauges", W / 2, H / 2 + 20, "center");
+    ctx.fillStyle = C.line; ctx.fillRect(W / 2 - 48 * a, H / 2 + 40, 96 * a, 2);
+    ctx.globalAlpha = 1; dim(); return;
+  }
+  // status row (0..40): warning lights on the left, fuel on the right
+  var water = Number(e.watertemp) || 0;
+  icoTemp(M, 20, water >= cfg.waterWarn ? C.red : (water < 60 ? C.sky : C.blue));
+  icoEngine(M + 40, 20, Number(e.checkengine) > 0 ? C.amber : C.dim);
+  icoBrake(M + 80, 20, Number(e.parkingbrake) > 0 ? C.red : C.dim);
+  icoLights(M + 120, 20, lights > 0 ? C.green : C.dim);
+  var fv = vol(Number(e.fuelVolume) || 0), fuelP = Number(e.fuel) || 0; fuelP = fuelP > 1.5 ? fuelP / 100 : fuelP;
+  var lowFuel = Number(e.lowfuel) > 0 || fuelP * 100 <= cfg.lowFuel;
+  icoFuel(W - M - 4, 20, lowFuel ? C.amber : C.white);
+  valueUnit(fmt(fv[0], 0), fv[1], W - M - 20, 28, 22, lowFuel ? C.amber : C.white, "right");
+  ctx.fillStyle = C.line; ctx.fillRect(M - 8, 40, W - 2 * M + 16, 2);
+  // title (48..80)
+  txt(PAGES[page], W / 2, 72, 24, C.white, "center", 600);
+  [pageBoost, pageTyres, pageEngine, pageBrakes, pageG][page]();
+  // page dots (416..432)
+  for (var i = 0; i < PAGES.length; i++) {
+    ctx.fillStyle = i === page ? C.white : "#2b3746";
+    var dx = W / 2 - 32 + i * 16;
+    if (i === page) { rr(dx - 6, 420, 12, 4, 2); ctx.fill(); }
+    else { ctx.beginPath(); ctx.arc(dx, 422, 2.5, 0, Math.PI * 2); ctx.fill(); }
+  }
+  ctx.fillStyle = C.line; ctx.fillRect(M - 8, 440, W - 2 * M + 16, 2);
+  // status strip (448..512): range and time | gear | outside and coolant
+  var rg = dist(Number(m.range) || 0);
+  footCell(M, "left", "Range", m.range > 0 ? fmt(rg[0], 0) : "---", rg[1]);
+  footCell(M + 88, "left", "Time", String(Math.min(Math.floor(clock / 60), 999)), "min");
+  ctx.strokeStyle = C.white; ctx.lineWidth = 2; rr(W / 2 - 24, 456, 48, 48, 8); ctx.stroke();
+  ctx.fillStyle = "rgba(46,124,246,0.22)"; rr(W / 2 - 23, 457, 46, 46, 7); ctx.fill();
+  txt(gearText(e.gear), W / 2, 492, 32, C.white, "center", 700);
+  footCell(W - M - 88, "right", "Outside", typeof m.envT === "number" ? fmt(tC(m.envT), 0) : "---", deg());
+  footCell(W - M, "right", "Coolant", fmt(tC(water), 0), deg());
+  dim();
+}
+function dim() {
+  var d = lights > 0 ? cfg.nightBrightness : cfg.nightBrightness + (1 - cfg.nightBrightness) * ambient;
+  if (d < 0.999) { ctx.globalAlpha = 1 - d; ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
+}
+
+// ---- BeamNG gauge API (called by lua/vehicle/controller/gauges/genericGauges.lua) ----
+function setup(config) {
+  config = config || {};
+  for (var k in cfg) if (config[k] !== undefined && config[k] !== null && !isNaN(Number(config[k]))) cfg[k] = Number(config[k]);
+  if (cfg.nightBrightness > 1) cfg.nightBrightness = cfg.nightBrightness / 100;
+  var p = String(config.uiUnitPressure || "bar").toLowerCase();
+  units.p = p === "psi" ? "psi" : (p === "kpa" ? "kpa" : "bar");
+  units.t = String(config.uiUnitTemperature || "c").toLowerCase() === "f" ? "f" : "c";
+  units.metric = String(config.uiUnitLength || "metric").toLowerCase() !== "imperial";
+  units.gal = String(config.uiUnitVolume || "l").toLowerCase().indexOf("gal") === 0;
+  page = ((cfg.startPage | 0) % PAGES.length + PAGES.length) % PAGES.length;
+  render();
+}
+
+// ---- data in, smoothing, frames ----
+// updateData only stores what the game sends; a 60 fps timer eases every reading towards it (time
+// based, so it feels the same at any frame rate, like the round gauges) and draws the frame.
+var raw = { e: {}, m: {} };
+var DISCRETE = { gear: 1, ignitionLevel: 1, lights: 1, lowhighbeam: 1, checkengine: 1, parkingbrake: 1, lowfuel: 1,
+                 dbg_mfd_page: 1, maxrpm: 1, maxBoost: 1, range: 1, engineRunning: 1 };
+var TAU = { rpm: 0.05, boost: 0.06, wheelspeed: 0.1, glat: 0.08, glon: 0.08, fuel: 0.6, fuelVolume: 0.6,
+            oiltemp: 0.4, watertemp: 0.4, egt: 0.3, envT: 1.0 };
+function ease(cur, tgt, key, dt) {
+  if (typeof tgt === "object" && tgt !== null) {
+    var out = (typeof cur === "object" && cur !== null) ? cur : {};
+    for (var k in tgt) out[k] = ease(out[k], tgt[k], k, dt);
+    for (k in out) if (!(k in tgt)) delete out[k];
+    return out;
+  }
+  if (typeof tgt !== "number" || DISCRETE[key] || typeof cur !== "number" || !isFinite(cur)) return tgt;
+  var a = 1 - Math.exp(-dt / (TAU[key] || 0.15));
+  var v = cur + (tgt - cur) * a;
+  return Math.abs(tgt - v) < 1e-4 ? tgt : v;
+}
+var lastT = 0, digitT = 0, trailT = 0, speedShown = 0;
+function tick() {
+  var now = (window.performance && performance.now) ? performance.now() : Date.now();
+  var dt = lastT ? Math.min(0.1, (now - lastT) / 1000) : 0.016;
+  lastT = now;
+  if (powered && !wasPowered) { bootT = 0; clock = 0; boostPeak = 0; gPeak = { lat: 0, lon: 0 }; nominal = {}; gTrail = []; }
+  wasPowered = powered;
+  if (bootT >= 0) { bootT += dt; if (bootT > 1.6) bootT = -1; }
+  clock += dt;
+  data.e = ease(data.e, raw.e, "", dt);
+  data.m = ease(data.m, raw.m, "", dt);
+  boost = Number(data.e.boost) || 0;
+  // big speed digits change ten times a second, like a real cluster, while bars move every frame
+  digitT += dt; if (digitT >= 0.1) { digitT = 0; speedShown = Math.abs(Number(data.e.wheelspeed) || 0); }
+  // session peak: only with the engine settled (running 2 s) and within a believable range of the
+  // wastegate limit, so start-up and stall transients don't stick as the "max"
+  runT = (Number(raw.e.rpm) || 0) > 600 ? runT + dt : 0;
+  var limP = (typeof raw.m.maxBoost === "number" && raw.m.maxBoost > 0) ? raw.m.maxBoost : 30;
+  if (runT > 2 && boost > boostPeak && boost < Math.max(limP * 2, limP + 15)) boostPeak = boost;
+  var tp = raw.m.tp || {};
+  for (var n in tp) if (typeof tp[n] === "number" && tp[n] > 20 && clock < 4) nominal[n] = Math.max(nominal[n] || 0, tp[n]);
+  var gx = Number(data.m.glat) || 0, gy = Number(data.m.glon) || 0;
+  trailT += dt; if (trailT >= 1 / 30) { trailT = 0; gTrail.push([gx, gy]); if (gTrail.length > 90) gTrail.shift(); }
+  gPeak.lat = Math.max(gPeak.lat, Math.abs(gx)); gPeak.lon = Math.max(gPeak.lon, Math.abs(gy));
+  render();
+}
+
+function updateData(d) {
+  var e = (d && d.electrics) || {};
+  var cm = (d && d.customModules) || {};
+  var m = cm.dbgCluster || cm.dbgAmbient || {};
+  var mfd = m.mfd || {};
+  var re = {};
+  for (var k in e) re[k] = e[k];
+  var turbo = Number(e.turboBoost) || 0, sc = Number(e.superchargerBoost) || 0;
+  re.boost = sc > 0 ? Math.max(turbo, sc) : turbo;
+  if (e.rpm !== undefined && Number(e.rpm) < 50) re.boost = 0;   // engine stopped: atmospheric
+  raw.e = re;
+  raw.m = { maxBoost: m.maxBoost, egt: m.egt, tp: mfd.tp, tt: mfd.tt, bt: mfd.bt, ws: mfd.ws, glat: mfd.glat, glon: mfd.glon,
+            range: mfd.range, envT: mfd.envT };
+  var ign = e.ignitionLevel;
+  powered = (ign === undefined || ign === null) ? true : (Number(ign) >= 1);
+  var pc = Number(e.dbg_mfd_page) || 0;                  // page button presses
+  if (pageCounter === null) pageCounter = pc;
+  if (pc !== pageCounter) { page = (page + ((pc - pageCounter) % PAGES.length) + PAGES.length) % PAGES.length; pageCounter = pc; }
+  lights = Math.max(Number(e.lights) || 0, Number(e.lowhighbeam) || 0);
+  ambient = typeof m.light === "number" ? Math.max(0, Math.min(1, m.light)) : 1;
+  tick();
+}
+
+function updateMode(d) {}
+
+buildBackground();
+render();
+// The game streams updateData every graphics frame and each call draws a frame (see the end of
+// updateData). This timer only keeps the screen animating when no data arrives for a while; inside
+// the game's HTML textures page timers can be throttled or stopped, so they never drive the frames.
+setInterval(function () {
+  var now = (window.performance && performance.now) ? performance.now() : Date.now();
+  if (now - lastT > 60) tick();
+}, 33);
+if (document.fonts && document.fonts.load) {             // redraw once the bundled typeface is in
+  Promise.all([document.fonts.load('500 20px "Barlow SC"'), document.fonts.load('600 20px "Barlow SC"'), document.fonts.load('700 20px "Barlow SC"')])
+    .then(function () { render(); }, function () {});
+}
+</script>
+</body>
+</html>

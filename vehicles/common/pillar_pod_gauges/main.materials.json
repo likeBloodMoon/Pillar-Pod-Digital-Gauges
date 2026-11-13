@@ -495,5 +495,98 @@
     "translucentBlendOp": "None",
     "version": 1.5,
     "castShadows": false
+  },
+  "dbg_mfd_screen": {
+    "name": "dbg_mfd_screen",
+    "mapTo": "dbg_mfd_screen",
+    "class": "Material",
+    "Stages": [
+      {
+        "baseColorFactor": [
+          0.02,
+          0.02,
+          0.025,
+          1
+        ],
+        "emissive": true,
+        "emissiveFactor": [
+          1,
+          1,
+          1
+        ],
+        "emissiveIntensityNits": 1600,
+        "emissiveMap": "@dbg_mfd_screen",
+        "metallicFactor": 0,
+        "roughnessFactor": 0.5
+      },
+      {},
+      {},
+      {}
+    ],
+    "dynamicCubemap": true,
+    "materialTag0": "beamng",
+    "materialTag1": "vehicle",
+    "translucentBlendOp": "None",
+    "version": 1.5,
+    "castShadows": false
+  },
+  "dbg_mfd_frame": {
+    "name": "dbg_mfd_frame",
+    "mapTo": "dbg_mfd_frame",
+    "class": "Material",
+    "Stages": [
+      {
+        "baseColorFactor": [
+          0.025,
+          0.025,
+          0.028,
+          1
+        ],
+        "metallicFactor": 0,
+        "roughnessFactor": 0.5
+      },
+      {},
+      {},
+      {}
+    ],
+    "dynamicCubemap": true,
+    "materialTag0": "beamng",
+    "materialTag1": "vehicle",
+    "translucentBlendOp": "None",
+    "version": 1.5
+  },
+  "dbg_cluster_screen": {
+    "name": "dbg_cluster_screen",
+    "mapTo": "dbg_cluster_screen",
+    "class": "Material",
+    "Stages": [
+      {
+        "baseColorFactor": [
+          0.02,
+          0.02,
+          0.025,
+          1
+        ],
+        "emissive": true,
+        "emissiveFactor": [
+          1,
+          1,
+          1
+        ],
+        "emissiveIntensityNits": 1600,
+        "emissiveMap": "@dbg_cluster_screen",
+        "metallicFactor": 0,
+        "roughnessFactor": 0.5
+      },
+      {},
+      {},
+      {}
+    ],
+    "dynamicCubemap": true,
+    "materialTag0": "beamng",
+    "materialTag1": "vehicle",
+    "translucentBlendOp": "None",
+    "version": 1.5,
+    "castShadows": false
   }
 }
