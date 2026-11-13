@@ -1,7 +1,10 @@
 # Pillar Pod Digital Gauges
 
-Digital boost and oil temperature gauges on A-pillar and roll-cage pods for BeamNG.drive.
-Currently for the Ibishu Covet and the Ibishu 200BX.
+Digital gauges for BeamNG.drive: round gauges on A-pillar and roll-cage pods, a pillar-mounted
+multi-function display, and a full digital instrument cluster.
+Currently for the Ibishu Covet and the Ibishu 200BX (the display and the cluster are Covet only).
+
+![Digital cluster on the Covet's race dashboard](docs/cluster-race-dash.jpg)
 
 ## Install
 
@@ -33,6 +36,8 @@ one pillar mounting plus the roll cage one. With the derby cage, which has no ba
 A-pillar, the gauges stay on the pillar.
 
 ## Digital cluster (Covet)
+
+![Digital cluster on the Covet's standard dashboard](docs/cluster-standard-dash.jpg)
 
 **Gauges → Pillar Pod Digital Cluster** replaces the Covet's instrument cluster with a wide screen,
 using the car's own Gauges slot, so it combines with anything in Additional Modification. On the
