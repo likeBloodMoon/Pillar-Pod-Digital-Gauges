@@ -5,9 +5,10 @@ Currently for the Ibishu Covet.
 
 ## Install
 
-Download `pillar_pod_gauges.zip` from the
+Download the mod zip (named after the version, for example `pillar_pod_gauges_v1.1.0.zip`) from the
 [latest release](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/releases/latest) and
-put it in your BeamNG `mods` folder. Do not unpack it.
+put it in your BeamNG `mods` folder. Do not unpack it. When updating, remove the older version's
+zip first so the game does not load two copies.
 
 GitHub's own "Download ZIP" of the source will not work as a mod, because it wraps everything in
 an extra folder. To build the mod zip yourself, zip the `vehicles` and `lua` folders together so
