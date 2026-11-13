@@ -24,6 +24,7 @@ CARS = (
 DAE = ROOT / "vehicles/common/pillar_pod_gauges/pillar_pod_gauges.dae"
 MATERIALS = ROOT / "vehicles/common/pillar_pod_gauges/main.materials.json"
 SCREEN = ROOT / "vehicles/common/pillar_pod_gauges/screen.html"
+MFD_PAGE = ROOT / "vehicles/common/pillar_pod_gauges/mfd.html"
 GENERATOR = ROOT / "tools/gen_jbeam.py"
 BAKER = ROOT / "tools/bake_faceplates.html"
 EXPECTED_HTML = "local://local/vehicles/common/pillar_pod_gauges/screen.html"
@@ -246,19 +247,20 @@ def check_javascript() -> None:
     if not node:
         warning("Node.js is not installed; skipped embedded JavaScript syntax check")
         return
-    html = SCREEN.read_text(encoding="utf-8")
-    scripts = re.findall(r"<script\b[^>]*>(.*?)</script\s*>", html, flags=re.I | re.S)
-    inline = [script for script in scripts if script.strip()]
-    if not inline:
-        error("screen.html contains no inline JavaScript to validate")
-        return
-    with tempfile.TemporaryDirectory() as tmp:
-        for index, script in enumerate(inline, 1):
-            path = Path(tmp) / f"screen-{index}.js"
-            path.write_text(script, encoding="utf-8")
-            result = subprocess.run([node, "--check", str(path)], text=True, capture_output=True)
-            if result.returncode:
-                error("screen.html JavaScript syntax error:\n" + (result.stderr.strip() or result.stdout.strip()))
+    for page in (SCREEN, MFD_PAGE):
+        html = page.read_text(encoding="utf-8")
+        scripts = re.findall(r"<script\b[^>]*>(.*?)</script\s*>", html, flags=re.I | re.S)
+        inline = [script for script in scripts if script.strip()]
+        if not inline:
+            error(f"{page.name} contains no inline JavaScript to validate")
+            continue
+        with tempfile.TemporaryDirectory() as tmp:
+            for index, script in enumerate(inline, 1):
+                path = Path(tmp) / f"page-{index}.js"
+                path.write_text(script, encoding="utf-8")
+                result = subprocess.run([node, "--check", str(path)], text=True, capture_output=True)
+                if result.returncode:
+                    error(f"{page.name} JavaScript syntax error:\n" + (result.stderr.strip() or result.stdout.strip()))
 
 
 def check_python_syntax() -> None:

@@ -1,5 +1,6 @@
 -- Ambient light (automatic display dimming), turbo wastegate limit (automatic LED scale),
--- exhaust gas temperature and automatic mounting for the digital pillar gauges.
+-- exhaust gas temperature, data for the multi-function display and automatic mounting for the
+-- digital pillar gauges.
 -- Works as a custom module of gauges/genericGauges: it adds customModules.dbgAmbient.light to the
 -- data sent to the gauge screens. 1 = full daylight, 0 = night. It asks the game engine for the
 -- time of day every couple of seconds; if that fails for any reason the value simply stays at 1.
@@ -174,6 +175,46 @@ local function readEgt()
   return type(t) == "number" and t or nil
 end
 
+-- Data for the multi-function display: tyre pressure and temperature, brake temperature, g-force,
+-- fuel range and outside temperature. Wheel names are the car's own (FL, FR, RL, RR on most cars).
+local mfd = {tp = {}, tt = {}, bt = {}, ws = {}}
+local trip = {dist = 0, fuelUsed = 0, lastFuel = nil}
+
+local function readMfd(dt)
+  local tp, tt, bt, ws = {}, {}, {}, {}
+  local envP = obj:getEnvPressure()
+  for _, wd in pairs(wheels.wheels or {}) do
+    local name = wd.name
+    if name then
+      local group = wd.pressureGroup and v.data.pressureGroups and v.data.pressureGroups[wd.pressureGroup]
+      if group then tp[name] = math.max((obj:getGroupPressure(group) - envP) * 0.001, 0) end   -- kPa above outside air
+      if wd.wheelID then
+        local k = obj:getWheelAvgTemperature(wd.wheelID)
+        if type(k) == "number" and k > 0 then tt[name] = k - 273.15 end
+      end
+      if type(wd.brakeSurfaceTemperature) == "number" then bt[name] = wd.brakeSurfaceTemperature end
+      if type(wd.wheelSpeed) == "number" then ws[name] = wd.wheelSpeed end                          -- m/s
+    end
+  end
+  mfd.tp, mfd.tt, mfd.bt, mfd.ws = tp, tt, bt, ws
+  mfd.glat = (sensors.gx2 or sensors.gx or 0) / 9.81
+  mfd.glon = (sensors.gy2 or sensors.gy or 0) / 9.81
+  mfd.envT = obj:getEnvTemperature() - 273.15
+  -- range from the average consumption since spawn (needs half a kilometre of driving first)
+  local e = electrics.values
+  trip.dist = trip.dist + math.abs(e.wheelspeed or 0) * dt
+  local fuel = e.fuelVolume
+  if type(fuel) == "number" then
+    if trip.lastFuel and fuel < trip.lastFuel and trip.lastFuel - fuel < 1 then trip.fuelUsed = trip.fuelUsed + (trip.lastFuel - fuel) end
+    trip.lastFuel = fuel
+    if trip.dist > 500 and trip.fuelUsed > 0.01 then
+      mfd.range = fuel / (trip.fuelUsed / (trip.dist / 1000))               -- km
+    else
+      mfd.range = 0
+    end
+  end
+end
+
 local function updateGaugeData(moduleData, dt)
   timer = timer + (dt or 0)
   if timer > 2 then
@@ -188,6 +229,8 @@ local function updateGaugeData(moduleData, dt)
   moduleData.maxBoost = maxBoost
   local okE, egt = pcall(readEgt)
   moduleData.egt = (okE and egt) or 0
+  pcall(readMfd, dt or 0)
+  moduleData.mfd = mfd
 end
 
 local function setupGaugeData(properties)
@@ -199,6 +242,7 @@ local function reset()
   autoMeshes = nil
   autoTimer = 99
   egtEngine = nil
+  trip = {dist = 0, fuelUsed = 0, lastFuel = nil}
 end
 
 local function init(jbeamData)

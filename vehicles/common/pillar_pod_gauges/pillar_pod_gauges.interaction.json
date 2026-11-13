@@ -1,0 +1,7 @@
+{
+    "fileversion": 2,
+    "actions": {
+        //page button of the Pillar Pod Digital Gauges multi-function display: counts presses in an electrics value the display reads
+        "dbgMfdNextPage": {"order":9100, "onDown":"electrics.values.dbg_mfd_page = (electrics.values.dbg_mfd_page or 0) + 1", "title":"Display: next page", "desc":"Pillar Pod Digital Gauges: show the next page of the multi-function display"}
+    }
+}

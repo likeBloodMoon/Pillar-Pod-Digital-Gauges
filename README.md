@@ -32,6 +32,26 @@ On the 200BX the A-pillar has the same shape with every interior, coupe or liftb
 one pillar mounting plus the roll cage one. With the derby cage, which has no bar along the
 A-pillar, the gauges stay on the pillar.
 
+## Multi-function display (Covet)
+
+**Lower Gauge → Multi-Function Display** puts a portrait colour screen on the A-pillar instead of the
+round gauges (leave the Upper Gauge empty). It has five pages:
+
+- **Boost:** dial scaled to the turbo's wastegate limit, with the session maximum
+- **Tyres:** pressure, tread temperature and wheel speed per wheel; low pressure turns amber, a flat red
+- **Engine:** oil, coolant and exhaust gas temperature and engine speed, with their warning limits
+- **Brakes:** temperature per brake
+- **G-Force:** friction circle with a trace and the peak lateral and longitudinal g
+
+The status rows show warning lights, fuel, estimated range (from the fuel used since spawning),
+time since the ignition came on, the gear, outside and coolant temperature.
+
+Change page by clicking the button under the screen in the cabin, or bind **Display: next page**
+in the controls. The first page and night brightness are in the Tuning menu.
+
+Like the gauges, it mounts itself to suit the standard interior, the stripped interior or the roll
+cage, for left- or right-hand drive. The 200BX doesn't have it yet.
+
 ## Features
 
 - Live display with a 24-LED sweep: vacuum in blue, boost in green, red overboost zone
@@ -65,6 +85,10 @@ A-pillar, the gauges stay on the pillar.
 - `tools/` — the scripts the generated files came from
 
 ## Licence
+
+The display uses the Barlow Semi Condensed typeface by the Barlow Project Authors, under the SIL Open Font
+License 1.1 (`vehicles/common/pillar_pod_gauges/fonts/OFL.txt`).
+
 
 MIT, see [LICENSE](LICENSE). The licence covers this mod's own files. BeamNG.drive and its
 vehicles belong to BeamNG GmbH and are not part of this repository.
