@@ -82,6 +82,16 @@ WATER_CFG='''            "source":"watertemp",
             "coldBelow":"$dbg_water_cold",
             "peakHold":0,
             "nightBrightness":"$dbg_water_night",'''
+EGT_CFG='''            "source":"egt",
+            "decimals":0,
+            //LED arc range in deg C (the digits follow the game's temperature unit setting; in deg F they read in hundreds)
+            "minValue":200,
+            "maxValue":1000,
+            "titleLabel":"EGT",
+            //digits flash at or above this temperature (deg C)
+            "warnValue":"$dbg_egt_warn",
+            "peakHold":0,
+            "nightBrightness":"$dbg_egt_night",'''
 FUEL_CFG='''            "source":"fuel",
             //tank level in percent
             "minValue":0,
@@ -101,8 +111,8 @@ SLOTS2="\n".join("        ["+" ".join((c+",").ljust(_w[i]+1) if i<4 else c for i
 out=f'''{{
 //Pillar Pod Digital Gauges - parts for the {CAR["label"]}.
 //  Additional Modification -> Digital Pillar Gauges
-//      Lower Gauge: boost (default), oil temp, coolant temp or fuel level
-//      Upper Gauge: empty (default), oil temp, coolant temp, fuel level or boost
+//      Lower Gauge: boost (default), oil temp, coolant temp, exhaust temp or fuel level
+//      Upper Gauge: empty (default), oil temp, coolant temp, exhaust temp, fuel level or boost
 //Every gauge type comes with automatic mounting in black or silver: it picks the position that
 //matches the car's interior. Boost (lower) and oil temp (upper) are also offered in fixed mountings,
 //which always use the position they name.
@@ -130,6 +140,8 @@ BOOST_VARS='''        ["$dbg_boost_shift", "range", "", "Gauges", 1, 0, 1, "Boos
 WATER_VARS='''        ["$dbg_water_cold", "range", "C", "Gauges", 60, 0, 100, "Coolant Temp Gauge: Cold Mark Below", "A blue COLD mark shows below this coolant temperature (deg C). 0 = off", {"stepDis":1}],
         ["$dbg_water_warn", "range", "C", "Gauges", 110, 90, 130, "Coolant Temp Gauge: Warning Temperature", "The digits flash at or above this coolant temperature (deg C)", {"stepDis":1}],
         ["$dbg_water_night", "range", "%", "Gauges", 12, 3, 100, "Coolant Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],'''
+EGT_VARS='''        ["$dbg_egt_warn", "range", "C", "Gauges", 900, 500, 1100, "Exhaust Temp Gauge: Warning Temperature", "The digits flash at or above this exhaust gas temperature (deg C)", {"stepDis":10}],
+        ["$dbg_egt_night", "range", "%", "Gauges", 12, 3, 100, "Exhaust Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],'''
 FUEL_VARS='''        ["$dbg_fuel_low", "range", "%", "Gauges", 10, 0, 40, "Fuel Gauge: Low Fuel Warning", "The digits flash at or below this tank level (percent). 0 = off", {"stepDis":1}],
         ["$dbg_fuel_night", "range", "%", "Gauges", 12, 3, 100, "Fuel Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],'''
 OIL_VARS='''        ["$dbg_oil_cold", "range", "C", "Gauges", 70, 0, 100, "Oil Temp Gauge: Cold Mark Below", "A blue COLD mark shows below this oil temperature (deg C). 0 = off", {"stepDis":1}],
@@ -164,6 +176,7 @@ def part(key,name,slot,gvars,ctrl,cfgf,el,fb):
                 ["moduleName", "property"],
                 ["dbgAmbient", "light"],
                 ["dbgAmbient", "maxBoost"],
+                ["dbgAmbient", "egt"],
             ],
         }},
     }},
@@ -178,10 +191,11 @@ LIGHT=["ignitionLevel","lights","lowhighbeam"]
 TYPES={"boost":("Boost",BOOST_CFG,BOOST_VARS,["turboBoost","superchargerBoost","engineRunning","rpm","maxrpm"]+LIGHT,"b"),
        "oil":("Oil Temp",OIL_CFG,OIL_VARS,["oiltemp"]+LIGHT,"t"),
        "water":("Coolant Temp",WATER_CFG,WATER_VARS,["watertemp"]+LIGHT,"t"),
-       "fuel":("Fuel Level",FUEL_CFG,FUEL_VARS,["fuel"]+LIGHT,"f")}
+       "fuel":("Fuel Level",FUEL_CFG,FUEL_VARS,["fuel"]+LIGHT,"f"),
+       "egt":("Exhaust Temp",EGT_CFG,EGT_VARS,LIGHT,"t")}
 # positions: (slot, controller, screen material, fixed pod mesh, fixed screen mesh, its own gauge type, other types in list order)
-POSITIONS=((P+"_dbg_boost","dbgGauge","dbg_screen","dbg_pod","dbg_screen","boost",("oil","water","fuel")),
-           (P+"_dbg_oil","dbgOilGauge","dbg_oil_screen","dbg_pod2","dbg_oil_screen","oil",("water","fuel","boost")))
+POSITIONS=((P+"_dbg_boost","dbgGauge","dbg_screen","dbg_pod","dbg_screen","boost",("oil","water","egt","fuel")),
+           (P+"_dbg_oil","dbgOilGauge","dbg_oil_screen","dbg_pod2","dbg_oil_screen","oil",("water","egt","fuel","boost")))
 FINS=(("black","","","dbg_gauge","","black"),("silver","_silver",", Silver","dbg_gauge_silver","_w","white"))
 SIDES=(("lhd",1,"","LHD"),("rhd",-1,"_rhd","RHD"))
 def auto_part(gi,slot,ctrl,mat,tkey,keyname):

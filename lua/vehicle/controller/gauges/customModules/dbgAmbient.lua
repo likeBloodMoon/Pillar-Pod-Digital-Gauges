@@ -1,5 +1,5 @@
--- Ambient light (automatic display dimming), turbo wastegate limit (automatic LED scale) and
--- automatic mounting for the digital pillar gauges.
+-- Ambient light (automatic display dimming), turbo wastegate limit (automatic LED scale),
+-- exhaust gas temperature and automatic mounting for the digital pillar gauges.
 -- Works as a custom module of gauges/genericGauges: it adds customModules.dbgAmbient.light to the
 -- data sent to the gauge screens. 1 = full daylight, 0 = night. It asks the game engine for the
 -- time of day every couple of seconds; if that fails for any reason the value simply stays at 1.
@@ -155,6 +155,25 @@ local function updateGFX(dt)
   end
 end
 
+-- Exhaust gas temperature (deg C) from the engine's thermal simulation. nil when the car has no
+-- combustion engine or its thermals aren't running; the display then shows zero.
+local egtEngine = nil       -- false when there is no engine to read
+
+local function readEgt()
+  if egtEngine == nil then
+    egtEngine = false
+    local ok, list = pcall(function() return powertrain.getDevicesByType("combustionEngine") end)
+    if ok and type(list) == "table" then
+      for _, dev in pairs(list) do
+        if type(dev) == "table" and type(dev.thermals) == "table" then egtEngine = dev break end
+      end
+    end
+  end
+  if not egtEngine then return nil end
+  local t = egtEngine.thermals and egtEngine.thermals.exhaustTemperature
+  return type(t) == "number" and t or nil
+end
+
 local function updateGaugeData(moduleData, dt)
   timer = timer + (dt or 0)
   if timer > 2 then
@@ -167,6 +186,8 @@ local function updateGaugeData(moduleData, dt)
     maxBoost = (ok and tonumber(res)) or 0
   end
   moduleData.maxBoost = maxBoost
+  local okE, egt = pcall(readEgt)
+  moduleData.egt = (okE and egt) or 0
 end
 
 local function setupGaugeData(properties)
@@ -177,6 +198,7 @@ local function reset()
   maxBoost = nil
   autoMeshes = nil
   autoTimer = 99
+  egtEngine = nil
 end
 
 local function init(jbeamData)
