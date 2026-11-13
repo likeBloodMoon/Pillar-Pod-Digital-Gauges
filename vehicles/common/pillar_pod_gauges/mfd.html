@@ -43,7 +43,7 @@ var bg = document.createElement("canvas"); bg.width = W; bg.height = H;
 var data = { e: {}, m: {} };
 var powered = true, lights = 0, ambient = 1, page = 0, pageCounter = null;
 var boostPeak = 0, gPeak = { lat: 0, lon: 0 }, gTrail = [], nominal = {};
-var last = 0, clock = 0, bootT = -1, wasPowered = false, boost = 0;
+var last = 0, clock = 0, bootT = -1, wasPowered = false, boost = 0, runT = 0;
 
 // ---- colours, close to an automotive TFT: navy ground, white type, blue and red accents ----
 var C = { white: "#f4f6f8", grey: "#8d99a8", dim: "#3b4757", blue: "#2e7cf6", sky: "#7cc4ff", red: "#e8262d",
@@ -445,7 +445,11 @@ function updateData(d) {
   var b = sc > 0 ? Math.max(turbo, sc) : turbo;
   if (e.rpm !== undefined && Number(e.rpm) < 50) b = 0;  // engine stopped: atmospheric
   boost += (b - boost) * Math.min(1, dt * 12);
-  if (boost > boostPeak) boostPeak = boost;
+  // session peak: only with the engine settled (running 2 s) and within a believable range of the
+  // wastegate limit, so start-up and stall transients don't stick as the "max"
+  runT = (Number(e.rpm) || 0) > 600 ? runT + dt : 0;
+  var limP = (typeof data.m.maxBoost === "number" && data.m.maxBoost > 0) ? data.m.maxBoost : 30;
+  if (runT > 2 && boost > boostPeak && boost < Math.max(limP * 2, limP + 15)) boostPeak = boost;
   var tp = data.m.tp || {};
   for (var n in tp) if (typeof tp[n] === "number" && tp[n] > 20 && clock < 4) nominal[n] = Math.max(nominal[n] || 0, tp[n]);
   var gx = Number(data.m.glat) || 0, gy = Number(data.m.glon) || 0;

@@ -43,7 +43,7 @@ var bg = document.createElement("canvas"); bg.width = W; bg.height = H;
 var data = { e: {}, m: {} };
 var powered = true, lights = 0, ambient = 1, page = 0, pageCounter = null;
 var boostPeak = 0, gPeak = { lat: 0, lon: 0 }, gTrail = [], nominal = {};
-var last = 0, clock = 0, bootT = -1, wasPowered = false, boost = 0;
+var last = 0, clock = 0, bootT = -1, wasPowered = false, boost = 0, runT = 0;
 
 // ---- colours, close to an automotive TFT: navy ground, white type, blue and red accents ----
 var C = { white: "#f4f6f8", grey: "#8d99a8", dim: "#3b4757", blue: "#2e7cf6", sky: "#7cc4ff", red: "#e8262d",
@@ -206,7 +206,7 @@ function tach() {
   }
   for (var k = 0; k <= top / 1000; k++) {
     var x0 = TACH.x0 + (TACH.x1 - TACH.x0) * k * 1000 / top;
-    txt(String(k), x0, TACH.y + TACH.h + 22, 18, k * 1000 >= maxR ? C.red : C.grey, "center", 600);
+    txt(String(k), x0, TACH.y + TACH.h + 22, 20, k * 1000 >= maxR ? C.red : C.grey, "center", 600);
   }
   label("x1000 rpm", TACH.x1 + 12, TACH.y + TACH.h - 1, "left", C.dim, 13);
 }
@@ -235,17 +235,17 @@ function leftPanel() {
   var e = data.e, m = data.m, x0 = LEFT.x0, x1 = LEFT.x1, w = x1 - x0;
   var fv = vol(Number(e.fuelVolume) || 0), fuelP = Number(e.fuel) || 0; fuelP = fuelP > 1.5 ? fuelP / 100 : fuelP;
   var lowFuel = Number(e.lowfuel) > 0 || fuelP * 100 <= cfg.lowFuel;
-  label("Fuel", x0, 108);
-  valueUnit(fmt(fv[0], 0), fv[1], x1, 112, 30, lowFuel ? C.amber : C.white, "right");
+  label("Fuel", x0, 108, "left", C.grey, 17);
+  valueUnit(fmt(fv[0], 0), fv[1], x1, 114, 36, lowFuel ? C.amber : C.white, "right");
   hbar(x0, 124, w, fuelP, lowFuel ? C.amber : C.sky, cfg.lowFuel / 100);
   var water = Number(e.watertemp) || 0;
-  label("Coolant", x0, 166);
-  valueUnit(fmt(tC(water), 0), deg(), x1, 170, 30, water >= cfg.waterWarn ? C.red : C.white, "right");
+  label("Coolant", x0, 166, "left", C.grey, 17);
+  valueUnit(fmt(tC(water), 0), deg(), x1, 172, 36, water >= cfg.waterWarn ? C.red : C.white, "right");
   hbar(x0, 182, w, (water - 40) / 90, water >= cfg.waterWarn ? C.red : C.sky, (cfg.waterWarn - 40) / 90);
   var rg = dist(Number(m.range) || 0);
-  label("Range", x0, 226); valueUnit(m.range > 0 ? fmt(rg[0], 0) : "---", rg[1], x0, 252, 22, C.white, "left");
-  label("Outside", x0 + 128, 226); valueUnit(typeof m.envT === "number" ? fmt(tC(m.envT), 0) : "---", deg(), x0 + 128, 252, 22, C.white, "left");
-  label("Time", x1, 226, "right"); valueUnit(String(Math.min(Math.floor(clock / 60), 999)), "min", x1, 252, 22, C.white, "right");
+  label("Range", x0, 226, "left", C.grey, 16); valueUnit(m.range > 0 ? fmt(rg[0], 0) : "---", rg[1], x0, 254, 26, C.white, "left");
+  label("Outside", x0 + 128, 226, "left", C.grey, 16); valueUnit(typeof m.envT === "number" ? fmt(tC(m.envT), 0) : "---", deg(), x0 + 128, 254, 26, C.white, "left");
+  label("Time", x1, 226, "right", C.grey, 16); valueUnit(String(Math.min(Math.floor(clock / 60), 999)), "min", x1, 254, 26, C.white, "right");
 }
 
 // ---- right panel: one page of the multi-function display ----
@@ -334,7 +334,7 @@ function pG(x0, y0, w, h) {
 }
 function rightPanel() {
   var x0 = RIGHT.x0, w = RIGHT.x1 - RIGHT.x0, y0 = RIGHT.top - 20;
-  label(PAGES[page], x0, RIGHT.top, "left", C.white, 16);
+  label(PAGES[page], x0, RIGHT.top, "left", C.white, 18);
   [pBoost, pTyres, pEngine, pBrakes, pG][page](x0, y0, w, 168);
   for (var i = 0; i < PAGES.length; i++) {                 // page dots, right-aligned with the title
     ctx.fillStyle = i === page ? C.white : "#2b3746";
@@ -408,7 +408,11 @@ function updateData(d) {
   var b = sc > 0 ? Math.max(turbo, sc) : turbo;
   if (e.rpm !== undefined && Number(e.rpm) < 50) b = 0;  // engine stopped: atmospheric
   boost += (b - boost) * Math.min(1, dt * 12);
-  if (boost > boostPeak) boostPeak = boost;
+  // session peak: only with the engine settled (running 2 s) and within a believable range of the
+  // wastegate limit, so start-up and stall transients don't stick as the "max"
+  runT = (Number(e.rpm) || 0) > 600 ? runT + dt : 0;
+  var limP = (typeof data.m.maxBoost === "number" && data.m.maxBoost > 0) ? data.m.maxBoost : 30;
+  if (runT > 2 && boost > boostPeak && boost < Math.max(limP * 2, limP + 15)) boostPeak = boost;
   var tp = data.m.tp || {};
   for (var n in tp) if (typeof tp[n] === "number" && tp[n] > 20 && clock < 4) nominal[n] = Math.max(nominal[n] || 0, tp[n]);
   var gx = Number(data.m.glat) || 0, gy = Number(data.m.glon) || 0;

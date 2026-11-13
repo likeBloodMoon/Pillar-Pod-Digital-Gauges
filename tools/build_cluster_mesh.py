@@ -15,7 +15,7 @@ import numpy as np
 
 cab = np.load(sys.argv[1], allow_pickle=True).item()
 race = np.load(sys.argv[2], allow_pickle=True).item()
-RACE_C = np.array([0.3360, -0.5465, 0.8377])          # screen centre of the race unit (on the carbon panel)
+RACE_C = np.array([0.3360, -0.5479, 0.8425])          # screen centre of the race unit (on the carbon panel)
 U0, U1, V0, V1 = -0.2375, 0.1225, -0.0362, 0.0595       # face extents in the page's coordinates (see cluster.html)
 
 # ---- standard dashboard: outline of the stock gauge face ----
