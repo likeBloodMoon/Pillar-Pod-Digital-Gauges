@@ -12,6 +12,7 @@ These scripts produce or validate the mod's generated assets.
 | `gen_jbeam.py` | Generates a car's part file (all mountings, finishes, sliders): `gen_jbeam.py --car covet\|bx <out>` |
 | `fit_check_render.py` | Software render of the car interior with the gauges, used to check the fit |
 | `build_release.py` | Assembles the release folder and zip from the working files |
+| `bake_faces.py` | Runs `bake_faceplates.html` in headless Chrome and writes all six face textures |
 | `bake_faceplates.html` | Bakes the printed face textures from the display page's own drawing code |
 | `validate_assets.py` | Checks JBeam structure, DAE mesh/material references, material texture paths, JavaScript syntax, Python syntax, and generated JBeam consistency |
 
