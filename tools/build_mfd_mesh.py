@@ -15,14 +15,16 @@ C = np.array([float(x) for x in os.environ['DBG_C'].split(',')]); YAW = float(os
 SCALE = float(os.environ.get('DBG_SCALE', '1'))
 SHARP_DEG = 38.0
 
-# screen 48 x 64 mm (3:4 portrait), housing 56 x 78 mm with a 10 mm chin for the page button, 15 mm deep
-SX, SZ = 0.024, 0.032                       # screen half sizes
-OX0, OX1, OZ0, OZ1, OR = -0.028, 0.028, -0.042, 0.036, 0.006
+# screen 52.5 x 70 mm (3:4 portrait), housing 60 x 83 mm with a 9 mm chin for the page button.
+# The housing is a 12 mm deep rounded tray; behind it a narrower neck tapers into the pillar.
+SX, SZ = 0.02625, 0.035                     # screen half sizes
+OX0, OX1, OZ0, OZ1, OR = -0.0298, 0.0298, -0.0442, 0.0385, 0.009
 SCREEN_Y = -0.0015                          # screen sits 1.5 mm behind the front face
-FRONT_Y, BACK_Y = 0.001, -0.014
+FRONT_Y, BACK_Y = 0.001, -0.012
+NECK = -0.0085                              # the neck is the housing outline pulled in by this much
 BUTTON = (0.0, (OZ0 + -SZ) / 2)             # page button centre (x, z) in the chin
 BUTTON_R = 0.0032
-K, M_LONG, M_SHORT = 6, 7, 5                # outline samples: arc steps per corner, points along sides
+K, M_LONG, M_SHORT = 8, 9, 6                # outline samples: arc steps per corner, points along sides
 
 def rz(deg):
     a = math.radians(deg); c, s = math.cos(a), math.sin(a)
@@ -67,10 +69,15 @@ def strip(rings, closed_cap=None):
 # ---------------------------------------------------------------- front frame (bezel material)
 scr = lambda off: outline(-SX, SX, -SZ, SZ, 0.002, off)
 out = lambda off: outline(OX0, OX1, OZ0, OZ1, OR, off)
-frame_rings = [ring(scr(0.0004), SCREEN_Y), ring(scr(0.0004), FRONT_Y), ring(scr(0.0024), FRONT_Y + 0.0004),
-               ring(out(-0.0022), FRONT_Y), ring(out(-0.0006), FRONT_Y - 0.0006), ring(out(0.0), FRONT_Y - 0.0022)]
+# the lip starts 0.6 mm inside the screen edge and in front of it, so there is never a gap to see through
+frame_rings = [ring(scr(-0.0006), SCREEN_Y + 0.0003), ring(scr(-0.0006), FRONT_Y), ring(scr(0.0016), FRONT_Y + 0.0004),
+               ring(out(-0.0045), FRONT_Y + 0.0002), ring(out(-0.0018), FRONT_Y - 0.0004), ring(out(-0.0005), FRONT_Y - 0.0016),
+               ring(out(0.0), FRONT_Y - 0.0032)]
 fv, ff = strip(frame_rings)
 frame = new_obj("frame", fv, ff)
+# backing plate just behind the screen: closes the housing so nothing behind it can show through
+pv = [tuple(p) for p in ring(out(-0.0005), SCREEN_Y - 0.0006)] + [((OX0 + OX1) / 2, SCREEN_Y - 0.0006, (OZ0 + OZ1) / 2)]
+plate = new_obj("plate", pv, [(i, (i + 1) % N, N) for i in range(N)])
 # ---------------------------------------------------------------- shell (pod material): sides + pod onto the pillar
 Rinv = rz(-YAW)
 _cab = np.load(os.environ['DBG_CABIN'], allow_pickle=True).item()
@@ -82,18 +89,34 @@ def ray(o, d):
     q = np.cross(q0, _E1); v = f * (q @ d); t = f * np.einsum('ij,ij->i', _E2, q)
     m = ok & (u >= 0) & (v >= 0) & (u + v <= 1) & (t > 1e-5)
     return float(t[m].min()) if m.any() else float('inf')
-back = ring(out(0.0), BACK_Y)
+# the neck is a rounded superellipse (not a box) inside the housing outline, so the pod reads as one
+# smooth moulding growing out of the pillar
+def neck(pull, y, n=2.4):
+    o = out(0.0); cx_, cz_ = (OX0 + OX1) / 2, (OZ0 + OZ1) / 2
+    a = (OX1 - OX0) / 2 + pull; b = (OZ1 - OZ0) / 2 + pull
+    pts = []
+    for x, z in o:
+        th = math.atan2(z - cz_, x - cx_)
+        r = (abs(math.cos(th) / a) ** n + abs(math.sin(th) / b) ** n) ** (-1 / n)
+        pts.append(np.array([cx_ + r * math.cos(th), y, cz_ + r * math.sin(th)]))
+    return pts
+back = None                                # set below from the neck
 d0 = np.array([0.0, -1.0, 0.0])
 TAPER = float(os.environ.get('DBG_TAPER', '0.25')); SINK = float(os.environ.get('DBG_SINK', '0.006'))
 centre = np.array([(OX0 + OX1) / 2, 0.0, (OZ0 + OZ1) / 2])
+back = neck(NECK, BACK_Y - 0.002)
 inward = [(np.array([centre[0], p[1], centre[2]]) - p) for p in back]
+TAPER = float(os.environ.get('DBG_TAPER', '0.35'))
 raw = np.array([ray(p + w * TAPER, d0) for p, w in zip(back, inward)])
 fin = raw[np.isfinite(raw)]
 cap_len = float(np.median(fin)) * 1.5 + 0.01 if len(fin) else 0.05
 length = [max(0.003, min(float(t), cap_len) + SINK) if np.isfinite(t) else cap_len for t in raw]
 print("columns hitting surface", int(np.isfinite(raw).sum()), "/", N)
-shell_rings = [ring(out(0.0), FRONT_Y - 0.0022), back]
-for f in (0.2, 0.4, 0.6, 0.8, 0.93, 1.0):
+#   rounded back edge of the tray, then the neck
+tray = [ring(out(0.0), FRONT_Y - 0.0032), ring(out(0.0), BACK_Y + 0.004), ring(out(-0.0012), BACK_Y + 0.0012),
+        ring(out(-0.0035), BACK_Y), neck(NECK + 0.0015, BACK_Y - 0.0006), neck(NECK, BACK_Y - 0.002)]
+shell_rings = tray[:]
+for f in (0.12, 0.28, 0.46, 0.64, 0.8, 0.92, 1.0):
     w = f * f * (3 - 2 * f)
     shell_rings.append([p + d0 * (L * f) + iw * (TAPER * w) for p, iw, L in zip(back, inward, length)])
 sv, sf = strip(shell_rings, closed_cap=np.mean(np.array(shell_rings[-1]), axis=0))
@@ -143,7 +166,9 @@ def finish(ob):
     uv = np.c_[p[:, 0] / 0.026, (p[:, 1] + p[:, 2]) / 0.026]          # plastic texture tiles at 26 mm
     return p * SCALE, n, t, uv
 
-parts = {name: finish(ob) for name, ob in (("frame", frame), ("shell", shell), ("button", button))}
+parts = {name: finish(ob) for name, ob in (("frame", frame), ("plate", plate), ("shell", shell), ("button", button))}
+fp, fn_, ft, fu = parts["frame"]; pp, pn, pt_, pu = parts.pop("plate")      # the plate shares the frame's material
+parts["frame"] = (np.vstack([fp, pp]), np.vstack([fn_, pn]), np.vstack([ft, pt_ + len(fp)]), np.vstack([fu, pu]))
 # screen: one quad, u runs from the driver's left (+x) to right, v = 1 at the top (like the gauges)
 sp = np.array([[SX, SCREEN_Y, -SZ], [-SX, SCREEN_Y, -SZ], [-SX, SCREEN_Y, SZ], [SX, SCREEN_Y, SZ]])
 suv = np.array([[0, 0], [1, 0], [1, 1], [0, 1]], float)

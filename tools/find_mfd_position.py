@@ -26,7 +26,7 @@ eye = np.array([0.333, 0.20, 1.08]); eye2 = np.array([0.0, 0.15, 1.10])
 CA = np.array([0.579, -0.3336, 1.0757])
 f = CA - eye; f /= np.linalg.norm(f); left = -np.cross(f, [0, 0, 1]); left /= np.linalg.norm(left); up = np.cross(left, -f)
 # housing outline in model space (x across, z up, y towards the driver), screen centre at the origin
-X0, X1, Z0, Z1, YF, YB = -0.028, 0.028, -0.042, 0.036, 0.001, -0.014
+X0, X1, Z0, Z1, YF, YB = -0.0298, 0.0298, -0.0442, 0.0385, 0.001, -0.012
 def samples(C, yaw):
     a = math.radians(yaw); ex = np.array([math.cos(a), math.sin(a), 0]); ey = np.array([-math.sin(a), math.cos(a), 0]); ez = np.array([0, 0, 1.0])
     pts = []

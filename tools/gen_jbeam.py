@@ -18,8 +18,8 @@ CARS={
   AUTO=(("A","std",1),("B","stripped",1),("C","cage",1),("D","std",-1),("E","stripped",-1),("F","cage",-1)),
   # multi-function display: screen centre, yaw and scale per mounting (tools/find_mfd_position.py),
   # and the body nodes the page button's click trigger hangs from, per side
-  MFD={"std":((0.5541,-0.2796,1.1031),24.8,0.8),"stripped":((0.5606,-0.2938,1.1038),24.8,0.8),
-       "cage":((0.5181,-0.2014,1.1068),24.8,0.65)},
+  MFD={"std":((0.5474,-0.2651,1.1024),24.8,1.0),"stripped":((0.5523,-0.2756,1.1029),24.8,1.0),
+       "cage":((0.5165,-0.1981,1.0992),24.8,0.85)},
   TRIGGER_NODES={1:("p1l","rf1l","p2l"),-1:("p1r","rf1r","p2r")}),
  "bx":dict(
   label="Ibishu 200BX", root="bx_pillar_pod_gauges", mod_slot="bx_mod", group="bx_body",
@@ -242,7 +242,7 @@ for gi,(slot,ctrl,mat,pod,screen,own,others) in enumerate(POSITIONS):
 # the dbgMfdNextPage action from pillar_pod_gauges.interaction.json
 MFD_VARS='''        ["$dbg_mfd_page", "range", "", "Gauges", 0, 0, 4, "Display: First Page", "Page shown at start: 0 boost, 1 tyres, 2 engine, 3 brakes, 4 g-force", {"stepDis":1}],
         ["$dbg_mfd_night", "range", "%", "Gauges", 12, 3, 100, "Display: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],'''
-BUTTON=(0.0,0.0028,-0.037)            # page button centre in the display's own space, before scaling
+BUTTON=(0.0,0.0028,-0.0396)            # page button centre in the display's own space, before scaling
 if "MFD" in CAR:
     fb=["        //meshes for every mounting; dbgAmbient.lua hides all but the one matching the car's interior"]
     trig=[]; links=[]
