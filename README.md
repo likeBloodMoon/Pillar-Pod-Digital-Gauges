@@ -1,7 +1,7 @@
 # Pillar Pod Digital Gauges
 
 Digital boost and oil temperature gauges on A-pillar and roll-cage pods for BeamNG.drive.
-Currently for the Ibishu Covet.
+Currently for the Ibishu Covet and the Ibishu 200BX.
 
 ## Install
 
@@ -23,6 +23,10 @@ Parts selector → **Additional Modification** → **Digital Pillar Gauges**.
 on the A-pillar trim, on the bare pillar of a stripped / race / rally interior, or on the roll
 cage bar, for left- or right-hand drive.
 
+On the 200BX the A-pillar has the same shape with every interior, coupe or liftback, so there is
+one pillar mounting plus the roll cage one. With the derby cage, which has no bar along the
+A-pillar, the gauges stay on the pillar.
+
 The fixed mountings are still listed below it, one per interior type, if you want to choose
 yourself. Fit one gauge or both; boost sits in the lower position and oil temperature above it.
 
@@ -40,17 +44,17 @@ yourself. Fit one gauge or both; boost sits in the lower position and oil temper
 
 ## Known limits
 
-- It uses the Covet's single "Additional Modification" slot, so it cannot be combined with another
+- It uses each car's single "Additional Modification" slot, so it cannot be combined with another
   mod that uses that slot.
-- The right-hand-drive mountings are mirrored from the left-hand ones and have not been checked
-  against the right-hand interior.
+- The right-hand-drive mountings are mirrored from the left-hand ones. On the 200BX they were
+  checked against the right-hand dashboards' meshes, but not yet in game.
 - Each mounting has its own pod mesh shaped to that interior, so moving a gauge by editing
   coordinates only works for small nudges.
 
 ## Layout
 
 - `vehicles/common/pillar_pod_gauges/` — meshes, materials, face textures and the display page
-- `vehicles/covet/` — the Covet parts
+- `vehicles/covet/`, `vehicles/bx/` — the parts for each car
 - `lua/vehicle/controller/gauges/customModules/` — ambient light, wastegate limit and automatic
   mounting
 - `tools/` — the scripts the generated files came from

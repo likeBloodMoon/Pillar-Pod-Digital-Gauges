@@ -76,44 +76,63 @@ local function findMaxBoost()
 end
 
 -- Automatic mounting. The "Auto" gauge parts carry the meshes for every mounting at once, named
--- dbgv<mounting><gauge>... (mounting A-F). This looks at which interior meshes the car has, picks the
--- matching mounting and hides the meshes of all the others.
---   A/D standard interior (LHD/RHD), B/E stripped interior, C/F roll cage
-local autoMeshes = nil      -- list of {name, code}; false when the car has no auto-mounted gauge
-local autoCode = nil
+-- dbgv<mounting><gauge>... (one letter per mounting). This looks at which interior meshes the car has,
+-- works out the interior type and driving side, and hides the meshes of every mounting that doesn't match.
+--   Ibishu Covet: A/D standard interior (LHD/RHD), B/E stripped interior, C/F roll cage
+--   Ibishu 200BX: G/I A-pillar (the pillar is the same shape with every interior), H/J roll cage
+local MOUNTINGS = {
+  A = {"std", false},      B = {"stripped", false}, C = {"cage", false},
+  D = {"std", true},       E = {"stripped", true},  F = {"cage", true},
+  G = {"pillar", false},   H = {"cage", false},
+  I = {"pillar", true},    J = {"cage", true},
+}
+local autoMeshes = nil      -- list of {name, visible}; false when the car has no auto-mounted gauge
+local autoLabel = nil
 local autoTimer = 99
+
+local function mountingMatches(code, interior, rhd)
+  local m = MOUNTINGS[code]
+  if not m or m[2] ~= rhd then return false end
+  if m[1] == interior then return true end
+  -- "pillar" mountings sit on the A-pillar trim, which is the same with standard and stripped interiors
+  return m[1] == "pillar" and interior ~= "cage"
+end
 
 local function detectMounting()
   local cage, stripped, rhd = false, false, false
-  local list = {}
+  local found = {}
   local data = v and v.data
-  if type(data) ~= "table" or type(data.flexbodies) ~= "table" then return nil, list end
+  if type(data) ~= "table" or type(data.flexbodies) ~= "table" then return nil, {} end
   for _, fb in pairs(data.flexbodies) do
     local mesh = type(fb) == "table" and fb.mesh
     if type(mesh) == "string" then
       if mesh:sub(1, 4) == "dbgv" and #mesh == 9 then
-        table.insert(list, {mesh, mesh:sub(5, 5)})
+        table.insert(found, mesh)
       else
         local m = mesh:lower()
-        if m:find("rollcage", 1, true) then cage = true end
+        -- a derby cage has no bar along the A-pillar, so the pillar mounting stays in use
+        if m:find("rollcage", 1, true) and not m:find("derby", 1, true) then cage = true end
         if m:find("stripped_int", 1, true) then stripped = true end
         if m:find("dash", 1, true) and m:find("_rhd", 1, true) then rhd = true end
       end
     end
   end
-  local code
-  if cage then code = rhd and "F" or "C"
-  elseif stripped then code = rhd and "E" or "B"
-  else code = rhd and "D" or "A" end
-  return code, list
+  local interior = cage and "cage" or (stripped and "stripped" or "std")
+  local list = {}
+  for _, mesh in ipairs(found) do
+    table.insert(list, {mesh, mountingMatches(mesh:sub(5, 5), interior, rhd)})
+  end
+  return interior .. (rhd and " RHD" or " LHD"), list
 end
 
 local function applyMounting()
   if autoMeshes == nil then
-    local ok, code, list = pcall(detectMounting)
-    if ok and code and #list > 0 then
-      autoCode, autoMeshes = code, list
-      log("I", "pillar_pod_gauges", "automatic mounting: " .. code .. " (" .. #list .. " meshes managed)")
+    local ok, label, list = pcall(detectMounting)
+    if ok and label and #list > 0 then
+      local shown = 0
+      for _, m in ipairs(list) do if m[2] then shown = shown + 1 end end
+      autoLabel, autoMeshes = label, list
+      log("I", "pillar_pod_gauges", "automatic mounting: " .. label .. " (" .. shown .. " of " .. #list .. " meshes shown)")
     else
       autoMeshes = false
     end
@@ -121,7 +140,7 @@ local function applyMounting()
   if not autoMeshes then return end
   local cmd = {"local veh = be:getObjectByID(" .. obj:getID() .. ") if veh then"}
   for _, m in ipairs(autoMeshes) do
-    table.insert(cmd, string.format(" veh:setMeshAlpha(%d, %q, false)", m[2] == autoCode and 1 or 0, m[1]))
+    table.insert(cmd, string.format(" veh:setMeshAlpha(%d, %q, false)", m[2] and 1 or 0, m[1]))
   end
   table.insert(cmd, " end")
   obj:queueGameEngineLua(table.concat(cmd))

@@ -5,9 +5,11 @@ These scripts produce or validate the mod's generated assets.
 | Script | What it does |
 |---|---|
 | `find_positions.py` | Casts rays from the driver's eye into the car's interior meshes to find a gauge position that is fully visible for each mounting |
+| `extract_cabin.py` | Pulls named interior meshes out of the game's car Collada file for the two scripts below |
+| `find_positions_bx.py` | `find_positions.py` set up for the 200BX |
 | `build_pod_mesh.py` | Builds one gauge + pod mesh (Blender `bpy`), ray-casting each of the pod's 40 columns onto the interior surface |
 | `export_dae.py` | Writes all pod, bezel and screen meshes into the Collada file |
-| `gen_jbeam.py` | Generates the Covet part file (all mountings, finishes, sliders) |
+| `gen_jbeam.py` | Generates a car's part file (all mountings, finishes, sliders): `gen_jbeam.py --car covet\|bx <out>` |
 | `fit_check_render.py` | Software render of the car interior with the gauges, used to check the fit |
 | `build_release.py` | Assembles the release folder and zip from the working files |
 | `bake_faceplates.html` | Bakes the printed face textures from the display page's own drawing code |
@@ -25,4 +27,4 @@ python tools/validate_assets.py
 
 The validator uses only Python's standard library and Node's built-in syntax checker. It does not launch BeamNG or Blender, so it cannot verify in-game fit, rendering, or game-side JBeam semantics.
 
-The placement and pod-shaping steps need the car's interior meshes extracted from the game's own `covet.dae`. Those are BeamNG's files and are not included here.
+The placement and pod-shaping steps need the car's interior meshes extracted from the game's own `covet.dae` / `bx.dae`. Those are BeamNG's files and are not included here.

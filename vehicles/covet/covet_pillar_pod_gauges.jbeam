@@ -1,10 +1,10 @@
 {
 //Pillar Pod Digital Gauges - parts for the Ibishu Covet.
 //  Additional Modification -> Digital Pillar Gauges
-//      Boost Gauge:    empty, or one entry per interior type (standard / stripped / roll cage, LHD or RHD)
-//      Oil Temp Gauge: empty, or one entry per interior type
-//Fit one or both. Boost sits in the lower position, oil temp above it. Every entry has its own
-//position and its own pod shape, so pick the one that matches the car's interior.
+//      Boost Gauge:    automatic mounting (black or silver), or a fixed mounting
+//      Oil Temp Gauge: empty, automatic mounting, or a fixed mounting
+//Fit one or both. Boost sits in the lower position, oil temp above it. The automatic parts pick
+//the position that matches the car's interior; the fixed ones always use the position they name.
 "covet_digital_boost_gauge_pillar": {
     "information":{
         "authors":"Kristof",
@@ -13,9 +13,9 @@
     },
     "slotType" : "covet_mod",
     "slots2": [
-        ["name",            "allowTypes",        "denyTypes", "default",              "description"],
-        ["covet_dbg_boost", ["covet_dbg_boost"], [],          "covet_dbg_boost_auto", "Boost Gauge"],
-        ["covet_dbg_oil",   ["covet_dbg_oil"],   [],          "",                     "Oil Temp Gauge"],
+        ["name",             "allowTypes",         "denyTypes",  "default",               "description"],
+        ["covet_dbg_boost",  ["covet_dbg_boost"],  [],           "covet_dbg_boost_auto",  "Boost Gauge"],
+        ["covet_dbg_oil",    ["covet_dbg_oil"],    [],           "",                      "Oil Temp Gauge"],
     ],
     //ambient light for automatic display dimming (shared by both gauges)
     "controller": [
@@ -93,7 +93,7 @@
     },
     "flexbodies": [
         ["mesh", "[group]:", "nonFlexMaterials"],
-        //meshes for every mounting (A-F); dbgAmbient.lua hides all but the one matching the car's interior
+        //meshes for every mounting (ABCDEF); dbgAmbient.lua hides all but the one matching the car's interior
         ["dbgvA1pod", ["covet_dash"],[],{"pos":{"x":0.5749,"y":-0.3246,"z":1.0758},"rot":{"x":0,"y":0,"z":24.8}}],
         ["dbgvA1bzk", ["covet_dash"],[],{"pos":{"x":0.5749,"y":-0.3246,"z":1.0758},"rot":{"x":0,"y":0,"z":24.8}}],
         ["dbgvA1sck", ["covet_dash"],[],{"pos":{"x":0.5749,"y":-0.3246,"z":1.0758},"rot":{"x":0,"y":0,"z":24.8}}],
@@ -184,7 +184,7 @@
     },
     "flexbodies": [
         ["mesh", "[group]:", "nonFlexMaterials"],
-        //meshes for every mounting (A-F); dbgAmbient.lua hides all but the one matching the car's interior
+        //meshes for every mounting (ABCDEF); dbgAmbient.lua hides all but the one matching the car's interior
         ["dbgvA1pod", ["covet_dash"],[],{"pos":{"x":0.5749,"y":-0.3246,"z":1.0758},"rot":{"x":0,"y":0,"z":24.8}}],
         ["dbgvA1bzs", ["covet_dash"],[],{"pos":{"x":0.5749,"y":-0.3246,"z":1.0758},"rot":{"x":0,"y":0,"z":24.8}}],
         ["dbgvA1scs", ["covet_dash"],[],{"pos":{"x":0.5749,"y":-0.3246,"z":1.0758},"rot":{"x":0,"y":0,"z":24.8}}],
@@ -1171,7 +1171,7 @@
     },
     "flexbodies": [
         ["mesh", "[group]:", "nonFlexMaterials"],
-        //meshes for every mounting (A-F); dbgAmbient.lua hides all but the one matching the car's interior
+        //meshes for every mounting (ABCDEF); dbgAmbient.lua hides all but the one matching the car's interior
         ["dbgvA2pod", ["covet_dash"],[],{"pos":{"x":0.5397,"y":-0.2291,"z":1.1372},"rot":{"x":0,"y":0,"z":25.7}}],
         ["dbgvA2bzk", ["covet_dash"],[],{"pos":{"x":0.5397,"y":-0.2291,"z":1.1372},"rot":{"x":0,"y":0,"z":25.7}}],
         ["dbgvA2sck", ["covet_dash"],[],{"pos":{"x":0.5397,"y":-0.2291,"z":1.1372},"rot":{"x":0,"y":0,"z":25.7}}],
@@ -1246,7 +1246,7 @@
     },
     "flexbodies": [
         ["mesh", "[group]:", "nonFlexMaterials"],
-        //meshes for every mounting (A-F); dbgAmbient.lua hides all but the one matching the car's interior
+        //meshes for every mounting (ABCDEF); dbgAmbient.lua hides all but the one matching the car's interior
         ["dbgvA2pod", ["covet_dash"],[],{"pos":{"x":0.5397,"y":-0.2291,"z":1.1372},"rot":{"x":0,"y":0,"z":25.7}}],
         ["dbgvA2bzs", ["covet_dash"],[],{"pos":{"x":0.5397,"y":-0.2291,"z":1.1372},"rot":{"x":0,"y":0,"z":25.7}}],
         ["dbgvA2scs", ["covet_dash"],[],{"pos":{"x":0.5397,"y":-0.2291,"z":1.1372},"rot":{"x":0,"y":0,"z":25.7}}],

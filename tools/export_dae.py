@@ -1,5 +1,6 @@
 import numpy as np, sys, math
-names=['std','stripped','cage','std_2','stripped_2','cage_2']
+names=['std','stripped','cage','std_2','stripped_2','cage_2',      # Ibishu Covet
+       'bx_std','bx_cage','bx_std_2','bx_cage_2']                     # Ibishu 200BX
 D={n:np.load('parts_%s.npy'%n,allow_pickle=True).item() for n in names}
 R=0.0235; SEG=40
 a=np.linspace(0,2*np.pi,SEG+1)[:-1]
@@ -61,15 +62,20 @@ for tag,src,sc in (("80","std",0.8),("65","cage",0.65)):     # two gauge sizes: 
     # silver bezel + white faceplate versions
     geoms+=geom("dbg_gauge_silver_"+tag,[("dbg_bezel_silver",g)])+geom("dbg_screen_w_"+tag,[("dbg_screen_w",(sp*sc,sn,st,suv))])+geom("dbg_oil_screen_w_"+tag,[("dbg_oil_screen_w",(sp*sc,sn,st,suv))])
     nodes+=node("dbg_gauge_silver_"+tag,["dbg_bezel_silver"])+node("dbg_screen_w_"+tag,["dbg_screen_w"])+node("dbg_oil_screen_w_"+tag,["dbg_oil_screen_w"])
+POD_NAME={'bx_std':'bx_pillar'}   # mesh name differs from the parts file name
 for n in names:
-    nm=("dbg_pod2_"+n[:-2]) if n.endswith("_2") else ("dbg_pod_"+n)
+    base_n=n[:-2] if n.endswith("_2") else n
+    base_n=POD_NAME.get(base_n,base_n)
+    nm=("dbg_pod2_" if n.endswith("_2") else "dbg_pod_")+base_n
     geoms+=geom(nm,[("dbg_body",D[n]['pod'])]); nodes+=node(nm,["dbg_body"])
     geoms+=geom(nm+"_rhd",[("dbg_body",mirror(D[n]['pod']))]); nodes+=node(nm+"_rhd",["dbg_body"])
 # ---- automatic mounting: every mounting of every gauge gets its own uniquely named meshes, so the
 # mod's script can show one set and hide the rest. Names are all 9 characters and none is a
-# substring of another: dbgv + mounting (A-F) + gauge (1 boost, 2 oil) + pod / bzk / bzs / sck / scs
-AUTO=(("A","std",False,0.8,"std"),("B","stripped",False,0.8,"std"),("C","cage",False,0.65,"cage"),
-      ("D","std",True,0.8,"std"),("E","stripped",True,0.8,"std"),("F","cage",True,0.65,"cage"))
+# substring of another: dbgv + mounting (A-J) + gauge (1 boost, 2 oil) + pod / bzk / bzs / sck / scs
+AUTO=(("A","std",False,0.8,"std"),("B","stripped",False,0.8,"std"),("C","cage",False,0.65,"cage"),          # Covet
+      ("D","std",True,0.8,"std"),("E","stripped",True,0.8,"std"),("F","cage",True,0.65,"cage"),
+      ("G","bx_std",False,0.8,"std"),("H","bx_cage",False,0.65,"cage"),                                   # 200BX
+      ("I","bx_std",True,0.8,"std"),("J","bx_cage",True,0.65,"cage"))
 for code,var,rhd,sc,gsrc in AUTO:
     g=D[gsrc]['gauge']
     for gi,(suffix,scr_k,scr_s) in enumerate((("","dbg_screen","dbg_screen_w"),("_2","dbg_oil_screen","dbg_oil_screen_w")),1):
@@ -82,7 +88,7 @@ for code,var,rhd,sc,gsrc in AUTO:
 xml=f'''<?xml version="1.0" encoding="utf-8"?>
 <COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <asset>
-    <contributor><author>digital_boost_gauge</author><authoring_tool>Blender (bpy) + export_v8.py</authoring_tool></contributor>
+    <contributor><author>Pillar Pod Digital Gauges</author><authoring_tool>Blender (bpy) + export_v8.py</authoring_tool></contributor>
     <created>2026-11-11T21:00:00</created><modified>2026-11-11T21:00:00</modified>
     <unit name="meter" meter="1"/><up_axis>Z_UP</up_axis>
   </asset>
