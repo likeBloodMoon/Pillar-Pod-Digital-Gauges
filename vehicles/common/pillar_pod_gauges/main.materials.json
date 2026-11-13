@@ -215,5 +215,285 @@
     "materialTag1": "vehicle",
     "translucentBlendOp": "None",
     "version": 1.5
+  },
+  "dbg_screen_t": {
+    "name": "dbg_screen_t",
+    "mapTo": "dbg_screen_t",
+    "class": "Material",
+    "Stages": [
+      {
+        "baseColorFactor": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "emissive": true,
+        "emissiveFactor": [
+          1,
+          1,
+          1
+        ],
+        "emissiveIntensityNits": 2200,
+        "emissiveMap": "@dbg_screen",
+        "metallicFactor": 0,
+        "roughnessFactor": 0.2,
+        "baseColorMap": "/vehicles/common/pillar_pod_gauges/dbg_face_black_oil_b.color.png"
+      },
+      {},
+      {},
+      {}
+    ],
+    "dynamicCubemap": true,
+    "materialTag0": "beamng",
+    "materialTag1": "vehicle",
+    "translucentBlendOp": "None",
+    "version": 1.5,
+    "castShadows": false
+  },
+  "dbg_screen_t_w": {
+    "name": "dbg_screen_t_w",
+    "mapTo": "dbg_screen_t_w",
+    "class": "Material",
+    "Stages": [
+      {
+        "baseColorFactor": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "emissive": true,
+        "emissiveFactor": [
+          1,
+          1,
+          1
+        ],
+        "emissiveIntensityNits": 2200,
+        "emissiveMap": "@dbg_screen",
+        "metallicFactor": 0,
+        "roughnessFactor": 0.2,
+        "baseColorMap": "/vehicles/common/pillar_pod_gauges/dbg_face_white_oil_b.color.png"
+      },
+      {},
+      {},
+      {}
+    ],
+    "dynamicCubemap": true,
+    "materialTag0": "beamng",
+    "materialTag1": "vehicle",
+    "translucentBlendOp": "None",
+    "version": 1.5,
+    "castShadows": false
+  },
+  "dbg_screen_f": {
+    "name": "dbg_screen_f",
+    "mapTo": "dbg_screen_f",
+    "class": "Material",
+    "Stages": [
+      {
+        "baseColorFactor": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "emissive": true,
+        "emissiveFactor": [
+          1,
+          1,
+          1
+        ],
+        "emissiveIntensityNits": 2200,
+        "emissiveMap": "@dbg_screen",
+        "metallicFactor": 0,
+        "roughnessFactor": 0.2,
+        "baseColorMap": "/vehicles/common/pillar_pod_gauges/dbg_face_black_fuel_b.color.png"
+      },
+      {},
+      {},
+      {}
+    ],
+    "dynamicCubemap": true,
+    "materialTag0": "beamng",
+    "materialTag1": "vehicle",
+    "translucentBlendOp": "None",
+    "version": 1.5,
+    "castShadows": false
+  },
+  "dbg_screen_f_w": {
+    "name": "dbg_screen_f_w",
+    "mapTo": "dbg_screen_f_w",
+    "class": "Material",
+    "Stages": [
+      {
+        "baseColorFactor": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "emissive": true,
+        "emissiveFactor": [
+          1,
+          1,
+          1
+        ],
+        "emissiveIntensityNits": 2200,
+        "emissiveMap": "@dbg_screen",
+        "metallicFactor": 0,
+        "roughnessFactor": 0.2,
+        "baseColorMap": "/vehicles/common/pillar_pod_gauges/dbg_face_white_fuel_b.color.png"
+      },
+      {},
+      {},
+      {}
+    ],
+    "dynamicCubemap": true,
+    "materialTag0": "beamng",
+    "materialTag1": "vehicle",
+    "translucentBlendOp": "None",
+    "version": 1.5,
+    "castShadows": false
+  },
+  "dbg_oil_screen_b": {
+    "name": "dbg_oil_screen_b",
+    "mapTo": "dbg_oil_screen_b",
+    "class": "Material",
+    "Stages": [
+      {
+        "baseColorFactor": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "emissive": true,
+        "emissiveFactor": [
+          1,
+          1,
+          1
+        ],
+        "emissiveIntensityNits": 2200,
+        "emissiveMap": "@dbg_oil_screen",
+        "metallicFactor": 0,
+        "roughnessFactor": 0.2,
+        "baseColorMap": "/vehicles/common/pillar_pod_gauges/dbg_face_black_boost_b.color.png"
+      },
+      {},
+      {},
+      {}
+    ],
+    "dynamicCubemap": true,
+    "materialTag0": "beamng",
+    "materialTag1": "vehicle",
+    "translucentBlendOp": "None",
+    "version": 1.5,
+    "castShadows": false
+  },
+  "dbg_oil_screen_b_w": {
+    "name": "dbg_oil_screen_b_w",
+    "mapTo": "dbg_oil_screen_b_w",
+    "class": "Material",
+    "Stages": [
+      {
+        "baseColorFactor": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "emissive": true,
+        "emissiveFactor": [
+          1,
+          1,
+          1
+        ],
+        "emissiveIntensityNits": 2200,
+        "emissiveMap": "@dbg_oil_screen",
+        "metallicFactor": 0,
+        "roughnessFactor": 0.2,
+        "baseColorMap": "/vehicles/common/pillar_pod_gauges/dbg_face_white_boost_b.color.png"
+      },
+      {},
+      {},
+      {}
+    ],
+    "dynamicCubemap": true,
+    "materialTag0": "beamng",
+    "materialTag1": "vehicle",
+    "translucentBlendOp": "None",
+    "version": 1.5,
+    "castShadows": false
+  },
+  "dbg_oil_screen_f": {
+    "name": "dbg_oil_screen_f",
+    "mapTo": "dbg_oil_screen_f",
+    "class": "Material",
+    "Stages": [
+      {
+        "baseColorFactor": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "emissive": true,
+        "emissiveFactor": [
+          1,
+          1,
+          1
+        ],
+        "emissiveIntensityNits": 2200,
+        "emissiveMap": "@dbg_oil_screen",
+        "metallicFactor": 0,
+        "roughnessFactor": 0.2,
+        "baseColorMap": "/vehicles/common/pillar_pod_gauges/dbg_face_black_fuel_b.color.png"
+      },
+      {},
+      {},
+      {}
+    ],
+    "dynamicCubemap": true,
+    "materialTag0": "beamng",
+    "materialTag1": "vehicle",
+    "translucentBlendOp": "None",
+    "version": 1.5,
+    "castShadows": false
+  },
+  "dbg_oil_screen_f_w": {
+    "name": "dbg_oil_screen_f_w",
+    "mapTo": "dbg_oil_screen_f_w",
+    "class": "Material",
+    "Stages": [
+      {
+        "baseColorFactor": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "emissive": true,
+        "emissiveFactor": [
+          1,
+          1,
+          1
+        ],
+        "emissiveIntensityNits": 2200,
+        "emissiveMap": "@dbg_oil_screen",
+        "metallicFactor": 0,
+        "roughnessFactor": 0.2,
+        "baseColorMap": "/vehicles/common/pillar_pod_gauges/dbg_face_white_fuel_b.color.png"
+      },
+      {},
+      {},
+      {}
+    ],
+    "dynamicCubemap": true,
+    "materialTag0": "beamng",
+    "materialTag1": "vehicle",
+    "translucentBlendOp": "None",
+    "version": 1.5,
+    "castShadows": false
   }
 }
