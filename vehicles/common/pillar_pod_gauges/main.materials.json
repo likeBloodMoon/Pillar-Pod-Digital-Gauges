@@ -517,7 +517,7 @@
         "emissiveIntensityNits": 1600,
         "emissiveMap": "@dbg_mfd_screen",
         "metallicFactor": 0,
-        "roughnessFactor": 0.12
+        "roughnessFactor": 0.5
       },
       {},
       {},
@@ -576,7 +576,7 @@
         "emissiveIntensityNits": 1600,
         "emissiveMap": "@dbg_cluster_screen",
         "metallicFactor": 0,
-        "roughnessFactor": 0.12
+        "roughnessFactor": 0.5
       },
       {},
       {},

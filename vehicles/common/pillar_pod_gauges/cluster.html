@@ -32,7 +32,7 @@ if (typeof beamng !== 'undefined') {
 // tachometer in the middle, fuel and coolant on the left, and the multi-function display pages on
 // the right (same page button / binding: the electrics value dbg_mfd_page).
 var W = 1024, H = 272;
-var PAGES = ["Boost", "Tyres", "Engine", "Brakes", "G-Force"];
+var PAGES = ["Boost", "Tyres", "Engine", "Brakes", "G-Force", "Trip"];
 var cfg = { startPage: 0, nightBrightness: 0.25, egtWarn: 900, oilWarn: 130, waterWarn: 110, lowFuel: 10, shiftAt: 0.92 };
 var units = { p: "bar", t: "c", metric: true, gal: false };
 var FONT = '"Barlow SC", "Arial Narrow", Arial, sans-serif';
@@ -46,7 +46,7 @@ var boostPeak = 0, gPeak = { lat: 0, lon: 0 }, gTrail = [], nominal = {};
 var last = 0, clock = 0, bootT = -1, wasPowered = false, boost = 0, runT = 0;
 
 // ---- colours, close to an automotive TFT: navy ground, white type, blue and red accents ----
-var C = { white: "#f4f6f8", grey: "#8d99a8", dim: "#3b4757", blue: "#2e7cf6", sky: "#7cc4ff", red: "#e8262d",
+var C = { white: "#ffffff", grey: "#a3afbe", dim: "#3b4757", blue: "#2e7cf6", sky: "#7cc4ff", red: "#e8262d",
           amber: "#f5b31a", green: "#7ed321", line: "#e8262d" };
 
 // ---- units ----
@@ -89,20 +89,10 @@ function heat(c, cold, warm, hot) { return c < cold ? C.sky : (c < warm ? C.whit
 // background: dark navy with a faint hex texture, darker towards the edges
 function buildBackground() {
   var g = bg.getContext("2d");
-  g.fillStyle = "#070c15"; g.fillRect(0, 0, W, H);
-  var rad = g.createRadialGradient(W / 2, H * 0.45, 40, W / 2, H * 0.45, H * 0.7);
-  rad.addColorStop(0, "rgba(28,48,78,0.40)"); rad.addColorStop(1, "rgba(0,0,0,0)");
+  g.fillStyle = "#04070d"; g.fillRect(0, 0, W, H);
+  var rad = g.createRadialGradient(W / 2, H * 0.55, 30, W / 2, H * 0.55, H * 0.75);
+  rad.addColorStop(0, "rgba(28,48,78,0.35)"); rad.addColorStop(1, "rgba(0,0,0,0)");
   g.fillStyle = rad; g.fillRect(0, 0, W, H);
-  g.strokeStyle = "rgba(150,175,210,0.022)"; g.lineWidth = 1;
-  var s = 7, h = s * Math.sqrt(3);
-  for (var row = -1; row * h * 0.5 < H + h; row++) {
-    for (var col = -1; col * s * 3 < W + s * 3; col++) {
-      var cx = col * s * 3 + (row % 2 ? s * 1.5 : 0), cy = row * h * 0.5;
-      g.beginPath();
-      for (var k = 0; k < 6; k++) { var a = Math.PI / 3 * k; g[k ? "lineTo" : "moveTo"](cx + s * Math.cos(a), cy + s * Math.sin(a)); }
-      g.closePath(); g.stroke();
-    }
-  }
 }
 
 // ---- small status icons ----
@@ -181,13 +171,15 @@ function carTop(cx, cy, w, h) {
   ctx.restore();
 }
 
-// ---- layout (1024 x 272 px). The Covet's cluster opening is a trapezoid and the steering wheel rim
-// crosses its top corners, so everything sits inside the band the driver can actually see. ----
-var TACH = { x0: 232, x1: 792, y: 24, h: 16, seg: 44 };
-var LEFT = { x0: 104, x1: 352 };
-var RIGHT = { x0: 672, x1: 936, top: 92 };
-function label(s, x, y, align, col, size) { txt(s.toUpperCase(), x, y, size || 15, col || C.grey, align || "left", 600); }
+// ---- layout (1024 x 272 px). Read from the driver's seat this screen is only a few hundred pixels
+// wide, so it is built like a real cluster: few readings, very large type, nothing under 22 px. The
+// steering wheel rim crosses the top corners, so the tach stays inside the visible band. ----
+var TACH = { x0: 200, x1: 824, y: 8, h: 36, seg: 40 };
+var LEFT = { x0: 100, x1: 356 };
+var RIGHT = { x0: 668, x1: 940, top: 126 };
+function label(s, x, y, align, col, size) { txt(s.toUpperCase(), x, y, size || 22, col || C.grey, align || "left", 600); }
 function bandColour(c, cold, warm, hot) { return c < cold ? C.sky : (c < warm ? C.white : (c < hot ? C.amber : C.red)); }
+function icon(fn, x, y, col, sc) { ctx.save(); ctx.translate(x, y); ctx.scale(sc, sc); fn(0, 0, col); ctx.restore(); }
 
 function tach() {
   var e = data.e, rpm = Number(e.rpm) || 0, maxR = Math.max(3000, Number(e.maxrpm) || 7000);
@@ -197,150 +189,147 @@ function tach() {
   var flash = rpm >= cfg.shiftAt * maxR && Math.floor(clock * 10) % 2 === 0;
   for (var i = 0; i < n; i++) {
     var f = (i + 0.5) / n, x = TACH.x0 + i * w;
-    var on = i < Math.floor(lit) || (i === Math.floor(lit) && lit % 1 > 0.5);
+    var part = Math.max(0, Math.min(1, lit - i));             // the leading segment fades in, so the bar glides
     var col = f >= red ? C.red : (f >= shift ? C.amber : C.blue);
-    // segments grow slightly taller towards the redline, like a printed tach
-    var hh = TACH.h * (0.6 + 0.4 * f);
-    ctx.fillStyle = on ? (flash ? C.red : col) : (f >= red ? "#3a1518" : "#13294a");
-    ctx.fillRect(x + 1, TACH.y + TACH.h - hh, w - 3, hh);
+    var hh = TACH.h * (0.55 + 0.45 * f);                      // taller towards the redline
+    ctx.fillStyle = f >= red ? "#3a1518" : "#15294a";
+    ctx.fillRect(x + 1, TACH.y + TACH.h - hh, w - 4, hh);
+    if (part > 0) { ctx.globalAlpha = part; ctx.fillStyle = flash ? C.red : col; ctx.fillRect(x + 1, TACH.y + TACH.h - hh, w - 4, hh); ctx.globalAlpha = 1; }
   }
   for (var k = 0; k <= top / 1000; k++) {
     var x0 = TACH.x0 + (TACH.x1 - TACH.x0) * k * 1000 / top;
-    txt(String(k), x0, TACH.y + TACH.h + 22, 20, k * 1000 >= maxR ? C.red : C.grey, "center", 600);
+    txt(String(k), x0, TACH.y + TACH.h + 32, 32, k * 1000 >= maxR ? C.red : C.white, "center", 700);
   }
-  label("x1000 rpm", TACH.x1 + 12, TACH.y + TACH.h - 1, "left", C.dim, 13);
 }
 
 function centre() {
-  var e = data.e, sp = spd(Math.abs(Number(e.wheelspeed) || 0));
-  txt(fmt(sp[0], 0), W / 2, 172, 112, C.white, "center", 700);
-  label(sp[1], W / 2, 196, "center");
-  ctx.strokeStyle = C.white; ctx.lineWidth = 2; rr(W / 2 - 26, 210, 52, 52, 8); ctx.stroke();
-  ctx.fillStyle = "rgba(46,124,246,0.22)"; rr(W / 2 - 25, 211, 50, 50, 7); ctx.fill();
-  txt(gearText(e.gear), W / 2, 249, 36, C.white, "center", 700);
-  // telltales either side of the gear
-  var water = Number(e.watertemp) || 0;
-  icoEngine(W / 2 - 112, 238, Number(e.checkengine) > 0 ? C.amber : C.dim);
-  icoBrake(W / 2 - 64, 238, Number(e.parkingbrake) > 0 ? C.red : C.dim);
-  icoLights(W / 2 + 64, 238, lights > 0 ? C.green : C.dim);
-  icoTemp(W / 2 + 108, 236, water >= cfg.waterWarn ? C.red : (water < 60 ? C.sky : C.dim));
+  var e = data.e, sp = spd(speedShown), cx = W / 2;
+  txt(fmt(sp[0], 0), cx, 204, 156, C.white, "center", 700);
+  // gear in a box, the unit to its left, active warning lights to its right
+  ctx.fillStyle = "rgba(46,124,246,0.25)"; rr(cx - 30, 212, 60, 56, 9); ctx.fill();
+  ctx.strokeStyle = C.white; ctx.lineWidth = 2.5; rr(cx - 30, 212, 60, 56, 9); ctx.stroke();
+  txt(gearText(e.gear), cx, 256, 46, C.white, "center", 700);
+  label(sp[1], cx - 46, 252, "right", C.grey, 24);
+  var water = Number(e.watertemp) || 0, on = [];
+  if (Number(e.parkingbrake) > 0) on.push([icoBrake, C.red]);
+  if (Number(e.checkengine) > 0) on.push([icoEngine, C.amber]);
+  if (water >= cfg.waterWarn) on.push([icoTemp, C.red]);
+  if (lights > 0) on.push([icoLights, C.green]);
+  // room for two between the gear box and the red rule; the most urgent ones win (a hot engine also
+  // turns the coolant reading red, so nothing is lost when that light has to wait its turn)
+  for (var i = 0; i < Math.min(2, on.length); i++) icon(on[i][0], cx + 54 + i * 36, 240, on[i][1], 1.3);
 }
 
 function hbar(x, y, w, f, col, warnF) {
-  ctx.fillStyle = "#16263d"; ctx.fillRect(x, y, w, 5);
-  ctx.fillStyle = col; ctx.fillRect(x, y, w * Math.max(0, Math.min(1, f)), 5);
-  if (warnF !== undefined && warnF !== null) { ctx.fillStyle = C.red; ctx.fillRect(x + w * warnF - 1, y - 3, 2, 11); }
+  ctx.fillStyle = "#1a2c45"; rr(x, y, w, 8, 4); ctx.fill();
+  var fw = w * Math.max(0, Math.min(1, f));
+  if (fw > 1) { ctx.fillStyle = col; rr(x, y, Math.max(8, fw), 8, 4); ctx.fill(); }
+  if (warnF !== undefined && warnF !== null) { ctx.fillStyle = C.red; ctx.fillRect(x + w * warnF - 1.5, y - 4, 3, 16); }
+}
+// one reading: label on the left, big value on the right, a bar underneath
+function reading(name, v, u, col, x0, x1, y, size, bar) {
+  label(name, x0, y, "left", C.grey, 24);
+  valueUnit(v, u, x1, y, size, col, "right");
+  if (bar) hbar(x0, y + 14, x1 - x0, bar[0], bar[1], bar[2]);
 }
 function leftPanel() {
-  var e = data.e, m = data.m, x0 = LEFT.x0, x1 = LEFT.x1, w = x1 - x0;
+  var e = data.e, x0 = LEFT.x0, x1 = LEFT.x1;
   var fv = vol(Number(e.fuelVolume) || 0), fuelP = Number(e.fuel) || 0; fuelP = fuelP > 1.5 ? fuelP / 100 : fuelP;
   var lowFuel = Number(e.lowfuel) > 0 || fuelP * 100 <= cfg.lowFuel;
-  label("Fuel", x0, 108, "left", C.grey, 17);
-  valueUnit(fmt(fv[0], 0), fv[1], x1, 114, 36, lowFuel ? C.amber : C.white, "right");
-  hbar(x0, 124, w, fuelP, lowFuel ? C.amber : C.sky, cfg.lowFuel / 100);
-  var water = Number(e.watertemp) || 0;
-  label("Coolant", x0, 166, "left", C.grey, 17);
-  valueUnit(fmt(tC(water), 0), deg(), x1, 172, 36, water >= cfg.waterWarn ? C.red : C.white, "right");
-  hbar(x0, 182, w, (water - 40) / 90, water >= cfg.waterWarn ? C.red : C.sky, (cfg.waterWarn - 40) / 90);
-  var rg = dist(Number(m.range) || 0);
-  label("Range", x0, 226, "left", C.grey, 16); valueUnit(m.range > 0 ? fmt(rg[0], 0) : "---", rg[1], x0, 254, 26, C.white, "left");
-  label("Outside", x0 + 128, 226, "left", C.grey, 16); valueUnit(typeof m.envT === "number" ? fmt(tC(m.envT), 0) : "---", deg(), x0 + 128, 254, 26, C.white, "left");
-  label("Time", x1, 226, "right", C.grey, 16); valueUnit(String(Math.min(Math.floor(clock / 60), 999)), "min", x1, 254, 26, C.white, "right");
+  reading("Fuel", fmt(fv[0], 0), fv[1], lowFuel ? C.amber : C.white, x0, x1, 150, 64, [fuelP, lowFuel ? C.amber : C.sky, cfg.lowFuel / 100]);
+  var water = Number(e.watertemp) || 0, hot = water >= cfg.waterWarn;
+  reading("Coolant", fmt(tC(water), 0), deg(), hot ? C.red : C.white, x0, x1, 238, 64, [(water - 40) / 90, hot ? C.red : C.sky, (cfg.waterWarn - 40) / 90]);
 }
 
 // ---- right panel: one page of the multi-function display ----
-function miniCar(cx, cy) {
-  ctx.save(); ctx.translate(cx, cy); ctx.scale(0.42, 0.42); carTop(0, 0, 104, 226); ctx.restore();
+function miniCar(cx, cy, sc) {
+  ctx.save(); ctx.translate(cx, cy); ctx.scale(sc, sc); carTop(0, 0, 104, 226); ctx.restore();
 }
-function pBoost(x0, y0, w, h) {
+function dialArc(cx, cy, R, f, col, under) {
+  var a0 = Math.PI * 0.75, span = Math.PI * 1.5;
+  ctx.lineCap = "round"; ctx.lineWidth = 10;
+  ctx.strokeStyle = "#15294a"; ctx.beginPath(); ctx.arc(cx, cy, R, a0, a0 + span); ctx.stroke();
+  if (under !== undefined) { ctx.strokeStyle = "#3a1518"; ctx.beginPath(); ctx.arc(cx, cy, R, a0 + span * under, a0 + span); ctx.stroke(); }
+  f = Math.max(0, Math.min(1, f));
+  if (f > 0.005) { ctx.strokeStyle = col; ctx.beginPath(); ctx.arc(cx, cy, R, a0, a0 + span * f); ctx.stroke(); }
+  ctx.lineCap = "butt";
+}
+function pBoost(x0, y0, w) {
   var m = data.m, psi = boost, lim = (typeof m.maxBoost === "number" && m.maxBoost > 0) ? m.maxBoost : 15;
-  var u1 = pPsi(1)[0], vNow = psi * u1, vLim = lim * u1;
-  var step = units.p === "psi" ? 5 : (units.p === "kpa" ? 50 : 0.5);
-  var top = Math.max(step * 2, Math.ceil(lim * 1.3 * u1 / step) * step), vac = units.p === "psi" ? -10 : (units.p === "kpa" ? -60 : -0.8);
-  var cx = x0 + 66, cy = y0 + 92, R = 60, a0 = Math.PI * 0.75, span = Math.PI * 1.5;
-  function ang(vd) { var f = vd < 0 ? 0.2 * (1 - vd / vac) : 0.2 + 0.8 * Math.min(1, vd / top); return a0 + span * Math.max(0, Math.min(1, f)); }
-  ctx.lineWidth = 6; ctx.strokeStyle = "#13294a"; ctx.beginPath(); ctx.arc(cx, cy, R, a0, a0 + span); ctx.stroke();
-  var lit = ctx.createLinearGradient(cx - R, cy + R, cx + R, cy - R); lit.addColorStop(0, "#1d5fd6"); lit.addColorStop(1, "#9fd2ff");
-  ctx.strokeStyle = lit; ctx.beginPath(); ctx.arc(cx, cy, R, a0, ang(vNow)); ctx.stroke();
-  ctx.strokeStyle = C.red; ctx.beginPath(); ctx.arc(cx, cy, R, ang(vLim), a0 + span); ctx.stroke();
-  var marks = [vac, 0]; for (var v = step; v <= top + 1e-6; v += step) marks.push(v);
-  for (var i = 0; i < marks.length; i++) {
-    var a = ang(marks[i]); ctx.strokeStyle = marks[i] > vLim ? C.red : C.white; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(cx + (R - 6) * Math.cos(a), cy + (R - 6) * Math.sin(a)); ctx.lineTo(cx + (R - 14) * Math.cos(a), cy + (R - 14) * Math.sin(a)); ctx.stroke();
-  }
-  var na = ang(vNow), nx = Math.cos(na), ny = Math.sin(na);
-  ctx.fillStyle = C.red; ctx.beginPath(); ctx.moveTo(cx + nx * (R - 2), cy + ny * (R - 2));
-  ctx.lineTo(cx + nx * 10 - ny * 3, cy + ny * 10 + nx * 3); ctx.lineTo(cx + nx * 10 + ny * 3, cy + ny * 10 - nx * 3); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = "#0a1220"; ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = "#24456f"; ctx.lineWidth = 1.5; ctx.stroke();
+  var topPsi = lim * 1.3, f = Math.max(0, psi) / topPsi;
+  dialArc(x0 + 56, y0 + 74, 48, f, psi > lim ? C.red : C.sky, lim / topPsi);
   var b = pPsi(psi), pk = pPsi(boostPeak);
-  label("Turbo " + b[2], x0 + w, y0 + 52, "right");
-  txt(fmt(b[0], b[1]), x0 + w, y0 + 100, 44, psi > lim ? C.red : C.white, "right", 700);
-  label("max", x0 + w - 62, y0 + 132, "right"); txt(fmt(pk[0], pk[1]), x0 + w, y0 + 133, 20, C.white, "right", 700);
+  valueUnit(fmt(b[0], b[1]), b[2], x0 + w, y0 + 84, 64, psi > lim ? C.red : C.white, "right");
+  label("Max", x0 + 128, y0 + 134, "left", C.grey, 24);
+  txt(fmt(pk[0], pk[1]), x0 + w, y0 + 134, 34, C.white, "right", 700);
 }
-function quad(x0, y0, w, h, vals) {             // four corner readings around a small car
-  miniCar(x0 + w / 2, y0 + 110);
-  var spots = { FL: [x0, y0 + 78, "left"], FR: [x0 + w, y0 + 78, "right"], RL: [x0, y0 + 150, "left"], RR: [x0 + w, y0 + 150, "right"] };
+function quad(x0, y0, w, vals) {                 // four corner readings around a small car
+  miniCar(x0 + w / 2, y0 + 74, 0.44);
+  var spots = { FL: [x0, y0 + 40, "left"], FR: [x0 + w, y0 + 40, "right"], RL: [x0, y0 + 110, "left"], RR: [x0 + w, y0 + 110, "right"] };
   for (var n in spots) {
     var s = spots[n], r = vals(n);
-    label(n + (r.unit ? "  " + r.unit : ""), s[0], s[1] - 26, s[2], C.grey, 13);
-    txt(r.v, s[0], s[1], 28, r.col, s[2], 700);
-    if (r.sub) txt(r.sub, s[0], s[1] + 20, 16, r.subCol || C.grey, s[2], 600);
+    txt(r.v, s[0], s[1], 48, r.col, s[2], 700);
+    if (r.sub) txt(r.sub, s[0], s[1] + 26, 24, r.subCol || C.grey, s[2], 600);
   }
 }
-function pTyres(x0, y0, w, h) {
+function pTyres(x0, y0, w) {
   var m = data.m, tp = m.tp || {}, tt = m.tt || {};
-  quad(x0, y0, w, h, function (n) {
+  quad(x0, y0, w, function (n) {
     var p = tp[n], t = tt[n], hasP = typeof p === "number", flat = hasP && p < 20, low = hasP && !flat && nominal[n] && p < nominal[n] * 0.8;
     var pv = pKpa(hasP ? p : 0);
-    return { unit: pv[2], v: hasP ? (flat ? "0.0" : fmt(pv[0], pv[1])) : "---", col: flat ? C.red : (low ? C.amber : C.white),
-             sub: typeof t === "number" ? fmt(tC(t), 0) + deg() : "---", subCol: typeof t === "number" ? bandColour(t, 40, 100, 120) : C.dim };
+    return { v: hasP ? (flat ? "0.0" : fmt(pv[0], pv[1])) : "---", col: flat ? C.red : (low ? C.amber : C.white),
+             sub: typeof t === "number" ? fmt(tC(t), 0) + "°" : "", subCol: typeof t === "number" ? bandColour(t, 40, 100, 120) : C.dim };
   });
 }
-function pBrakes(x0, y0, w, h) {
+function pBrakes(x0, y0, w) {
   var bt = data.m.bt || {};
-  quad(x0, y0, w, h, function (n) {
+  quad(x0, y0 + 10, w, function (n) {
     var b = bt[n], has = typeof b === "number";
-    return { unit: deg(), v: has ? fmt(tC(b), 0) : "---", col: has ? bandColour(b, 80, 450, 700) : C.dim };
+    return { v: has ? fmt(tC(b), 0) : "---", col: has ? bandColour(b, 80, 450, 700) : C.dim };
   });
 }
-function pEngine(x0, y0, w, h) {
-  var e = data.e, m = data.m, oil = Number(e.oiltemp) || 0, egt = Number(m.egt) || 0, rpm = Number(e.rpm) || 0;
-  var rows = [["Oil", tC(oil), deg(), (oil - 40) / 110, (cfg.oilWarn - 40) / 110, oil >= cfg.oilWarn],
-              ["Exhaust gas", tC(egt), deg(), (egt - 100) / 900, (cfg.egtWarn - 100) / 900, egt >= cfg.egtWarn],
-              ["Engine", rpm, "rpm", rpm / Math.max(1000, Number(e.maxrpm) || 7000), null, false]];
-  for (var i = 0; i < rows.length; i++) {
-    var r = rows[i], y = y0 + 52 + i * 48;
-    label(r[0], x0, y, "left", C.grey, 14);
-    valueUnit(fmt(r[1], 0), r[2], x0 + w, y + 2, 26, r[5] ? C.red : C.white, "right");
-    hbar(x0, y + 12, w, r[3], r[5] ? C.red : C.sky, r[4]);
-  }
+function pEngine(x0, y0, w) {
+  var e = data.e, m = data.m, oil = Number(e.oiltemp) || 0, egt = Number(m.egt) || 0;
+  reading("Oil", fmt(tC(oil), 0), deg(), oil >= cfg.oilWarn ? C.red : C.white, x0, x0 + w, y0 + 46, 52,
+          [(oil - 40) / 110, oil >= cfg.oilWarn ? C.red : C.sky, (cfg.oilWarn - 40) / 110]);
+  reading("EGT", fmt(tC(egt), 0), deg(), egt >= cfg.egtWarn ? C.red : C.white, x0, x0 + w, y0 + 110, 52,
+          [(egt - 100) / 900, egt >= cfg.egtWarn ? C.red : C.sky, (cfg.egtWarn - 100) / 900]);
 }
-function pG(x0, y0, w, h) {
-  var m = data.m, cx = x0 + 66, cy = y0 + 92, R = 60, scale = 1.5;
-  ctx.strokeStyle = "#24456f"; ctx.lineWidth = 1;
-  for (var k = 1; k <= 3; k++) { ctx.beginPath(); ctx.arc(cx, cy, R * k / 3, 0, Math.PI * 2); ctx.stroke(); }
+function pG(x0, y0, w) {
+  var m = data.m, cx = x0 + 56, cy = y0 + 74, R = 52, scale = 1.5;
+  ctx.strokeStyle = "#2a4a75"; ctx.lineWidth = 2;
+  for (var k = 1; k <= 2; k++) { ctx.beginPath(); ctx.arc(cx, cy, R * k / 2, 0, Math.PI * 2); ctx.stroke(); }
   ctx.beginPath(); ctx.moveTo(cx - R, cy); ctx.lineTo(cx + R, cy); ctx.moveTo(cx, cy - R); ctx.lineTo(cx, cy + R); ctx.stroke();
   var cl = function (v) { return Math.max(-1, Math.min(1, v / scale)); };
   if (gTrail.length > 1) {
-    ctx.strokeStyle = "rgba(124,196,255,0.7)"; ctx.lineWidth = 1.5; ctx.beginPath();
+    ctx.strokeStyle = "rgba(124,196,255,0.8)"; ctx.lineWidth = 3; ctx.lineJoin = "round"; ctx.beginPath();
     for (var i = 0; i < gTrail.length; i++) { var q = gTrail[i]; ctx[i ? "lineTo" : "moveTo"](cx + cl(q[0]) * R, cy - cl(q[1]) * R); }
     ctx.stroke();
   }
   var gx = Number(m.glat) || 0, gy = Number(m.glon) || 0;
-  ctx.fillStyle = C.red; ctx.beginPath(); ctx.arc(cx + cl(gx) * R, cy - cl(gy) * R, 5, 0, Math.PI * 2); ctx.fill();
-  label("Combined", x0 + w, y0 + 52, "right"); valueUnit(fmt(Math.sqrt(gx * gx + gy * gy), 2), "g", x0 + w, y0 + 96, 40, C.white, "right");
-  label("Lat", x0 + w - 70, y0 + 120, "right", C.grey, 13); txt(fmt(gPeak.lat, 2), x0 + w - 70, y0 + 142, 18, C.white, "right", 700);
-  label("Long", x0 + w, y0 + 120, "right", C.grey, 13); txt(fmt(gPeak.lon, 2), x0 + w, y0 + 142, 18, C.white, "right", 700);
+  ctx.fillStyle = C.red; ctx.beginPath(); ctx.arc(cx + cl(gx) * R, cy - cl(gy) * R, 8, 0, Math.PI * 2); ctx.fill();
+  valueUnit(fmt(Math.sqrt(gx * gx + gy * gy), 2), "g", x0 + w, y0 + 84, 64, C.white, "right");
+  label("Max", x0 + 128, y0 + 134, "left", C.grey, 24);
+  txt(fmt(Math.max(gPeak.lat, gPeak.lon), 2), x0 + w, y0 + 134, 34, C.white, "right", 700);
 }
+function pTrip(x0, y0, w) {
+  var m = data.m, rg = dist(Number(m.range) || 0);
+  reading("Range", m.range > 0 ? fmt(rg[0], 0) : "---", rg[1], C.white, x0, x0 + w, y0 + 40, 42);
+  reading("Outside", typeof m.envT === "number" ? fmt(tC(m.envT), 0) : "---", deg(), C.white, x0, x0 + w, y0 + 86, 42);
+  reading("Drive", String(Math.min(Math.floor(clock / 60), 999)), "min", C.white, x0, x0 + w, y0 + 132, 42);
+}
+var PAGE_FN = [pBoost, pTyres, pEngine, pBrakes, pG, pTrip];
+var PAGE_UNIT = function (i) { return i === 1 ? pKpa(0)[2] : (i === 3 ? deg() : ""); };
 function rightPanel() {
-  var x0 = RIGHT.x0, w = RIGHT.x1 - RIGHT.x0, y0 = RIGHT.top - 20;
-  label(PAGES[page], x0, RIGHT.top, "left", C.white, 18);
-  [pBoost, pTyres, pEngine, pBrakes, pG][page](x0, y0, w, 168);
+  var x0 = RIGHT.x0, w = RIGHT.x1 - RIGHT.x0;
+  var t = PAGES[page] + (PAGE_UNIT(page) ? "  " + PAGE_UNIT(page) : "");
+  label(t, x0, RIGHT.top - 16, "left", C.white, 26);
+  PAGE_FN[page](x0, RIGHT.top, w);
   for (var i = 0; i < PAGES.length; i++) {                 // page dots, right-aligned with the title
-    ctx.fillStyle = i === page ? C.white : "#2b3746";
-    var dx = RIGHT.x1 - (PAGES.length - 1 - i) * 14;
-    if (i === page) { rr(dx - 6, RIGHT.top - 7, 12, 4, 2); ctx.fill(); }
-    else { ctx.beginPath(); ctx.arc(dx, RIGHT.top - 5, 2.5, 0, Math.PI * 2); ctx.fill(); }
+    ctx.fillStyle = i === page ? C.white : "#34465c";
+    var dx = RIGHT.x1 - 6 - (PAGES.length - 1 - i) * 18;
+    if (i === page) { rr(dx - 9, RIGHT.top - 27, 18, 6, 3); ctx.fill(); }
+    else { ctx.beginPath(); ctx.arc(dx, RIGHT.top - 24, 3.5, 0, Math.PI * 2); ctx.fill(); }
   }
 }
 
@@ -356,14 +345,14 @@ function render() {
   ctx.drawImage(bg, 0, 0);
   if (bootT >= 0) {
     var a = Math.min(1, bootT * 1.6); ctx.globalAlpha = a;
-    txt("Pillar Pod", W / 2, H / 2 + 4, 40, C.white, "center", 700);
-    label("Digital Gauges", W / 2, H / 2 + 34, "center");
-    ctx.fillStyle = C.line; ctx.fillRect(W / 2 - 60 * a, H / 2 + 50, 120 * a, 2);
+    txt("Pillar Pod", W / 2, H / 2 + 8, 56, C.white, "center", 700);
+    label("Digital Gauges", W / 2, H / 2 + 44, "center", C.grey, 26);
+    ctx.fillStyle = C.line; ctx.fillRect(W / 2 - 80 * a, H / 2 + 62, 160 * a, 3);
     ctx.globalAlpha = 1; dim(); return;
   }
   tach();
   ctx.fillStyle = "rgba(232,38,45,0.85)";                  // red rules framing the centre column
-  ctx.fillRect(LEFT.x1 + 40, 96, 2, 160); ctx.fillRect(RIGHT.x0 - 42, 96, 2, 160);
+  ctx.fillRect(LEFT.x1 + 30, 96, 3, 166); ctx.fillRect(RIGHT.x0 - 32, 96, 3, 166);
   centre(); leftPanel(); rightPanel();
   dim();
 }
@@ -386,47 +375,80 @@ function setup(config) {
   render();
 }
 
+// ---- data in, smoothing, frames ----
+// updateData only stores what the game sends; a 60 fps timer eases every reading towards it (time
+// based, so it feels the same at any frame rate, like the round gauges) and draws the frame.
+var raw = { e: {}, m: {} };
+var DISCRETE = { gear: 1, ignitionLevel: 1, lights: 1, lowhighbeam: 1, checkengine: 1, parkingbrake: 1, lowfuel: 1,
+                 dbg_mfd_page: 1, maxrpm: 1, maxBoost: 1, range: 1, engineRunning: 1 };
+var TAU = { rpm: 0.05, boost: 0.06, wheelspeed: 0.1, glat: 0.08, glon: 0.08, fuel: 0.6, fuelVolume: 0.6,
+            oiltemp: 0.4, watertemp: 0.4, egt: 0.3, envT: 1.0 };
+function ease(cur, tgt, key, dt) {
+  if (typeof tgt === "object" && tgt !== null) {
+    var out = (typeof cur === "object" && cur !== null) ? cur : {};
+    for (var k in tgt) out[k] = ease(out[k], tgt[k], k, dt);
+    for (k in out) if (!(k in tgt)) delete out[k];
+    return out;
+  }
+  if (typeof tgt !== "number" || DISCRETE[key] || typeof cur !== "number" || !isFinite(cur)) return tgt;
+  var a = 1 - Math.exp(-dt / (TAU[key] || 0.15));
+  var v = cur + (tgt - cur) * a;
+  return Math.abs(tgt - v) < 1e-4 ? tgt : v;
+}
+var lastT = 0, digitT = 0, trailT = 0, speedShown = 0;
+function tick() {
+  var now = (window.performance && performance.now) ? performance.now() : Date.now();
+  var dt = lastT ? Math.min(0.1, (now - lastT) / 1000) : 0.016;
+  lastT = now;
+  if (powered && !wasPowered) { bootT = 0; clock = 0; boostPeak = 0; gPeak = { lat: 0, lon: 0 }; nominal = {}; gTrail = []; }
+  wasPowered = powered;
+  if (bootT >= 0) { bootT += dt; if (bootT > 1.6) bootT = -1; }
+  clock += dt;
+  data.e = ease(data.e, raw.e, "", dt);
+  data.m = ease(data.m, raw.m, "", dt);
+  boost = Number(data.e.boost) || 0;
+  // big speed digits change ten times a second, like a real cluster, while bars move every frame
+  digitT += dt; if (digitT >= 0.1) { digitT = 0; speedShown = Math.abs(Number(data.e.wheelspeed) || 0); }
+  // session peak: only with the engine settled (running 2 s) and within a believable range of the
+  // wastegate limit, so start-up and stall transients don't stick as the "max"
+  runT = (Number(raw.e.rpm) || 0) > 600 ? runT + dt : 0;
+  var limP = (typeof raw.m.maxBoost === "number" && raw.m.maxBoost > 0) ? raw.m.maxBoost : 30;
+  if (runT > 2 && boost > boostPeak && boost < Math.max(limP * 2, limP + 15)) boostPeak = boost;
+  var tp = raw.m.tp || {};
+  for (var n in tp) if (typeof tp[n] === "number" && tp[n] > 20 && clock < 4) nominal[n] = Math.max(nominal[n] || 0, tp[n]);
+  var gx = Number(data.m.glat) || 0, gy = Number(data.m.glon) || 0;
+  trailT += dt; if (trailT >= 1 / 30) { trailT = 0; gTrail.push([gx, gy]); if (gTrail.length > 90) gTrail.shift(); }
+  gPeak.lat = Math.max(gPeak.lat, Math.abs(gx)); gPeak.lon = Math.max(gPeak.lon, Math.abs(gy));
+  render();
+}
+
 function updateData(d) {
   var e = (d && d.electrics) || {};
   var cm = (d && d.customModules) || {};
   var m = cm.dbgCluster || cm.dbgAmbient || {};
   var mfd = m.mfd || {};
-  data.e = e;
-  data.m = { maxBoost: m.maxBoost, egt: m.egt, tp: mfd.tp, tt: mfd.tt, bt: mfd.bt, ws: mfd.ws, glat: mfd.glat, glon: mfd.glon,
-             range: mfd.range, envT: mfd.envT };
-  var now = Date.now() / 1000, dt = last ? Math.min(0.2, now - last) : 0; last = now;
+  var re = {};
+  for (var k in e) re[k] = e[k];
+  var turbo = Number(e.turboBoost) || 0, sc = Number(e.superchargerBoost) || 0;
+  re.boost = sc > 0 ? Math.max(turbo, sc) : turbo;
+  if (e.rpm !== undefined && Number(e.rpm) < 50) re.boost = 0;   // engine stopped: atmospheric
+  raw.e = re;
+  raw.m = { maxBoost: m.maxBoost, egt: m.egt, tp: mfd.tp, tt: mfd.tt, bt: mfd.bt, ws: mfd.ws, glat: mfd.glat, glon: mfd.glon,
+            range: mfd.range, envT: mfd.envT };
   var ign = e.ignitionLevel;
   powered = (ign === undefined || ign === null) ? true : (Number(ign) >= 1);
-  if (powered && !wasPowered) { bootT = 0; clock = 0; boostPeak = 0; gPeak = { lat: 0, lon: 0 }; nominal = {}; }
-  wasPowered = powered;
-  if (bootT >= 0) { bootT += dt; if (bootT > 1.6) bootT = -1; }
-  clock += dt;
   var pc = Number(e.dbg_mfd_page) || 0;                  // page button presses
   if (pageCounter === null) pageCounter = pc;
   if (pc !== pageCounter) { page = (page + ((pc - pageCounter) % PAGES.length) + PAGES.length) % PAGES.length; pageCounter = pc; }
-  var turbo = Number(e.turboBoost) || 0, sc = Number(e.superchargerBoost) || 0;
-  var b = sc > 0 ? Math.max(turbo, sc) : turbo;
-  if (e.rpm !== undefined && Number(e.rpm) < 50) b = 0;  // engine stopped: atmospheric
-  boost += (b - boost) * Math.min(1, dt * 12);
-  // session peak: only with the engine settled (running 2 s) and within a believable range of the
-  // wastegate limit, so start-up and stall transients don't stick as the "max"
-  runT = (Number(e.rpm) || 0) > 600 ? runT + dt : 0;
-  var limP = (typeof data.m.maxBoost === "number" && data.m.maxBoost > 0) ? data.m.maxBoost : 30;
-  if (runT > 2 && boost > boostPeak && boost < Math.max(limP * 2, limP + 15)) boostPeak = boost;
-  var tp = data.m.tp || {};
-  for (var n in tp) if (typeof tp[n] === "number" && tp[n] > 20 && clock < 4) nominal[n] = Math.max(nominal[n] || 0, tp[n]);
-  var gx = Number(data.m.glat) || 0, gy = Number(data.m.glon) || 0;
-  gTrail.push([gx, gy]); if (gTrail.length > 90) gTrail.shift();
-  gPeak.lat = Math.max(gPeak.lat, Math.abs(gx)); gPeak.lon = Math.max(gPeak.lon, Math.abs(gy));
   lights = Math.max(Number(e.lights) || 0, Number(e.lowhighbeam) || 0);
   ambient = typeof m.light === "number" ? Math.max(0, Math.min(1, m.light)) : 1;
-  render();
 }
 
 function updateMode(d) {}
 
 buildBackground();
 render();
+setInterval(tick, 16);
 if (document.fonts && document.fonts.load) {             // redraw once the bundled typeface is in
   Promise.all([document.fonts.load('500 20px "Barlow SC"'), document.fonts.load('600 20px "Barlow SC"'), document.fonts.load('700 20px "Barlow SC"')])
     .then(function () { render(); }, function () {});

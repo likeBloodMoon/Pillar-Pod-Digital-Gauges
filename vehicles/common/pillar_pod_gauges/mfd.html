@@ -424,46 +424,80 @@ function setup(config) {
   render();
 }
 
-function updateData(d) {
-  var e = (d && d.electrics) || {};
-  var m = (d && d.customModules && d.customModules.dbgAmbient) || {};
-  var mfd = m.mfd || {};
-  data.e = e;
-  data.m = { maxBoost: m.maxBoost, egt: m.egt, tp: mfd.tp, tt: mfd.tt, bt: mfd.bt, ws: mfd.ws, glat: mfd.glat, glon: mfd.glon,
-             range: mfd.range, envT: mfd.envT };
-  var now = Date.now() / 1000, dt = last ? Math.min(0.2, now - last) : 0; last = now;
-  var ign = e.ignitionLevel;
-  powered = (ign === undefined || ign === null) ? true : (Number(ign) >= 1);
-  if (powered && !wasPowered) { bootT = 0; clock = 0; boostPeak = 0; gPeak = { lat: 0, lon: 0 }; nominal = {}; }
+// ---- data in, smoothing, frames ----
+// updateData only stores what the game sends; a 60 fps timer eases every reading towards it (time
+// based, so it feels the same at any frame rate, like the round gauges) and draws the frame.
+var raw = { e: {}, m: {} };
+var DISCRETE = { gear: 1, ignitionLevel: 1, lights: 1, lowhighbeam: 1, checkengine: 1, parkingbrake: 1, lowfuel: 1,
+                 dbg_mfd_page: 1, maxrpm: 1, maxBoost: 1, range: 1, engineRunning: 1 };
+var TAU = { rpm: 0.05, boost: 0.06, wheelspeed: 0.1, glat: 0.08, glon: 0.08, fuel: 0.6, fuelVolume: 0.6,
+            oiltemp: 0.4, watertemp: 0.4, egt: 0.3, envT: 1.0 };
+function ease(cur, tgt, key, dt) {
+  if (typeof tgt === "object" && tgt !== null) {
+    var out = (typeof cur === "object" && cur !== null) ? cur : {};
+    for (var k in tgt) out[k] = ease(out[k], tgt[k], k, dt);
+    for (k in out) if (!(k in tgt)) delete out[k];
+    return out;
+  }
+  if (typeof tgt !== "number" || DISCRETE[key] || typeof cur !== "number" || !isFinite(cur)) return tgt;
+  var a = 1 - Math.exp(-dt / (TAU[key] || 0.15));
+  var v = cur + (tgt - cur) * a;
+  return Math.abs(tgt - v) < 1e-4 ? tgt : v;
+}
+var lastT = 0, digitT = 0, trailT = 0, speedShown = 0;
+function tick() {
+  var now = (window.performance && performance.now) ? performance.now() : Date.now();
+  var dt = lastT ? Math.min(0.1, (now - lastT) / 1000) : 0.016;
+  lastT = now;
+  if (powered && !wasPowered) { bootT = 0; clock = 0; boostPeak = 0; gPeak = { lat: 0, lon: 0 }; nominal = {}; gTrail = []; }
   wasPowered = powered;
   if (bootT >= 0) { bootT += dt; if (bootT > 1.6) bootT = -1; }
   clock += dt;
+  data.e = ease(data.e, raw.e, "", dt);
+  data.m = ease(data.m, raw.m, "", dt);
+  boost = Number(data.e.boost) || 0;
+  // big speed digits change ten times a second, like a real cluster, while bars move every frame
+  digitT += dt; if (digitT >= 0.1) { digitT = 0; speedShown = Math.abs(Number(data.e.wheelspeed) || 0); }
+  // session peak: only with the engine settled (running 2 s) and within a believable range of the
+  // wastegate limit, so start-up and stall transients don't stick as the "max"
+  runT = (Number(raw.e.rpm) || 0) > 600 ? runT + dt : 0;
+  var limP = (typeof raw.m.maxBoost === "number" && raw.m.maxBoost > 0) ? raw.m.maxBoost : 30;
+  if (runT > 2 && boost > boostPeak && boost < Math.max(limP * 2, limP + 15)) boostPeak = boost;
+  var tp = raw.m.tp || {};
+  for (var n in tp) if (typeof tp[n] === "number" && tp[n] > 20 && clock < 4) nominal[n] = Math.max(nominal[n] || 0, tp[n]);
+  var gx = Number(data.m.glat) || 0, gy = Number(data.m.glon) || 0;
+  trailT += dt; if (trailT >= 1 / 30) { trailT = 0; gTrail.push([gx, gy]); if (gTrail.length > 90) gTrail.shift(); }
+  gPeak.lat = Math.max(gPeak.lat, Math.abs(gx)); gPeak.lon = Math.max(gPeak.lon, Math.abs(gy));
+  render();
+}
+
+function updateData(d) {
+  var e = (d && d.electrics) || {};
+  var cm = (d && d.customModules) || {};
+  var m = cm.dbgCluster || cm.dbgAmbient || {};
+  var mfd = m.mfd || {};
+  var re = {};
+  for (var k in e) re[k] = e[k];
+  var turbo = Number(e.turboBoost) || 0, sc = Number(e.superchargerBoost) || 0;
+  re.boost = sc > 0 ? Math.max(turbo, sc) : turbo;
+  if (e.rpm !== undefined && Number(e.rpm) < 50) re.boost = 0;   // engine stopped: atmospheric
+  raw.e = re;
+  raw.m = { maxBoost: m.maxBoost, egt: m.egt, tp: mfd.tp, tt: mfd.tt, bt: mfd.bt, ws: mfd.ws, glat: mfd.glat, glon: mfd.glon,
+            range: mfd.range, envT: mfd.envT };
+  var ign = e.ignitionLevel;
+  powered = (ign === undefined || ign === null) ? true : (Number(ign) >= 1);
   var pc = Number(e.dbg_mfd_page) || 0;                  // page button presses
   if (pageCounter === null) pageCounter = pc;
   if (pc !== pageCounter) { page = (page + ((pc - pageCounter) % PAGES.length) + PAGES.length) % PAGES.length; pageCounter = pc; }
-  var turbo = Number(e.turboBoost) || 0, sc = Number(e.superchargerBoost) || 0;
-  var b = sc > 0 ? Math.max(turbo, sc) : turbo;
-  if (e.rpm !== undefined && Number(e.rpm) < 50) b = 0;  // engine stopped: atmospheric
-  boost += (b - boost) * Math.min(1, dt * 12);
-  // session peak: only with the engine settled (running 2 s) and within a believable range of the
-  // wastegate limit, so start-up and stall transients don't stick as the "max"
-  runT = (Number(e.rpm) || 0) > 600 ? runT + dt : 0;
-  var limP = (typeof data.m.maxBoost === "number" && data.m.maxBoost > 0) ? data.m.maxBoost : 30;
-  if (runT > 2 && boost > boostPeak && boost < Math.max(limP * 2, limP + 15)) boostPeak = boost;
-  var tp = data.m.tp || {};
-  for (var n in tp) if (typeof tp[n] === "number" && tp[n] > 20 && clock < 4) nominal[n] = Math.max(nominal[n] || 0, tp[n]);
-  var gx = Number(data.m.glat) || 0, gy = Number(data.m.glon) || 0;
-  gTrail.push([gx, gy]); if (gTrail.length > 90) gTrail.shift();
-  gPeak.lat = Math.max(gPeak.lat, Math.abs(gx)); gPeak.lon = Math.max(gPeak.lon, Math.abs(gy));
   lights = Math.max(Number(e.lights) || 0, Number(e.lowhighbeam) || 0);
   ambient = typeof m.light === "number" ? Math.max(0, Math.min(1, m.light)) : 1;
-  render();
 }
 
 function updateMode(d) {}
 
 buildBackground();
 render();
+setInterval(tick, 16);
 if (document.fonts && document.fonts.load) {             // redraw once the bundled typeface is in
   Promise.all([document.fonts.load('500 20px "Barlow SC"'), document.fonts.load('600 20px "Barlow SC"'), document.fonts.load('700 20px "Barlow SC"')])
     .then(function () { render(); }, function () {});
