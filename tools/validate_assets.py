@@ -16,7 +16,11 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-JBEAM = ROOT / "vehicles/covet/covet_pillar_pod_gauges.jbeam"
+# one part file per supported car: (generator --car name, part file, root part)
+CARS = (
+    ("covet", ROOT / "vehicles/covet/covet_pillar_pod_gauges.jbeam", "covet_digital_boost_gauge_pillar"),
+    ("bx", ROOT / "vehicles/bx/bx_pillar_pod_gauges.jbeam", "bx_pillar_pod_gauges"),
+)
 DAE = ROOT / "vehicles/common/pillar_pod_gauges/pillar_pod_gauges.dae"
 MATERIALS = ROOT / "vehicles/common/pillar_pod_gauges/main.materials.json"
 SCREEN = ROOT / "vehicles/common/pillar_pod_gauges/screen.html"
@@ -88,7 +92,7 @@ def parse_jbeam(path: Path) -> dict:
 
 def check_required_files() -> bool:
     ok = True
-    for path in (JBEAM, DAE, MATERIALS, SCREEN, GENERATOR, BAKER):
+    for path in (*(c[1] for c in CARS), DAE, MATERIALS, SCREEN, GENERATOR, BAKER):
         if not path.is_file():
             error(f"required file is missing: {path.relative_to(ROOT)}")
             ok = False
@@ -112,11 +116,11 @@ def collect_flexbody_meshes(document: dict) -> set[str]:
     return meshes
 
 
-def check_jbeam_structure(document: dict) -> None:
+def check_jbeam_structure(document: dict, root_part: str) -> None:
     if not document:
         return
-    if "covet_digital_boost_gauge_pillar" not in document:
-        error("JBeam is missing the root Covet part")
+    if root_part not in document:
+        error(f"JBeam is missing the root part {root_part!r}")
     for name, part in document.items():
         if not isinstance(part, dict):
             error(f"{name}: part definition must be an object")
@@ -208,10 +212,11 @@ def check_dae(meshes: set[str]) -> None:
 
 
 def check_html_and_generator() -> None:
-    jbeam_source = JBEAM.read_text(encoding="utf-8")
     generator_source = GENERATOR.read_text(encoding="utf-8")
     baker_source = BAKER.read_text(encoding="utf-8")
-    for label, source in (("checked-in JBeam", jbeam_source), ("JBeam generator", generator_source)):
+    sources = [("JBeam generator", generator_source)]
+    sources += [(path.relative_to(ROOT).as_posix(), path.read_text(encoding="utf-8")) for _, path, _ in CARS]
+    for label, source in sources:
         if EXPECTED_HTML not in source:
             error(f"{label} does not reference the current gauge screen.html path")
         if "digital_boost_gauge/screen.html" in source:
@@ -221,20 +226,19 @@ def check_html_and_generator() -> None:
     if "pillar_pod_gauges/screen.html" not in baker_source:
         error("faceplate baker does not load the current pillar_pod_gauges screen")
 
-    # The generator should produce the same structured JBeam as the checked-in asset.
+    # The generator should produce the same structured JBeam as each checked-in part file.
     with tempfile.TemporaryDirectory() as tmp:
-        generated = Path(tmp) / "generated.jbeam"
-        result = subprocess.run(
-            [sys.executable, str(GENERATOR), str(generated)],
-            cwd=ROOT, text=True, capture_output=True
-        )
-        if result.returncode:
-            error("JBeam generator failed: " + (result.stderr.strip() or result.stdout.strip()))
-            return
-        generated_doc = parse_jbeam(generated)
-        checked_doc = parse_jbeam(JBEAM)
-        if generated_doc != checked_doc:
-            error("generated JBeam is out of sync with vehicles/covet/covet_pillar_pod_gauges.jbeam")
+        for car, path, _ in CARS:
+            generated = Path(tmp) / f"{car}.jbeam"
+            result = subprocess.run(
+                [sys.executable, str(GENERATOR), "--car", car, str(generated)],
+                cwd=ROOT, text=True, capture_output=True
+            )
+            if result.returncode:
+                error(f"JBeam generator failed for {car}: " + (result.stderr.strip() or result.stdout.strip()))
+                continue
+            if parse_jbeam(generated) != parse_jbeam(path):
+                error(f"generated JBeam is out of sync with {path.relative_to(ROOT).as_posix()}")
 
 
 def check_javascript() -> None:
@@ -271,10 +275,14 @@ def check_python_syntax() -> None:
 def main() -> int:
     if not check_required_files():
         return 1
-    document = parse_jbeam(JBEAM)
     check_materials()
-    check_jbeam_structure(document)
-    meshes = collect_flexbody_meshes(document)
+    meshes: set[str] = set()
+    part_count = 0
+    for _, path, root_part in CARS:
+        document = parse_jbeam(path)
+        part_count += len(document)
+        check_jbeam_structure(document, root_part)
+        meshes |= collect_flexbody_meshes(document)
     check_dae(meshes)
     check_html_and_generator()
     check_javascript()
@@ -287,7 +295,7 @@ def main() -> int:
             print(f"ERROR: {message}")
         print(f"\nValidation failed: {len(ERRORS)} error(s), {len(WARNINGS)} warning(s).")
         return 1
-    print(f"Validation passed: {len(document)} JBeam parts, {len(meshes)} referenced meshes, "
+    print(f"Validation passed: {part_count} JBeam parts in {len(CARS)} cars, {len(meshes)} referenced meshes, "
           f"{len(material_names)} materials checked; embedded JavaScript syntax is valid.")
     if WARNINGS:
         print(f"{len(WARNINGS)} warning(s).")

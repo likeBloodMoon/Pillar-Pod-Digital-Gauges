@@ -27,7 +27,7 @@ if (typeof beamng !== 'undefined') {
 // ---- configuration (overridable from the jbeam "configuration" section) ----
 var NUMERIC = {zeroValue: 1, zeroLed: 1};   // null by default but numeric when set
 var cfg = {
-  source: "boost",    // "boost" (turbo/supercharger; min/max/warn given in PSI) or "oiltemp" (given in deg C)
+  source: "boost",    // "boost" (turbo/supercharger; min/max/warn in PSI), "oiltemp" or "watertemp" (deg C), "fuel" (percent)
   decimals: 1,        // digits after the point (set automatically for boost from the unit)
   unit: "auto",       // boost only: "auto" follows the game's pressure unit setting, or force "psi", "bar", "kpa"
   zeroLed: null,      // fix the zero mark at this LED index (the scale above and below it stretches to fit)
@@ -35,7 +35,8 @@ var cfg = {
   face: "black",      // "black", or "white" for the silver-bezel version (white faceplate is in the material)
   shiftLight: 0,      // boost gauge: 1 = the whole LED ring flashes red near the rev limit
   shiftAt: 0.96,      // fraction of the engine's maximum RPM where the shift light starts
-  coldBelow: 0,       // oil gauge: show a blue COLD mark below this temperature in deg C (0 = off)
+  coldBelow: 0,       // temperature gauges: show a blue COLD mark below this temperature in deg C (0 = off)
+  warnLow: 0,         // 1 = the warning is at the low end (fuel): red LEDs come first, digits flash at or below warnValue
   peakRecall: false,  // after a pull, flash the peak value on the display
   recallTime: 2.5,    // seconds the peak is shown
   recallMin: 3,       // a pull must exceed zero by this much to count
@@ -184,7 +185,7 @@ function buildStaticFace(white) {
       g.save(); g.translate(CX + Math.cos(a) * (major ? 186 : 188), CY + Math.sin(a) * (major ? 186 : 188)); g.rotate(a);
       g.fillStyle = (z > 0 && i === z) ? "#c03000" : "#111"; g.fillRect(major ? -9 : -5, -2, major ? 18 : 10, 4); g.restore();
     }
-    drawLed(g, i, i >= n - cfg.warnLeds ? "#3a0f0b" : (i < z ? "#0c2540" : "#12380f"), false);   // unlit LEDs
+    drawLed(g, i, isRed(i) ? "#3a0f0b" : (i < z ? "#0c2540" : "#12380f"), false);   // unlit LEDs
   }
   for (var d = 0; d < 3; d++) drawDigit(g, "8", DX[d], DY, "#210606", null);       // unlit segments
   g.shadowBlur = 0;
@@ -198,7 +199,7 @@ function buildLayers() {
   for (var i = 0; i < cfg.ledCount; i++) {
     // crop to the LED's neighbourhood so blits stay small
     var a = ledAngle(i), x = Math.round(CX + Math.cos(a) * 216 - 50), y = Math.round(CY + Math.sin(a) * 216 - 50);
-    var cols = [i >= cfg.ledCount - cfg.warnLeds ? "#ff2a1a" : (i < zeroLed() ? "#3aa8ff" : "#35ff2e"), "#ff2a1a"];
+    var cols = [isRed(i) ? "#ff2a1a" : (i < zeroLed() ? "#3aa8ff" : "#35ff2e"), "#ff2a1a"];
     for (var k = 0; k < 2; k++) {                 // normal colour, and all-red for the shift light
       var c = layer(W, W), g = c.getContext("2d");
       drawLed(g, i, cols[k], true);
@@ -240,10 +241,14 @@ var recallVal = 0;
 var lastT = 0;
 var lastKey = "";
 
-var tempF = false;       // oil temp follows the game's temperature unit setting
+var tempF = false;       // temperatures follow the game's temperature unit setting
+function isTemp() { return cfg.source === "oiltemp" || cfg.source === "watertemp"; }
+function isRed(i) { return cfg.warnLow > 0 ? i < cfg.warnLeds : i >= cfg.ledCount - cfg.warnLeds; }
+function warning(v) { return cfg.warnLow > 0 ? (cfg.warnValue > 0 && v <= cfg.warnValue) : v >= effWarn(); }
 var pUnit = "psi";       // boost follows the game's pressure unit setting (or cfg.unit)
 function shown(value) {
-  if (cfg.source === "oiltemp") return tempF ? value * 9 / 5 + 32 : value;
+  if (isTemp()) return tempF ? value * 9 / 5 + 32 : value;
+  if (cfg.source === "fuel") return value;
   if (pUnit === "bar") return value * 0.0689476;
   if (pUnit === "kpa") return value * 6.89476;
   return value;
@@ -315,11 +320,11 @@ function render() {
     pos = ledPos(arcVal);                        // e.g. 13.4 = 13 LEDs full, the 14th at 40%
     var dt1 = digitText(digitVal); txt = dt1[0]; dot = dt1[1];
     if (cfg.peakHold > 0 && peakPos > Math.max(pos, z) + 0.6) peak = Math.min(n - 1, Math.ceil(peakPos) - 1);
-    if (arcVal >= effWarn()) digitsOn = Math.floor(clock * 12) % 2 === 0;   // overboost flash
+    if (warning(arcVal)) digitsOn = Math.floor(clock * 12) % 2 === 0;   // overboost / overheat / low fuel flash
   }
   var shiftOn = powered && !booting && shifting;
   var shiftPhase = shiftOn ? Math.floor(clock * 10) % 2 : 0;
-  var cold = powered && !booting && cfg.source === "oiltemp" && cfg.coldBelow > 0 && target < cfg.coldBelow;
+  var cold = powered && !booting && isTemp() && cfg.coldBelow > 0 && target < cfg.coldBelow;
   // brightness: headlights on -> night level; otherwise follow the ambient light
   var dim = 1;
   if (powered) dim = lights > 0 ? cfg.nightBrightness : cfg.nightBrightness + (1 - cfg.nightBrightness) * ambient;
@@ -422,9 +427,12 @@ function setup(config) {
       }
     }
   }
-  if (cfg.source === "oiltemp") {
+  if (isTemp()) {
     tempF = !!config && String(config.uiUnitTemperature || "c").toLowerCase() === "f";
     cfg.unitLabel = tempF ? "\u00b0F" : "\u00b0C";
+  } else if (cfg.source === "fuel") {
+    cfg.decimals = 0;
+    cfg.unitLabel = "%";
   } else {
     var u = String(cfg.unit || "auto").toLowerCase();
     if (u === "auto") u = String((config && config.uiUnitPressure) || "psi").toLowerCase();
@@ -450,6 +458,11 @@ function updateData(data) {
   var rpm = Number(e.rpm) || 0, maxRpm = Number(e.maxrpm) || 0;
   shifting = cfg.source === "boost" && cfg.shiftLight > 0 && !stopped && maxRpm > 0 && rpm >= maxRpm * cfg.shiftAt;
   if (cfg.source === "oiltemp") target = Number(e.oiltemp) || 0;
+  if (cfg.source === "watertemp") target = Number(e.watertemp) || 0;
+  if (cfg.source === "fuel") {
+    var f = Number(e.fuel) || 0;               // the game gives the tank level as 0..1
+    target = f > 1.5 ? f : f * 100;
+  }
   lights = Math.max(Number(e.lights) || 0, Number(e.lowhighbeam) || 0);
   var am = data && data.customModules && data.customModules.dbgAmbient;
   ambient = (am && typeof am.light === "number") ? Math.max(0, Math.min(1, am.light)) : 1;

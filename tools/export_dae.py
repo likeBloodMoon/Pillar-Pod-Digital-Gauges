@@ -1,5 +1,6 @@
 import numpy as np, sys, math
-names=['std','stripped','cage','std_2','stripped_2','cage_2']
+names=['std','stripped','cage','std_2','stripped_2','cage_2',      # Ibishu Covet
+       'bx_std','bx_cage','bx_std_2','bx_cage_2']                     # Ibishu 200BX
 D={n:np.load('parts_%s.npy'%n,allow_pickle=True).item() for n in names}
 R=0.0235; SEG=40
 a=np.linspace(0,2*np.pi,SEG+1)[:-1]
@@ -46,6 +47,9 @@ def node(name,mats):
       </node>
 '''
 mats=[("dbg_body","0.03 0.03 0.03"),("dbg_bezel","0.01 0.01 0.01"),("dbg_screen","0.05 0.05 0.05"),("dbg_oil_screen","0.05 0.05 0.05"),("dbg_bezel_silver","0.7 0.7 0.7"),("dbg_screen_w","0.8 0.8 0.8"),("dbg_oil_screen_w","0.8 0.8 0.8")]
+# screens with the other printed faces, for any gauge type in either position (automatic mounting only)
+mats+=[(m,"0.05 0.05 0.05" if not m.endswith("_w") else "0.8 0.8 0.8") for m in
+       ("dbg_screen_t","dbg_screen_t_w","dbg_screen_f","dbg_screen_f_w","dbg_oil_screen_b","dbg_oil_screen_b_w","dbg_oil_screen_f","dbg_oil_screen_f_w")]
 eff="".join(f'''    <effect id="{m}-effect"><profile_COMMON><technique sid="common"><lambert>
       <emission><color sid="emission">0 0 0 1</color></emission><diffuse><color sid="diffuse">{c} 1</color></diffuse>
       <index_of_refraction><float sid="ior">1.45</float></index_of_refraction></lambert></technique></profile_COMMON></effect>\n''' for m,c in mats)
@@ -61,28 +65,40 @@ for tag,src,sc in (("80","std",0.8),("65","cage",0.65)):     # two gauge sizes: 
     # silver bezel + white faceplate versions
     geoms+=geom("dbg_gauge_silver_"+tag,[("dbg_bezel_silver",g)])+geom("dbg_screen_w_"+tag,[("dbg_screen_w",(sp*sc,sn,st,suv))])+geom("dbg_oil_screen_w_"+tag,[("dbg_oil_screen_w",(sp*sc,sn,st,suv))])
     nodes+=node("dbg_gauge_silver_"+tag,["dbg_bezel_silver"])+node("dbg_screen_w_"+tag,["dbg_screen_w"])+node("dbg_oil_screen_w_"+tag,["dbg_oil_screen_w"])
+POD_NAME={'bx_std':'bx_pillar'}   # mesh name differs from the parts file name
 for n in names:
-    nm=("dbg_pod2_"+n[:-2]) if n.endswith("_2") else ("dbg_pod_"+n)
+    base_n=n[:-2] if n.endswith("_2") else n
+    base_n=POD_NAME.get(base_n,base_n)
+    nm=("dbg_pod2_" if n.endswith("_2") else "dbg_pod_")+base_n
     geoms+=geom(nm,[("dbg_body",D[n]['pod'])]); nodes+=node(nm,["dbg_body"])
     geoms+=geom(nm+"_rhd",[("dbg_body",mirror(D[n]['pod']))]); nodes+=node(nm+"_rhd",["dbg_body"])
 # ---- automatic mounting: every mounting of every gauge gets its own uniquely named meshes, so the
 # mod's script can show one set and hide the rest. Names are all 9 characters and none is a
-# substring of another: dbgv + mounting (A-F) + gauge (1 boost, 2 oil) + pod / bzk / bzs / sck / scs
-AUTO=(("A","std",False,0.8,"std"),("B","stripped",False,0.8,"std"),("C","cage",False,0.65,"cage"),
-      ("D","std",True,0.8,"std"),("E","stripped",True,0.8,"std"),("F","cage",True,0.65,"cage"))
+# substring of another: dbgv + mounting (A-J) + position (1 lower, 2 upper) + one of
+#   pod, bzk / bzs (black / silver bezel),
+#   s + printed face (b boost, t temperature, f fuel) + k / s (black face / white face of the silver version)
+AUTO=(("A","std",False,0.8,"std"),("B","stripped",False,0.8,"std"),("C","cage",False,0.65,"cage"),          # Covet
+      ("D","std",True,0.8,"std"),("E","stripped",True,0.8,"std"),("F","cage",True,0.65,"cage"),
+      ("G","bx_std",False,0.8,"std"),("H","bx_cage",False,0.65,"cage"),                                   # 200BX
+      ("I","bx_std",True,0.8,"std"),("J","bx_cage",True,0.65,"cage"))
 for code,var,rhd,sc,gsrc in AUTO:
     g=D[gsrc]['gauge']
-    for gi,(suffix,scr_k,scr_s) in enumerate((("","dbg_screen","dbg_screen_w"),("_2","dbg_oil_screen","dbg_oil_screen_w")),1):
+    # screen material per position and printed face: (black, silver-version white)
+    SCREENS=({"b":("dbg_screen","dbg_screen_w"),"t":("dbg_screen_t","dbg_screen_t_w"),"f":("dbg_screen_f","dbg_screen_f_w")},
+             {"b":("dbg_oil_screen_b","dbg_oil_screen_b_w"),"t":("dbg_oil_screen","dbg_oil_screen_w"),"f":("dbg_oil_screen_f","dbg_oil_screen_f_w")})
+    for gi,suffix in enumerate(("","_2"),1):
         pod=D[var+suffix]['pod']
         if rhd: pod=mirror(pod)
         base="dbgv%s%d"%(code,gi)
-        for nm,mat,part in ((base+"pod","dbg_body",pod),(base+"bzk","dbg_bezel",g),(base+"bzs","dbg_bezel_silver",g),
-                            (base+"sck",scr_k,(sp*sc,sn,st,suv)),(base+"scs",scr_s,(sp*sc,sn,st,suv))):
+        items=[(base+"pod","dbg_body",pod),(base+"bzk","dbg_bezel",g),(base+"bzs","dbg_bezel_silver",g)]
+        for face,(mk,ms) in SCREENS[gi-1].items():
+            items+=[(base+"s"+face+"k",mk,(sp*sc,sn,st,suv)),(base+"s"+face+"s",ms,(sp*sc,sn,st,suv))]
+        for nm,mat,part in items:
             geoms+=geom(nm,[(mat,part)]); nodes+=node(nm,[mat])
 xml=f'''<?xml version="1.0" encoding="utf-8"?>
 <COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <asset>
-    <contributor><author>digital_boost_gauge</author><authoring_tool>Blender (bpy) + export_v8.py</authoring_tool></contributor>
+    <contributor><author>Pillar Pod Digital Gauges</author><authoring_tool>Blender (bpy) + tools/export_dae.py</authoring_tool></contributor>
     <created>2026-11-11T21:00:00</created><modified>2026-11-11T21:00:00</modified>
     <unit name="meter" meter="1"/><up_axis>Z_UP</up_axis>
   </asset>

@@ -10,7 +10,7 @@ from mathutils import Matrix
 
 import os
 C = np.array([float(x) for x in os.environ.get('DBG_C', '0.5906,-0.3945,1.0753').split(',')]); YAW = float(os.environ.get('DBG_YAW', '23'))
-EDGE = np.array([0.601, -0.477, 1.066]); FACE_T = np.array([0.042, 0.024, 0.002]); U = np.array([-0.079, 0.242, 0.17])
+EDGE = np.array([float(x) for x in os.environ.get("DBG_EDGE","0.601,-0.477,1.066").split(",")]); FACE_T = np.array([0.042, 0.024, 0.002]); U = np.array([float(x) for x in os.environ.get("DBG_U","-0.079,0.242,0.17").split(",")])
 SEG = 40
 R_SCREEN = 0.0235
 SHARP_DEG = 38.0
