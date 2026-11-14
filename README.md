@@ -51,6 +51,10 @@ for the drive (in the top part of the scale), and a red **WARN** light stays on 
 warning limit: overboost, overheating, low fuel, or the shift point on the tachometer. The fuel gauge
 has only WARN.
 
+If the car doesn't have the reading at all, for example the boost gauge on a car without a turbo or
+supercharger, the gauge shows `---` with the LED ring dark instead of a made-up 0. The display and the
+cluster do the same.
+
 Every gauge comes as **Automatic Mounting**, in black or in silver with a white face. It finds its
 own place: on the A-pillar trim, on the bare pillar of a stripped or race interior, or on the roll
 cage bar, for left- or right-hand drive.

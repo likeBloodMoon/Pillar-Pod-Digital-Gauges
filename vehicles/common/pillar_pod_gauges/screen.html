@@ -288,6 +288,9 @@ var storedPeak = -1e9;   // highest value since the car was spawned
 var sesPeak = -1e9;      // highest value since the ignition came on (for the PEAK light)
 var peakLitT = 0;        // seconds the PEAK light stays on
 var overRev = false;     // tachometer: engine speed at or past the shift point (lights WARN)
+var haveNow = true;      // the car reported this gauge's reading in the latest update
+var missT = 0, missing = false;   // no reading for half a second: the gauge shows dashes and a dark ring
+function dashes() { return nDig === 4 ? "----" : "---"; }
 var offBoost = 0;        // seconds spent back at/below zero
 var recallT = -1;        // >= 0 while the peak is being shown
 var recallVal = 0;
@@ -398,6 +401,9 @@ function render() {
     txt = offTxt; dot = offDot; sweep = true;
     digA = 1 - u;
     bgA = u < 0.5 ? 1 : 1 - (u - 0.5) / 0.5;
+  } else if (powered && missing) {
+    // the car doesn't report this reading: dashes, and the ring stays dark
+    txt = dashes(); ledsOn = false;
   } else if (powered) {
     pos = ledPos(arcVal);                        // e.g. 13.4 = 13 LEDs full, the 14th at 40%
     var dt1 = digitText(digitVal); txt = dt1[0]; dot = dt1[1];
@@ -406,12 +412,12 @@ function render() {
   }
   var shiftOn = powered && !booting && shifting;
   var shiftPhase = shiftOn ? Math.floor(clock * 10) % 2 : 0;
-  var cold = powered && !booting && isTemp() && cfg.coldBelow > 0 && target < cfg.coldBelow;
+  var cold = powered && !booting && !missing && isTemp() && cfg.coldBelow > 0 && target < cfg.coldBelow;
   // indicator lights: both on during the start-up test, like the digits
   var peakOn = false, warnOn = false;
   if (cfg.indicators > 0) {
     if (booting) { peakOn = hasPeakLight() && digitsOn; warnOn = digitsOn; }
-    else if (powered) {
+    else if (powered && !missing) {
       peakOn = peakLitT > 0;
       warnOn = warning(arcVal) || (cfg.source === "rpm" && overRev);
     }
@@ -421,7 +427,7 @@ function render() {
   if (powered || shutting) dim = lights > 0 ? cfg.nightBrightness : cfg.nightBrightness + (1 - cfg.nightBrightness) * ambient;
   var key = (powered ? "1" : "0") + Math.round(pos * 25) + txt + dot + peak + (digitsOn ? "d" : "x") + (ledsOn ? "l" : "o") +
             (recalling ? "r" : "") + Math.round(dim * 50) + (shiftOn ? "s" + shiftPhase : "") + (cold ? "c" : "") +
-            (shutting ? "o" + Math.round(u * 60) : "") + (peakOn ? "P" : "") + (warnOn ? "W" : "");
+            (shutting ? "o" + Math.round(u * 60) : "") + (peakOn ? "P" : "") + (warnOn ? "W" : "") + (missing ? "m" : "");
   if (key === lastKey) return;                  // nothing visible changed
   lastKey = key;
 
@@ -488,9 +494,11 @@ function tick() {
   if (powered && !wasPowered) { bootT = 0; offT = -1; arcVal = 0; digitVal = 0; peakPos = 0; sesPeak = -1e9; peakLitT = 0; }
   // ignition switched off after running a while: shut-down sweep (not after a reset, and not when the
   // engine just stalls, since the ignition stays on then)
+  missT = haveNow ? 0 : missT + dt;
+  missing = missT > 0.5;
   if (!powered && wasPowered && cfg.shutdownSweep > 0 && onT > 0.5 && quietT <= 0) {
-    offT = 0; offFrom = bootT >= 0 ? 0 : ledPos(arcVal);
-    var t0 = digitText(digitVal); offTxt = bootT >= 0 ? "" : t0[0]; offDot = bootT >= 0 ? -1 : t0[1];
+    offT = 0; offFrom = (bootT >= 0 || missing) ? 0 : ledPos(arcVal);
+    var t0 = missing ? [dashes(), -1] : digitText(digitVal); offTxt = bootT >= 0 ? "" : t0[0]; offDot = bootT >= 0 ? -1 : t0[1];
     bootT = -1; recallT = -1;
   }
   onT = powered ? onT + dt : 0;
@@ -572,6 +580,13 @@ function updateData(data) {
   var e = (data && data.electrics) || {};
   var turbo = Number(e.turboBoost) || 0, sc = Number(e.superchargerBoost) || 0;
   target = (sc > 0 ? Math.max(turbo, sc) : turbo) * cfg.unitScale;
+  // the game fills a missing electrics value with 0, so the mod's module says which ones the car
+  // doesn't have (and leaves out the exhaust temperature when there is none)
+  var am0 = data && data.customModules && data.customModules.dbgAmbient, miss = am0 && am0.missing;
+  if (miss && typeof miss === "object") {
+    haveNow = cfg.source === "egt" ? (am0.egt !== undefined && am0.egt !== null) :
+              cfg.source === "boost" ? !(miss.turboBoost && miss.superchargerBoost) : !miss[cfg.source];
+  } else haveNow = true;   // no word from the module: can't tell, show the value
   // engine not turning: the manifold is at atmospheric pressure, so the gauge must read zero
   // (the game keeps reporting a little vacuum with the engine stopped)
   var stopped = (e.engineRunning !== undefined && e.engineRunning !== null && !(Number(e.engineRunning) > 0)) ||
