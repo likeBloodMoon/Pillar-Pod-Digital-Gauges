@@ -27,21 +27,22 @@ if (typeof beamng !== 'undefined') {
 // ---- configuration (overridable from the jbeam "configuration" section) ----
 var NUMERIC = {zeroValue: 1, zeroLed: 1};   // null by default but numeric when set
 var cfg = {
-  source: "boost",    // "boost" (turbo/supercharger; min/max/warn in PSI), "oiltemp", "watertemp" or "egt" (deg C), "fuel" (percent)
+  source: "boost",    // "boost" (turbo/supercharger; min/max/warn in PSI), "oiltemp", "watertemp" or "egt" (deg C), "fuel" (percent),
+                      // "rpm" (engine speed; min/max/warn in RPM, shown in thousands)
   decimals: 1,        // digits after the point (set automatically for boost from the unit)
   unit: "auto",       // boost only: "auto" follows the game's pressure unit setting, or force "psi", "bar", "kpa"
   zeroLed: null,      // fix the zero mark at this LED index (the scale above and below it stretches to fit)
   zeroValue: null,    // LEDs light outwards from this value; below it they show vacuum. null = same as minValue
   face: "black",      // "black", or "white" for the silver-bezel version (white faceplate is in the material)
-  shiftLight: 0,      // boost gauge: 1 = the whole LED ring flashes red near the rev limit
-  shiftAt: 0.96,      // fraction of the engine's maximum RPM where the shift light starts
+  shiftLight: 0,      // boost gauge and tachometer: 1 = the whole LED ring flashes red near the rev limit
+  shiftAt: 0.96,      // fraction of the engine's maximum RPM where the shift light starts (a value above 1 is a percentage)
   coldBelow: 0,       // temperature gauges: show a blue COLD mark below this temperature in deg C (0 = off)
   warnLow: 0,         // 1 = the warning is at the low end (fuel): red LEDs come first, digits flash at or below warnValue
   peakRecall: false,  // after a pull, flash the peak value on the display
   recallTime: 2.5,    // seconds the peak is shown
   recallMin: 3,       // a pull must exceed zero by this much to count
   minValue: 0,        // value at the first LED
-  maxValue: 30,       // value at the last LED
+  maxValue: 30,       // value at the last LED (tachometer: 0 = automatic, the red LEDs start at the engine's rev limit)
   ledCount: 24,
   warnLeds: 3,        // last N LEDs are red
   unitLabel: "PSI",
@@ -135,7 +136,7 @@ var bgOn, bgOff, ledSprites = [], ledSpritesRed = [], digitSprites = {};
 function zeroLed() {     // index of the first LED above zero (0 when there is no vacuum zone)
   if (typeof cfg.zeroLed === "number") return cfg.zeroLed;   // fixed, so it matches the printed faceplate
   var z = (cfg.zeroValue === null || cfg.zeroValue === undefined) ? cfg.minValue : cfg.zeroValue;
-  return Math.max(0, Math.round((z - cfg.minValue) / (cfg.maxValue - cfg.minValue) * cfg.ledCount));
+  return Math.max(0, Math.round((z - cfg.minValue) / (effMax() - cfg.minValue) * cfg.ledCount));
 }
 
 function ledAngle(i) { return A0 + SWEEP * (i / (cfg.ledCount - 1)); }
@@ -277,6 +278,7 @@ function shown(value) {
     return tempF ? value * 9 / 5 + 32 : value;
   }
   if (cfg.source === "fuel") return value;
+  if (cfg.source === "rpm") return value / 1000;   // tachometer: thousands, one decimal (6.8)
   if (pUnit === "bar") return value * 0.0689476;
   if (pUnit === "kpa") return value * 6.89476;
   return value;
@@ -314,12 +316,18 @@ function digitText(value) {
 // LED scale maximum and overboost warning: a slider value above 0 wins; 0 means automatic, taken from
 // the turbo's wastegate limit (red LEDs then start just above it); with no turbo data, fixed defaults.
 var autoLimit = 0;       // wastegate limit in PSI from the car's jbeam data (0 = unknown)
+var autoRpm = 0;         // tachometer: the engine's maximum RPM from the game (0 = unknown)
 function effMax() {
+  if (cfg.source === "rpm") {                    // the last 3 of 24 LEDs (the red ones) are past the rev limit
+    if (cfg.maxValue > 0) return cfg.maxValue;
+    return Math.round((autoRpm > 0 ? Math.max(3000, autoRpm) : 7000) * cfg.ledCount / (cfg.ledCount - cfg.warnLeds) / 100) * 100;
+  }
   if (cfg.source !== "boost") return cfg.maxValue;
   if (cfg.maxValue > 0) return cfg.maxValue;
   return autoLimit > 0 ? Math.max(8, Math.round(autoLimit * 1.25 * 2) / 2) : 30;
 }
 function effWarn() {
+  if (cfg.source === "rpm") return cfg.warnValue > 0 ? cfg.warnValue : 1e9;   // the shift light is the tachometer's warning
   if (cfg.source !== "boost") return cfg.warnValue;
   if (cfg.warnValue > 0) return cfg.warnValue;
   return autoLimit > 0 ? Math.max(autoLimit * 1.1, autoLimit + 2) : 26;
@@ -492,6 +500,10 @@ function setup(config) {
   } else if (cfg.source === "fuel") {
     cfg.decimals = 0;
     cfg.unitLabel = "%";
+  } else if (cfg.source === "rpm") {
+    cfg.decimals = 1;
+    cfg.unitLabel = "x1000";
+    if (!config || config.warnValue === undefined || config.warnValue === null) cfg.warnValue = 0;   // no digit flash unless set
   } else {
     var u = String(cfg.unit || "auto").toLowerCase();
     if (u === "auto") u = String((config && config.uiUnitPressure) || "psi").toLowerCase();
@@ -500,6 +512,7 @@ function setup(config) {
     cfg.unitLabel = pUnit === "bar" ? "BAR" : (pUnit === "kpa" ? "kPa" : "PSI");
   }
   if (cfg.nightBrightness > 1) cfg.nightBrightness = cfg.nightBrightness / 100;   // tuning slider is in percent
+  if (cfg.shiftAt > 1) cfg.shiftAt = cfg.shiftAt / 100;
   buildLayers();
   lastKey = "";
   render();
@@ -515,7 +528,11 @@ function updateData(data) {
                 (e.rpm !== undefined && e.rpm !== null && Number(e.rpm) < 50);
   if (stopped) target = 0;
   var rpm = Number(e.rpm) || 0, maxRpm = Number(e.maxrpm) || 0;
-  shifting = cfg.source === "boost" && cfg.shiftLight > 0 && !stopped && maxRpm > 0 && rpm >= maxRpm * cfg.shiftAt;
+  shifting = (cfg.source === "boost" || cfg.source === "rpm") && cfg.shiftLight > 0 && !stopped && maxRpm > 0 && rpm >= maxRpm * cfg.shiftAt;
+  if (cfg.source === "rpm") {
+    target = stopped ? 0 : rpm;
+    if (maxRpm !== autoRpm) { autoRpm = maxRpm; lastKey = ""; }
+  }
   if (cfg.source === "oiltemp") target = Number(e.oiltemp) || 0;
   if (cfg.source === "watertemp") target = Number(e.watertemp) || 0;
   if (cfg.source === "egt") {

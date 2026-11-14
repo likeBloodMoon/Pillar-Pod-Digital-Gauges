@@ -32,6 +32,8 @@ GAUGES = [
     ("gauge_oil_f_silver", "oil", "white", {"source": "oiltemp", "decimals": 0, "minValue": 50, "maxValue": 150, "titleLabel": "OIL TEMP", "warnValue": 130, "uiUnitTemperature": "f"}),
     ("gauge_coolant", "oil", "black", {"source": "watertemp", "decimals": 0, "minValue": 40, "maxValue": 130, "titleLabel": "COOLANT", "warnValue": 110}),
     ("gauge_egt_f", "egt", "black", {"source": "egt", "decimals": 0, "minValue": 200, "maxValue": 1000, "titleLabel": "EGT", "warnValue": 900, "printedDigits": 0, "uiUnitTemperature": "f"}),
+    ("gauge_tach", "oil", "black", {"source": "rpm", "minValue": 0, "maxValue": 0, "titleLabel": "RPM", "shiftLight": 1, "shiftAt": 96, "peakHold": 1.5}),
+    ("gauge_tach_silver", "oil", "white", {"source": "rpm", "minValue": 0, "maxValue": 0, "titleLabel": "RPM", "shiftLight": 1, "shiftAt": 96, "peakHold": 1.5}),
     ("gauge_fuel", "fuel", "black", {"source": "fuel", "minValue": 0, "maxValue": 100, "warnLow": 1, "titleLabel": "FUEL", "warnValue": 10}),
 ]
 MFD_PAGES = ["boost", "tyres", "engine", "brakes", "gforce"]
