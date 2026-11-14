@@ -46,6 +46,11 @@ the **Lower Gauge** and **Upper Gauge** positions. Each position can hold any ga
 | Fuel level | Fuel left, with a low-fuel warning |
 | Tachometer | Engine speed in thousands (6.8 = 6800 rpm), scaled to the engine's rev limit, with a shift light |
 
+Under the label, a blue **PEAK** light comes on for a moment whenever the reading sets a new high
+for the drive (in the top part of the scale), and a red **WARN** light stays on while it's past the
+warning limit: overboost, overheating, low fuel, or the shift point on the tachometer. The fuel gauge
+has only WARN.
+
 Every gauge comes as **Automatic Mounting**, in black or in silver with a white face. It finds its
 own place: on the A-pillar trim, on the bare pillar of a stripped or race interior, or on the roll
 cage bar, for left- or right-hand drive.

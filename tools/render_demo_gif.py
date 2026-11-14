@@ -109,7 +109,7 @@ async def render(root, out_path):
                 tt = t + k / (FPS * sub)
                 for pg, _ in tabs:
                     await pg.evaluate("([d, ms]) => { window.__t = ms; updateData(d); }", [state(tt), 1000 + tt * 1000])
-            row = Image.new("RGB", (SIZE * 2 + GAP * 3, SIZE + GAP * 2), BG)
+            row = Image.new("RGB", (SIZE * len(tabs) + GAP * (len(tabs) + 1), SIZE + GAP * 2), BG)
             for j, (pg, printed) in enumerate(tabs):
                 shot = await pg.screenshot(type="png")
                 emissive = Image.open(io.BytesIO(shot)).convert("RGB")
