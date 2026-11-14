@@ -501,7 +501,7 @@
             "displayHeight":512,
             "source":"egt",
             "decimals":0,
-            //LED arc range in deg C (the digits follow the game's temperature unit setting; in deg F they read in hundreds)
+            //LED arc range in deg C (the digits follow the game's temperature unit setting; deg F uses four digits)
             "minValue":200,
             "maxValue":1000,
             "titleLabel":"EGT",
@@ -509,6 +509,8 @@
             "warnValue":"$dbg_egt_warn",
             "peakHold":0,
             "nightBrightness":"$dbg_egt_night",
+            //the EGT face has no printed digits: the page draws a 3-digit (deg C) or 4-digit (deg F) window itself
+            "printedDigits":0,
             "face":"black",
         },
         "displayData": {
@@ -530,16 +532,16 @@
         //meshes for every mounting (GHIJ); dbgAmbient.lua hides all but the one matching the car's interior
         ["dbgvG1pod", ["bx_body"],[],{"pos":{"x":0.5837,"y":-0.1443,"z":1.0671},"rot":{"x":0,"y":0,"z":24.7}}],
         ["dbgvG1bzk", ["bx_body"],[],{"pos":{"x":0.5837,"y":-0.1443,"z":1.0671},"rot":{"x":0,"y":0,"z":24.7}}],
-        ["dbgvG1stk", ["bx_body"],[],{"pos":{"x":0.5837,"y":-0.1443,"z":1.0671},"rot":{"x":0,"y":0,"z":24.7}}],
+        ["dbgvG1sek", ["bx_body"],[],{"pos":{"x":0.5837,"y":-0.1443,"z":1.0671},"rot":{"x":0,"y":0,"z":24.7}}],
         ["dbgvH1pod", ["bx_body"],[],{"pos":{"x":0.4943,"y":-0.0537,"z":1.0857},"rot":{"x":0,"y":0,"z":19.6}}],
         ["dbgvH1bzk", ["bx_body"],[],{"pos":{"x":0.4943,"y":-0.0537,"z":1.0857},"rot":{"x":0,"y":0,"z":19.6}}],
-        ["dbgvH1stk", ["bx_body"],[],{"pos":{"x":0.4943,"y":-0.0537,"z":1.0857},"rot":{"x":0,"y":0,"z":19.6}}],
+        ["dbgvH1sek", ["bx_body"],[],{"pos":{"x":0.4943,"y":-0.0537,"z":1.0857},"rot":{"x":0,"y":0,"z":19.6}}],
         ["dbgvI1pod", ["bx_body"],[],{"pos":{"x":-0.5837,"y":-0.1443,"z":1.0671},"rot":{"x":0,"y":0,"z":-24.7}}],
         ["dbgvI1bzk", ["bx_body"],[],{"pos":{"x":-0.5837,"y":-0.1443,"z":1.0671},"rot":{"x":0,"y":0,"z":-24.7}}],
-        ["dbgvI1stk", ["bx_body"],[],{"pos":{"x":-0.5837,"y":-0.1443,"z":1.0671},"rot":{"x":0,"y":0,"z":-24.7}}],
+        ["dbgvI1sek", ["bx_body"],[],{"pos":{"x":-0.5837,"y":-0.1443,"z":1.0671},"rot":{"x":0,"y":0,"z":-24.7}}],
         ["dbgvJ1pod", ["bx_body"],[],{"pos":{"x":-0.4943,"y":-0.0537,"z":1.0857},"rot":{"x":0,"y":0,"z":-19.6}}],
         ["dbgvJ1bzk", ["bx_body"],[],{"pos":{"x":-0.4943,"y":-0.0537,"z":1.0857},"rot":{"x":0,"y":0,"z":-19.6}}],
-        ["dbgvJ1stk", ["bx_body"],[],{"pos":{"x":-0.4943,"y":-0.0537,"z":1.0857},"rot":{"x":0,"y":0,"z":-19.6}}],
+        ["dbgvJ1sek", ["bx_body"],[],{"pos":{"x":-0.4943,"y":-0.0537,"z":1.0857},"rot":{"x":0,"y":0,"z":-19.6}}],
     ],
 },
 "bx_dbg_boost_egt_auto_silver": {
@@ -567,7 +569,7 @@
             "displayHeight":512,
             "source":"egt",
             "decimals":0,
-            //LED arc range in deg C (the digits follow the game's temperature unit setting; in deg F they read in hundreds)
+            //LED arc range in deg C (the digits follow the game's temperature unit setting; deg F uses four digits)
             "minValue":200,
             "maxValue":1000,
             "titleLabel":"EGT",
@@ -575,6 +577,8 @@
             "warnValue":"$dbg_egt_warn",
             "peakHold":0,
             "nightBrightness":"$dbg_egt_night",
+            //the EGT face has no printed digits: the page draws a 3-digit (deg C) or 4-digit (deg F) window itself
+            "printedDigits":0,
             "face":"white",
         },
         "displayData": {
@@ -596,16 +600,16 @@
         //meshes for every mounting (GHIJ); dbgAmbient.lua hides all but the one matching the car's interior
         ["dbgvG1pod", ["bx_body"],[],{"pos":{"x":0.5837,"y":-0.1443,"z":1.0671},"rot":{"x":0,"y":0,"z":24.7}}],
         ["dbgvG1bzs", ["bx_body"],[],{"pos":{"x":0.5837,"y":-0.1443,"z":1.0671},"rot":{"x":0,"y":0,"z":24.7}}],
-        ["dbgvG1sts", ["bx_body"],[],{"pos":{"x":0.5837,"y":-0.1443,"z":1.0671},"rot":{"x":0,"y":0,"z":24.7}}],
+        ["dbgvG1ses", ["bx_body"],[],{"pos":{"x":0.5837,"y":-0.1443,"z":1.0671},"rot":{"x":0,"y":0,"z":24.7}}],
         ["dbgvH1pod", ["bx_body"],[],{"pos":{"x":0.4943,"y":-0.0537,"z":1.0857},"rot":{"x":0,"y":0,"z":19.6}}],
         ["dbgvH1bzs", ["bx_body"],[],{"pos":{"x":0.4943,"y":-0.0537,"z":1.0857},"rot":{"x":0,"y":0,"z":19.6}}],
-        ["dbgvH1sts", ["bx_body"],[],{"pos":{"x":0.4943,"y":-0.0537,"z":1.0857},"rot":{"x":0,"y":0,"z":19.6}}],
+        ["dbgvH1ses", ["bx_body"],[],{"pos":{"x":0.4943,"y":-0.0537,"z":1.0857},"rot":{"x":0,"y":0,"z":19.6}}],
         ["dbgvI1pod", ["bx_body"],[],{"pos":{"x":-0.5837,"y":-0.1443,"z":1.0671},"rot":{"x":0,"y":0,"z":-24.7}}],
         ["dbgvI1bzs", ["bx_body"],[],{"pos":{"x":-0.5837,"y":-0.1443,"z":1.0671},"rot":{"x":0,"y":0,"z":-24.7}}],
-        ["dbgvI1sts", ["bx_body"],[],{"pos":{"x":-0.5837,"y":-0.1443,"z":1.0671},"rot":{"x":0,"y":0,"z":-24.7}}],
+        ["dbgvI1ses", ["bx_body"],[],{"pos":{"x":-0.5837,"y":-0.1443,"z":1.0671},"rot":{"x":0,"y":0,"z":-24.7}}],
         ["dbgvJ1pod", ["bx_body"],[],{"pos":{"x":-0.4943,"y":-0.0537,"z":1.0857},"rot":{"x":0,"y":0,"z":-19.6}}],
         ["dbgvJ1bzs", ["bx_body"],[],{"pos":{"x":-0.4943,"y":-0.0537,"z":1.0857},"rot":{"x":0,"y":0,"z":-19.6}}],
-        ["dbgvJ1sts", ["bx_body"],[],{"pos":{"x":-0.4943,"y":-0.0537,"z":1.0857},"rot":{"x":0,"y":0,"z":-19.6}}],
+        ["dbgvJ1ses", ["bx_body"],[],{"pos":{"x":-0.4943,"y":-0.0537,"z":1.0857},"rot":{"x":0,"y":0,"z":-19.6}}],
     ],
 },
 "bx_dbg_boost_fuel_auto": {
@@ -1663,7 +1667,7 @@
             "displayHeight":512,
             "source":"egt",
             "decimals":0,
-            //LED arc range in deg C (the digits follow the game's temperature unit setting; in deg F they read in hundreds)
+            //LED arc range in deg C (the digits follow the game's temperature unit setting; deg F uses four digits)
             "minValue":200,
             "maxValue":1000,
             "titleLabel":"EGT",
@@ -1671,6 +1675,8 @@
             "warnValue":"$dbg_egt_warn",
             "peakHold":0,
             "nightBrightness":"$dbg_egt_night",
+            //the EGT face has no printed digits: the page draws a 3-digit (deg C) or 4-digit (deg F) window itself
+            "printedDigits":0,
             "face":"black",
         },
         "displayData": {
@@ -1692,16 +1698,16 @@
         //meshes for every mounting (GHIJ); dbgAmbient.lua hides all but the one matching the car's interior
         ["dbgvG2pod", ["bx_body"],[],{"pos":{"x":0.5502,"y":-0.0285,"z":1.1255},"rot":{"x":0,"y":0,"z":26.9}}],
         ["dbgvG2bzk", ["bx_body"],[],{"pos":{"x":0.5502,"y":-0.0285,"z":1.1255},"rot":{"x":0,"y":0,"z":26.9}}],
-        ["dbgvG2stk", ["bx_body"],[],{"pos":{"x":0.5502,"y":-0.0285,"z":1.1255},"rot":{"x":0,"y":0,"z":26.9}}],
+        ["dbgvG2sek", ["bx_body"],[],{"pos":{"x":0.5502,"y":-0.0285,"z":1.1255},"rot":{"x":0,"y":0,"z":26.9}}],
         ["dbgvH2pod", ["bx_body"],[],{"pos":{"x":0.463,"y":0.051,"z":1.1297},"rot":{"x":0,"y":0,"z":20.4}}],
         ["dbgvH2bzk", ["bx_body"],[],{"pos":{"x":0.463,"y":0.051,"z":1.1297},"rot":{"x":0,"y":0,"z":20.4}}],
-        ["dbgvH2stk", ["bx_body"],[],{"pos":{"x":0.463,"y":0.051,"z":1.1297},"rot":{"x":0,"y":0,"z":20.4}}],
+        ["dbgvH2sek", ["bx_body"],[],{"pos":{"x":0.463,"y":0.051,"z":1.1297},"rot":{"x":0,"y":0,"z":20.4}}],
         ["dbgvI2pod", ["bx_body"],[],{"pos":{"x":-0.5502,"y":-0.0285,"z":1.1255},"rot":{"x":0,"y":0,"z":-26.9}}],
         ["dbgvI2bzk", ["bx_body"],[],{"pos":{"x":-0.5502,"y":-0.0285,"z":1.1255},"rot":{"x":0,"y":0,"z":-26.9}}],
-        ["dbgvI2stk", ["bx_body"],[],{"pos":{"x":-0.5502,"y":-0.0285,"z":1.1255},"rot":{"x":0,"y":0,"z":-26.9}}],
+        ["dbgvI2sek", ["bx_body"],[],{"pos":{"x":-0.5502,"y":-0.0285,"z":1.1255},"rot":{"x":0,"y":0,"z":-26.9}}],
         ["dbgvJ2pod", ["bx_body"],[],{"pos":{"x":-0.463,"y":0.051,"z":1.1297},"rot":{"x":0,"y":0,"z":-20.4}}],
         ["dbgvJ2bzk", ["bx_body"],[],{"pos":{"x":-0.463,"y":0.051,"z":1.1297},"rot":{"x":0,"y":0,"z":-20.4}}],
-        ["dbgvJ2stk", ["bx_body"],[],{"pos":{"x":-0.463,"y":0.051,"z":1.1297},"rot":{"x":0,"y":0,"z":-20.4}}],
+        ["dbgvJ2sek", ["bx_body"],[],{"pos":{"x":-0.463,"y":0.051,"z":1.1297},"rot":{"x":0,"y":0,"z":-20.4}}],
     ],
 },
 "bx_dbg_oil_egt_auto_silver": {
@@ -1729,7 +1735,7 @@
             "displayHeight":512,
             "source":"egt",
             "decimals":0,
-            //LED arc range in deg C (the digits follow the game's temperature unit setting; in deg F they read in hundreds)
+            //LED arc range in deg C (the digits follow the game's temperature unit setting; deg F uses four digits)
             "minValue":200,
             "maxValue":1000,
             "titleLabel":"EGT",
@@ -1737,6 +1743,8 @@
             "warnValue":"$dbg_egt_warn",
             "peakHold":0,
             "nightBrightness":"$dbg_egt_night",
+            //the EGT face has no printed digits: the page draws a 3-digit (deg C) or 4-digit (deg F) window itself
+            "printedDigits":0,
             "face":"white",
         },
         "displayData": {
@@ -1758,16 +1766,16 @@
         //meshes for every mounting (GHIJ); dbgAmbient.lua hides all but the one matching the car's interior
         ["dbgvG2pod", ["bx_body"],[],{"pos":{"x":0.5502,"y":-0.0285,"z":1.1255},"rot":{"x":0,"y":0,"z":26.9}}],
         ["dbgvG2bzs", ["bx_body"],[],{"pos":{"x":0.5502,"y":-0.0285,"z":1.1255},"rot":{"x":0,"y":0,"z":26.9}}],
-        ["dbgvG2sts", ["bx_body"],[],{"pos":{"x":0.5502,"y":-0.0285,"z":1.1255},"rot":{"x":0,"y":0,"z":26.9}}],
+        ["dbgvG2ses", ["bx_body"],[],{"pos":{"x":0.5502,"y":-0.0285,"z":1.1255},"rot":{"x":0,"y":0,"z":26.9}}],
         ["dbgvH2pod", ["bx_body"],[],{"pos":{"x":0.463,"y":0.051,"z":1.1297},"rot":{"x":0,"y":0,"z":20.4}}],
         ["dbgvH2bzs", ["bx_body"],[],{"pos":{"x":0.463,"y":0.051,"z":1.1297},"rot":{"x":0,"y":0,"z":20.4}}],
-        ["dbgvH2sts", ["bx_body"],[],{"pos":{"x":0.463,"y":0.051,"z":1.1297},"rot":{"x":0,"y":0,"z":20.4}}],
+        ["dbgvH2ses", ["bx_body"],[],{"pos":{"x":0.463,"y":0.051,"z":1.1297},"rot":{"x":0,"y":0,"z":20.4}}],
         ["dbgvI2pod", ["bx_body"],[],{"pos":{"x":-0.5502,"y":-0.0285,"z":1.1255},"rot":{"x":0,"y":0,"z":-26.9}}],
         ["dbgvI2bzs", ["bx_body"],[],{"pos":{"x":-0.5502,"y":-0.0285,"z":1.1255},"rot":{"x":0,"y":0,"z":-26.9}}],
-        ["dbgvI2sts", ["bx_body"],[],{"pos":{"x":-0.5502,"y":-0.0285,"z":1.1255},"rot":{"x":0,"y":0,"z":-26.9}}],
+        ["dbgvI2ses", ["bx_body"],[],{"pos":{"x":-0.5502,"y":-0.0285,"z":1.1255},"rot":{"x":0,"y":0,"z":-26.9}}],
         ["dbgvJ2pod", ["bx_body"],[],{"pos":{"x":-0.463,"y":0.051,"z":1.1297},"rot":{"x":0,"y":0,"z":-20.4}}],
         ["dbgvJ2bzs", ["bx_body"],[],{"pos":{"x":-0.463,"y":0.051,"z":1.1297},"rot":{"x":0,"y":0,"z":-20.4}}],
-        ["dbgvJ2sts", ["bx_body"],[],{"pos":{"x":-0.463,"y":0.051,"z":1.1297},"rot":{"x":0,"y":0,"z":-20.4}}],
+        ["dbgvJ2ses", ["bx_body"],[],{"pos":{"x":-0.463,"y":0.051,"z":1.1297},"rot":{"x":0,"y":0,"z":-20.4}}],
     ],
 },
 "bx_dbg_oil_fuel_auto": {

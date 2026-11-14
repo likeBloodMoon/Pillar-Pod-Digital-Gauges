@@ -97,14 +97,16 @@ WATER_CFG='''            "source":"watertemp",
             "nightBrightness":"$dbg_water_night",'''
 EGT_CFG='''            "source":"egt",
             "decimals":0,
-            //LED arc range in deg C (the digits follow the game's temperature unit setting; in deg F they read in hundreds)
+            //LED arc range in deg C (the digits follow the game's temperature unit setting; deg F uses four digits)
             "minValue":200,
             "maxValue":1000,
             "titleLabel":"EGT",
             //digits flash at or above this temperature (deg C)
             "warnValue":"$dbg_egt_warn",
             "peakHold":0,
-            "nightBrightness":"$dbg_egt_night",'''
+            "nightBrightness":"$dbg_egt_night",
+            //the EGT face has no printed digits: the page draws a 3-digit (deg C) or 4-digit (deg F) window itself
+            "printedDigits":0,'''
 FUEL_CFG='''            "source":"fuel",
             //tank level in percent
             "minValue":0,
@@ -200,12 +202,12 @@ def part(key,name,slot,gvars,ctrl,cfgf,el,fb):
 }},
 '''
 LIGHT=["ignitionLevel","lights","lowhighbeam"]
-# gauge types: (key, name, config, sliders, electrics, printed face b/t/f)
+# gauge types: (key, name, config, sliders, electrics, printed face b/t/f/e)
 TYPES={"boost":("Boost",BOOST_CFG,BOOST_VARS,["turboBoost","superchargerBoost","engineRunning","rpm","maxrpm"]+LIGHT,"b"),
        "oil":("Oil Temp",OIL_CFG,OIL_VARS,["oiltemp"]+LIGHT,"t"),
        "water":("Coolant Temp",WATER_CFG,WATER_VARS,["watertemp"]+LIGHT,"t"),
        "fuel":("Fuel Level",FUEL_CFG,FUEL_VARS,["fuel"]+LIGHT,"f"),
-       "egt":("Exhaust Temp",EGT_CFG,EGT_VARS,LIGHT,"t")}
+       "egt":("Exhaust Temp",EGT_CFG,EGT_VARS,LIGHT,"e")}
 # positions: (slot, controller, screen material, fixed pod mesh, fixed screen mesh, its own gauge type, other types in list order)
 POSITIONS=((P+"_dbg_boost","dbgGauge","dbg_screen","dbg_pod","dbg_screen","boost",("oil","water","egt","fuel")),
            (P+"_dbg_oil","dbgOilGauge","dbg_oil_screen","dbg_pod2","dbg_oil_screen","oil",("water","egt","fuel","boost")))

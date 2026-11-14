@@ -50,7 +50,8 @@ mats=[("dbg_body","0.03 0.03 0.03"),("dbg_bezel","0.01 0.01 0.01"),("dbg_screen"
 # screens with the other printed faces, for any gauge type in either position (automatic mounting only)
 mats+=[("dbg_mfd_screen","0.02 0.02 0.025"),("dbg_mfd_frame","0.025 0.025 0.028"),("dbg_cluster_screen","0.02 0.02 0.025")]   # display, cluster
 mats+=[(m,"0.05 0.05 0.05" if not m.endswith("_w") else "0.8 0.8 0.8") for m in
-       ("dbg_screen_t","dbg_screen_t_w","dbg_screen_f","dbg_screen_f_w","dbg_oil_screen_b","dbg_oil_screen_b_w","dbg_oil_screen_f","dbg_oil_screen_f_w")]
+       ("dbg_screen_t","dbg_screen_t_w","dbg_screen_f","dbg_screen_f_w","dbg_oil_screen_b","dbg_oil_screen_b_w","dbg_oil_screen_f","dbg_oil_screen_f_w",
+        "dbg_screen_e","dbg_screen_e_w","dbg_oil_screen_e","dbg_oil_screen_e_w")]
 eff="".join(f'''    <effect id="{m}-effect"><profile_COMMON><technique sid="common"><lambert>
       <emission><color sid="emission">0 0 0 1</color></emission><diffuse><color sid="diffuse">{c} 1</color></diffuse>
       <index_of_refraction><float sid="ior">1.45</float></index_of_refraction></lambert></technique></profile_COMMON></effect>\n''' for m,c in mats)
@@ -77,7 +78,7 @@ for n in names:
 # mod's script can show one set and hide the rest. Names are all 9 characters and none is a
 # substring of another: dbgv + mounting (A-J) + position (1 lower, 2 upper) + one of
 #   pod, bzk / bzs (black / silver bezel),
-#   s + printed face (b boost, t temperature, f fuel) + k / s (black face / white face of the silver version)
+#   s + printed face (b boost, t temperature, f fuel, e exhaust temperature) + k / s (black face / white face of the silver version)
 AUTO=(("A","std",False,0.8,"std"),("B","stripped",False,0.8,"std"),("C","cage",False,0.65,"cage"),          # Covet
       ("D","std",True,0.8,"std"),("E","stripped",True,0.8,"std"),("F","cage",True,0.65,"cage"),
       ("G","bx_std",False,0.8,"std"),("H","bx_cage",False,0.65,"cage"),                                   # 200BX
@@ -85,8 +86,8 @@ AUTO=(("A","std",False,0.8,"std"),("B","stripped",False,0.8,"std"),("C","cage",F
 for code,var,rhd,sc,gsrc in AUTO:
     g=D[gsrc]['gauge']
     # screen material per position and printed face: (black, silver-version white)
-    SCREENS=({"b":("dbg_screen","dbg_screen_w"),"t":("dbg_screen_t","dbg_screen_t_w"),"f":("dbg_screen_f","dbg_screen_f_w")},
-             {"b":("dbg_oil_screen_b","dbg_oil_screen_b_w"),"t":("dbg_oil_screen","dbg_oil_screen_w"),"f":("dbg_oil_screen_f","dbg_oil_screen_f_w")})
+    SCREENS=({"b":("dbg_screen","dbg_screen_w"),"t":("dbg_screen_t","dbg_screen_t_w"),"f":("dbg_screen_f","dbg_screen_f_w"),"e":("dbg_screen_e","dbg_screen_e_w")},
+             {"b":("dbg_oil_screen_b","dbg_oil_screen_b_w"),"t":("dbg_oil_screen","dbg_oil_screen_w"),"f":("dbg_oil_screen_f","dbg_oil_screen_f_w"),"e":("dbg_oil_screen_e","dbg_oil_screen_e_w")})
     for gi,suffix in enumerate(("","_2"),1):
         pod=D[var+suffix]['pod']
         if rhd: pod=mirror(pod)
