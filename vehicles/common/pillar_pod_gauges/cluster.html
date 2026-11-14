@@ -415,7 +415,9 @@ function tick() {
   quietT = Math.max(0, quietT - dt);
   if (powered && !wasPowered) { bootT = 0; clock = 0; boostPeak = 0; gPeak = { lat: 0, lon: 0 }; nominal = {}; gTrail = []; }
   wasPowered = powered;
-  if (bootT >= 0) { bootT += dt; if (bootT > 1.6) bootT = -1; }
+  // the start-up splash only advances while powered: a shut-down fade that starts during it fades
+  // the splash itself instead of jumping to the live screen mid-fade
+  if (bootT >= 0 && powered) { bootT += dt; if (bootT > 1.6) bootT = -1; }
   clock += dt;
   data.e = ease(data.e, raw.e, "", dt);
   data.m = ease(data.m, raw.m, "", dt);
