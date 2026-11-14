@@ -17,7 +17,7 @@ from PIL import Image, ImageDraw
 car, cabin_file, parts_dir, out_dir = sys.argv[1:5]
 os.makedirs(out_dir, exist_ok=True)
 cab = np.load(cabin_file, allow_pickle=True).item()
-EYES = {'covet': (0.340, 0.176, 1.079), 'bx': (0.34, 0.419, 1.019)}
+EYES = {'covet': (0.340, 0.176, 1.079), 'bx': (0.349, 0.266, 1.049)}   # default driver cameras, measured in game
 eye_l = np.array([float(v) for v in sys.argv[5].split(',')] if len(sys.argv) > 5 else EYES[car])
 
 GREY = (0.62, 0.62, 0.64)
@@ -33,7 +33,7 @@ RHD_NAME = {'covet_door_L': 'covet_door_R', 'covet_doorpanel_L': 'covet_doorpane
             'covet_sunvisor_L': 'covet_sunvisor_R', 'covet_dash': 'covet_dash_rhd', 'covet_dash_rally': 'covet_dash_rhd_rally',
             'covet_doorglass_L_int': 'covet_doorglass_R_int', 'covet_grp_dash_lhd': 'covet_grp_dash_rhd',
             'bx_door_L': 'bx_door_R', 'bx_doorpanel_L': 'bx_doorpanel_R', 'bx_sunvisor_L': 'bx_sunvisor_R', 'bx_dash': 'bx_dash_rhd',
-            'bx_dash_rally': 'bx_dash_rhd_rally', 'bx_mirror_int_lhd': 'bx_mirror_int_rhd', 'bx_grp_dash': 'bx_grp_dash_rhd'}
+            'bx_dash_rally': 'bx_dash_rhd_rally', 'bx_mirror_int_lhd': 'bx_mirror_int_rhd', 'bx_grp_dash': 'bx_grp_dash_rhd', 'bx_steer': 'bx_steer_rhd'}
 CB = ['covet_body', 'covet_door_L', 'covet_doorpanel_L', 'covet_door_grp_doorpanel_L', 'covet_sunvisor_L', 'covet_grp_dash_lhd']
 BB = ['bx_body_hatch', 'bx_door_L', 'bx_doorpanel_L', 'bx_sunvisor_L', 'bx_sunvisor_mounts', 'bx_mirror_int_lhd', 'bx_intpanels_hatch', 'bx_grp_dash']
 # mounting -> interior meshes (LHD names), gauges [(centre, yaw, parts file, scale)], display (centre, yaw, mfd file) or None
@@ -44,8 +44,8 @@ MOUNTS = {
         'cage': (CB + ['covet_dash_rally', 'covet_stripped_int_F', 'covet_rollcage_F'], [((0.5175, -0.2189, 1.0961), 23.8, 'cage', 0.65), ((0.4972, -0.1483, 1.1426), 25.2, 'cage_2', 0.65)], ((0.5165, -0.1981, 1.0992), 24.8, 'cage')),
     },
     'bx': {
-        'pillar': (BB + ['bx_dash', 'bx_intcarpet_hatch'], [((0.5837, -0.1443, 1.0671), 24.7, 'bx_std', 0.8), ((0.5502, -0.0285, 1.1255), 26.9, 'bx_std_2', 0.8)], None),
-        'cage': (BB + ['bx_dash_rally', 'bx_rollcage'], [((0.4943, -0.0537, 1.0857), 19.6, 'bx_cage', 0.65), ((0.4630, 0.0510, 1.1297), 20.4, 'bx_cage_2', 0.65)], None),
+        'pillar': (BB + ['bx_dash', 'bx_intcarpet_hatch', 'bx_steer'], [((0.6081, -0.2417, 1.0150), 27.0, 'bx_std', 0.8), ((0.5753, -0.1308, 1.0769), 29.7, 'bx_std_2', 0.8)], None),
+        'cage': (BB + ['bx_dash_rally', 'bx_rollcage', 'bx_steer'], [((0.5245, -0.1621, 1.0259), 22.3, 'bx_cage', 0.65), ((0.4943, -0.0712, 1.0781), 23.3, 'bx_cage_2', 0.65)], None),
     }}
 if len(sys.argv) > 6:          # positions to try instead of the ones above: mounting=x,y,z,yaw;x,y,z,yaw
     for spec in sys.argv[6:]:
@@ -138,7 +138,9 @@ def save(name, build):
         m, c = build(rhd)
         img.paste(row(m, c, rhd), (0, 30 + i * 400))
     d.text((8, 8), '%s - %s    top: left-hand drive (LHD meshes)   bottom: right-hand drive (RHD meshes, flipped to line up)' % (car, name), fill=(0, 0, 0))
-    path = os.path.join(out_dir, '%s_%s.png' % (car, name)); img.save(path); print(path)
+    tag = os.environ.get('FIT_TAG', '')
+    if tag: d.text((1100, 8), tag.upper(), fill=(200, 0, 0))
+    path = os.path.join(out_dir, '%s_%s%s.png' % (car, name, ('_' + tag) if tag else '')); img.save(path); print(path)
 
 for key in MOUNTS[car]:
     save(key, lambda rhd, k=key: scene(k, rhd))
