@@ -37,6 +37,5 @@ Fixes and polish. No new gauges, cars or parts.
 
 - Boost and oil temperature gauges on A-pillar pods for the Ibishu Covet.
 - Automatic mounting for every Covet interior (pillar trim, bare pillar of stripped / race / rally
-  interiors, roll cage), left- and right-hand
-  drive, in black or silver.
+  interiors, roll cage), left- and right-hand drive, in black or silver.
 - Shift light on the boost gauge and a cold mark on the oil temperature gauge.
