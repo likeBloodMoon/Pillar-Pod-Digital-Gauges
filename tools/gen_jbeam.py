@@ -12,9 +12,6 @@ CARS={
   POS={"std":(((0.5749,-0.3246,1.0758),24.8),((0.5397,-0.2291,1.1372),25.7)),
        "stripped":(((0.5823,-0.3407,1.0756),24.8),((0.5473,-0.2448,1.1393),25.7)),
        "cage":(((0.5175,-0.2189,1.0961),23.8),((0.4972,-0.1483,1.1426),25.2))},
-  SIZE={"std":"80","stripped":"80","cage":"65"},
-  NAMES={"std":"A-Pillar, Standard Interior","stripped":"A-Pillar, Stripped / Race / Rally Interior","cage":"Roll Cage Bar"},
-  MESH={"std":"std","stripped":"stripped","cage":"cage"},
   AUTO=(("A","std",1),("B","stripped",1),("C","cage",1),("D","std",-1),("E","stripped",-1),("F","cage",-1)),
   # multi-function display: screen centre, yaw and scale per mounting (tools/find_mfd_position.py),
   # and the body nodes the page button's click trigger hangs from, per side
@@ -36,15 +33,12 @@ CARS={
   # in game: the bezels look the same size from the seat as the Covet's (1.2.1; they were 15-45 % bigger)
   POS={"pillar":(((0.6081,-0.2417,1.0150),27.0),((0.5753,-0.1308,1.0769),29.7)),
        "cage":(((0.5245,-0.1621,1.0259),22.3),((0.4943,-0.0712,1.0781),23.3))},
-  SIZE={"pillar":"80","cage":"65"},
-  NAMES={"pillar":"A-Pillar, Any Interior","cage":"Roll Cage Bar"},
-  MESH={"pillar":"bx_pillar","cage":"bx_cage"},
   AUTO=(("G","pillar",1),("H","cage",1),("I","pillar",-1),("J","cage",-1))),
 }
 ap=argparse.ArgumentParser(description="Generate a car's part file")
 ap.add_argument("out"); ap.add_argument("--car",default="covet",choices=sorted(CARS))
 args=ap.parse_args(); CAR=CARS[args.car]
-POS,SIZE,NAMES,MESH=CAR["POS"],CAR["SIZE"],CAR["NAMES"],CAR["MESH"]
+POS=CAR["POS"]
 P=args.car; GROUP=CAR["group"]
 HEAD_CFG='''            "materialName": "@{mat}",
             "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
@@ -142,9 +136,8 @@ out=f'''{{
 //  Additional Modification -> Digital Pillar Gauges
 //      Lower Gauge: boost (default), oil temp, coolant temp, exhaust temp, fuel level or tachometer
 //      Upper Gauge: empty (default), oil temp, coolant temp, exhaust temp, fuel level, tachometer or boost
-//Every gauge type comes with automatic mounting in black or silver: it picks the position that
-//matches the car's interior. Boost (lower) and oil temp (upper) are also offered in fixed mountings,
-//which always use the position they name.
+//Every gauge comes with automatic mounting, in black or silver: it picks the position that matches
+//the car's interior (pillar trim, bare pillar or roll cage, left- or right-hand drive).
 "{CAR["root"]}": {{
     "information":{{
         "authors":"Kristof",
@@ -234,17 +227,16 @@ TYPES={"boost":("Boost",BOOST_CFG,BOOST_VARS,["turboBoost","superchargerBoost","
        "egt":("Exhaust Temp",EGT_CFG,EGT_VARS,LIGHT,"e"),
        # the tachometer uses the temperature gauges' printed face: green LEDs, the last three red, three digits
        "tach":("Tachometer",TACH_CFG,TACH_VARS,["rpm","maxrpm","engineRunning"]+LIGHT,"t")}
-# positions: (slot, controller, screen material, fixed pod mesh, fixed screen mesh, its own gauge type, other types in list order)
-POSITIONS=((P+"_dbg_boost","dbgGauge","dbg_screen","dbg_pod","dbg_screen","boost",("oil","water","egt","fuel","tach")),
-           (P+"_dbg_oil","dbgOilGauge","dbg_oil_screen","dbg_pod2","dbg_oil_screen","oil",("water","egt","fuel","tach","boost")))
-FINS=(("black","","","dbg_gauge","","black"),("silver","_silver",", Silver","dbg_gauge_silver","_w","white"))
-SIDES=(("lhd",1,"","LHD"),("rhd",-1,"_rhd","RHD"))
+# positions: (slot, controller, screen material, its own gauge type, other types in list order)
+POSITIONS=((P+"_dbg_boost","dbgGauge","dbg_screen","boost",("oil","water","egt","fuel","tach")),
+           (P+"_dbg_oil","dbgOilGauge","dbg_oil_screen","oil",("water","egt","fuel","tach","boost")))
+FINS=(("black","","","black"),("silver","_silver",", Silver","white"))
 def auto_part(gi,slot,ctrl,mat,tkey,keyname):
     gname,tcfg,gvars,electrics,facecode=TYPES[tkey]
     el="\n".join('                "%s",'%e for e in electrics)
     global out
     # automatic mounting: every mounting's meshes are fitted; the mod's script shows the matching one
-    for fin,fkey,fname,bezel,scr_suffix,face in FINS:
+    for fin,fkey,fname,face in FINS:
         fb="        //meshes for every mounting (%s); dbgAmbient.lua"%"".join(c for c,_,_ in CAR["AUTO"])+" hides all but the one matching the car's interior\n"
         lines=[]
         for code,key,sx in CAR["AUTO"]:
@@ -255,22 +247,10 @@ def auto_part(gi,slot,ctrl,mat,tkey,keyname):
             lines+=['        ["%spod", ["%s"],[],%s],'%(base,GROUP,pr),'        ["%sbz%s", ["%s"],[],%s],'%(base,k,GROUP,pr),'        ["%ss%s%s", ["%s"],[],%s],'%(base,facecode,k,GROUP,pr)]
         cfgf=HEAD_CFG.format(mat=mat)+"\n"+tcfg+'\n            "face":"%s",'%face
         out+=part(f"{keyname}_auto{fkey}", f"{gname} - Automatic Mounting{fname}", slot, gvars, ctrl, cfgf, el, fb+"\n".join(lines))
-for gi,(slot,ctrl,mat,pod,screen,own,others) in enumerate(POSITIONS):
+for gi,(slot,ctrl,mat,own,others) in enumerate(POSITIONS):
     auto_part(gi,slot,ctrl,mat,own,slot)
     for tkey in others:
         auto_part(gi,slot,ctrl,mat,tkey,f"{slot}_{tkey}")
-    gname,tcfg,gvars,electrics,facecode=TYPES[own]
-    el="\n".join('                "%s",'%e for e in electrics)
-    for (fin,fkey,fname,bezel,scr_suffix,face),(side,sx,suffix,label) in [(f,s) for f in FINS for s in SIDES]:
-        for key in POS:
-            (x,y,z),yaw=POS[key][gi]
-            cfgf=HEAD_CFG.format(mat=mat)+"\n"+tcfg+'\n            "face":"%s",'%face
-            pr='{"pos":{"x":%g,"y":%g,"z":%g},"rot":{"x":0,"y":0,"z":%g}}'%(sx*x,y,z,sx*yaw)
-            fb=f'''        //pos = centre of the gauge face. The pod mesh is shaped for exactly this spot.
-        ["{pod}_{MESH[key]}{suffix}", ["{GROUP}"],[],{pr}],
-        ["{bezel}_{SIZE[key]}", ["{GROUP}"],[],{pr}],
-        ["{screen}{scr_suffix}_{SIZE[key]}", ["{GROUP}"],[],{pr}],'''
-            out+=part(f"{slot}_{key}_{side}{fkey}", f"{gname} - {NAMES[key]} ({label}){fname}", slot, gvars, ctrl, cfgf, el, fb)
 
 # multi-function display: a lower-gauge option with automatic mounting; the page button on its chin
 # is an in-cabin click trigger (one per mounting, since the mounting is only known in game) that runs

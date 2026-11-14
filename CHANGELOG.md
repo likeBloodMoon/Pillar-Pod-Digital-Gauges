@@ -8,6 +8,14 @@
   whole ring flashes red at the shift point. Tuning → Gauges has the shift light on/off, the RPM it
   starts at (96 % of the limit by default) and an optional fixed scale maximum.
 
+### Changed
+- **Only automatic mounting.** The fixed mountings (one part per interior, side and finish for the
+  Boost and Oil Temp gauges) are gone, since automatic mounting finds the same spots by itself. The
+  parts list is much shorter (30 parts instead of 54 on the Covet, 25 instead of 41 on the 200BX),
+  and the mod's mesh file is about a fifth smaller.
+  **If you saved a config with a fixed mounting**, that gauge is missing when you load it: pick the
+  gauge again with Automatic Mounting and save the config.
+
 ## 1.2.1
 
 Fixes and polish. No new gauges, cars or parts.
