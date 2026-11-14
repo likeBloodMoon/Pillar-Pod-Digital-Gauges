@@ -33,7 +33,7 @@ if (typeof beamng !== 'undefined') {
 // the next page.
 var W = 384, H = 512;
 var PAGES = ["Boost", "Tyres", "Engine", "Brakes", "G-Force"];
-var cfg = { startPage: 0, nightBrightness: 0.25, egtWarn: 900, oilWarn: 130, waterWarn: 110, lowFuel: 10 };
+var cfg = { startPage: 0, nightBrightness: 0.25, shutdownSweep: 1, egtWarn: 900, oilWarn: 130, waterWarn: 110, lowFuel: 10 };
 var units = { p: "bar", t: "c", metric: true, gal: false };
 var FONT = '"Barlow SC", "Arial Narrow", Arial, sans-serif';
 
@@ -44,6 +44,7 @@ var data = { e: {}, m: {} };
 var powered = true, lights = 0, ambient = 1, page = 0, pageCounter = null;
 var boostPeak = 0, gPeak = { lat: 0, lon: 0 }, gTrail = [], nominal = {};
 var last = 0, clock = 0, bootT = -1, wasPowered = false, boost = 0, runT = 0;
+var OFF_TIME = 0.8, offT = -1, onT = 0, resets = null, quietT = 0;   // shut-down fade (ignition switched off)
 
 // ---- colours, close to an automotive TFT: navy ground, white type, blue and red accents ----
 var C = { white: "#f4f6f8", grey: "#8d99a8", dim: "#3b4757", blue: "#2e7cf6", sky: "#7cc4ff", red: "#e8262d",
@@ -362,7 +363,14 @@ function footCell(x, align, name, v, unit) {                // label over value,
 }
 function render() {
   ctx.globalAlpha = 1; ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H);
-  if (!powered) return;
+  if (!powered && offT < 0) return;
+  draw();
+  if (!powered) {                                // shut-down: the last picture fades to black
+    var u = Math.min(1, offT / OFF_TIME);
+    ctx.globalAlpha = u * u * (3 - 2 * u); ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1;
+  }
+}
+function draw() {
   ctx.drawImage(bg, 0, 0);
   var e = data.e, m = data.m;
   if (bootT >= 0) {
@@ -449,9 +457,16 @@ function tick() {
   var now = (window.performance && performance.now) ? performance.now() : Date.now();
   var dt = lastT ? Math.min(0.1, (now - lastT) / 1000) : 0.016;
   lastT = now;
+  if (!powered && wasPowered && cfg.shutdownSweep > 0 && onT > 0.5 && quietT <= 0) offT = 0;
+  if (powered) offT = -1;
+  if (offT >= 0) { offT += dt; if (offT >= OFF_TIME) offT = -1; }
+  onT = powered ? onT + dt : 0;
+  quietT = Math.max(0, quietT - dt);
   if (powered && !wasPowered) { bootT = 0; clock = 0; boostPeak = 0; gPeak = { lat: 0, lon: 0 }; nominal = {}; gTrail = []; }
   wasPowered = powered;
-  if (bootT >= 0) { bootT += dt; if (bootT > 1.6) bootT = -1; }
+  // the start-up splash only advances while powered: a shut-down fade that starts during it fades
+  // the splash itself instead of jumping to the live screen mid-fade
+  if (bootT >= 0 && powered) { bootT += dt; if (bootT > 1.6) bootT = -1; }
   clock += dt;
   data.e = ease(data.e, raw.e, "", dt);
   data.m = ease(data.m, raw.m, "", dt);
@@ -484,6 +499,11 @@ function updateData(d) {
   raw.e = re;
   raw.m = { maxBoost: m.maxBoost, egt: m.egt, tp: mfd.tp, tt: mfd.tt, bt: mfd.bt, ws: mfd.ws, glat: mfd.glat, glon: mfd.glon,
             range: mfd.range, envT: mfd.envT };
+  var rm = (d && d.customModules) || {}; rm = rm.dbgCluster || rm.dbgAmbient || {};
+  if (typeof rm.resets === "number") {           // the car was reset: no shut-down fade
+    if (resets !== null && rm.resets !== resets) { quietT = 1; offT = -1; }
+    resets = rm.resets;
+  }
   var ign = e.ignitionLevel;
   powered = (ign === undefined || ign === null) ? true : (Number(ign) >= 1);
   var pc = Number(e.dbg_mfd_page) || 0;                  // page button presses

@@ -10,6 +10,7 @@ M.type = "auxiliary"
 
 local light = 1
 local timer = 99
+local resets = 0                        -- counts vehicle resets
 
 local function setLight(v)
   v = tonumber(v)
@@ -231,12 +232,14 @@ local function updateGaugeData(moduleData, dt)
   moduleData.egt = (okE and egt) or 0
   pcall(readMfd, dt or 0)
   moduleData.mfd = mfd
+  moduleData.resets = resets            -- the screens skip their shut-down animation right after a reset
 end
 
 local function setupGaugeData(properties)
 end
 
 local function reset()
+  resets = resets + 1
   timer = 99
   maxBoost = nil
   autoMeshes = nil
