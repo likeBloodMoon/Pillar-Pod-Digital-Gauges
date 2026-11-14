@@ -18,6 +18,12 @@ Fixes and polish. No new gauges, cars or parts.
   It doesn't run when the car spawns, after a reset, or when the engine stalls with the ignition
   still on. Turn it off in Tuning → Gauges → **Shut-Down Sweep**.
 
+### Changed
+- **Easier to read from the driver's seat.** The round gauges have bigger digits (about 20 %), and
+  the label (BOOST, OIL TEMP ...) and unit are almost twice as large. From the seat the whole face is
+  only about 100 pixels across, and the old 4-pixel labels couldn't be read. PEAK and COLD use the
+  same large text in place of the label.
+
 ### Checked
 - **Right-hand drive.** Every RHD mounting (pillar gauges, display, cluster) was checked against the
   game's own RHD interiors on both cars instead of a mirror of the LHD side. All of them fit, so
