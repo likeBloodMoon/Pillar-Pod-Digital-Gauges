@@ -68,7 +68,8 @@ var SEG = {
   "5": "acdfg", "6": "acdefg", "7": "abc", "8": "abcdefg", "9": "abcdfg",
   "-": "g", " ": ""
 };
-var DW = 72, DH = 146, DT = 21, GAP = 24, PAD = 34;
+// sized for reading from the driver's seat, where the whole 52 mm face is only ~100 px across
+var DW = 78, DH = 166, DT = 24, GAP = 18, PAD = 38;
 
 function layer(w, h) {
   var c = document.createElement("canvas"); c.width = w; c.height = h; return c;
@@ -111,8 +112,9 @@ function drawDigit(g, ch, x, y, onCol, offCol) {
 // at 80 % size with tighter spacing so they fit the same window, like a 4-digit aftermarket EGT gauge
 var TOTAL = DW * 3 + GAP * 2 + 14;
 var DX3 = [CX - TOTAL / 2 + 6, CX - TOTAL / 2 + 6 + DW + GAP, CX - TOTAL / 2 + 6 + DW * 2 + GAP * 2 + 14];
-var DY = 181;
-var S4 = 0.8, GAP4 = 14, TOTAL4 = DW * S4 * 4 + GAP4 * 3;
+var DY = 173;
+var TITLE_Y = DY + DH + 52;   // baseline of the title (BOOST, OIL TEMP ...), also used for PEAK and COLD
+var S4 = 0.8, GAP4 = 10, TOTAL4 = DW * S4 * 4 + GAP4 * 3;
 var DX4 = [0, 1, 2, 3].map(function (k) { return CX - TOTAL4 / 2 + 4 + k * (DW * S4 + GAP4); });
 var DY4 = DY + DH * (1 - S4) / 2;
 var nDig = 3, DX = DX3, DS = 1, DYs = DY;  // active layout: digit count, x positions, scale, top
@@ -175,11 +177,11 @@ function buildBackground(on) {
   }
   g.textAlign = "center";
   g.fillStyle = "#f2f2f2";
-  g.font = "bold 22px Arial, Helvetica, sans-serif";
-  g.fillText(cfg.titleLabel, CX, DY + DH + 46);
+  g.font = "bold 40px Arial, Helvetica, sans-serif";
+  g.fillText(cfg.titleLabel, CX, TITLE_Y);
   g.fillStyle = "#ffb300";
-  g.font = "bold 20px Arial, Helvetica, sans-serif";
-  g.fillText(cfg.unitLabel, CX, DY - 24);
+  g.font = "bold 36px Arial, Helvetica, sans-serif";
+  g.fillText(cfg.unitLabel, CX, DY - 16);
   if (!cfg.printedDigits) { unlitDigits(g); g.shadowBlur = 0; }
   return c;
 }
@@ -190,7 +192,7 @@ function buildStaticFace(white) {
   g.fillStyle = "#000"; g.fillRect(0, 0, W, W);
   if (white) {
     g.beginPath(); g.arc(CX, CY, 255, 0, 7); g.fillStyle = "#b2b2ae"; g.fill();      // faceplate
-    g.beginPath(); g.arc(CX, CY, 172, 0, 7); g.fillStyle = "#080808"; g.fill();      // display window
+    g.beginPath(); g.arc(CX, CY, 180, 0, 7); g.fillStyle = "#080808"; g.fill();      // display window (fits the larger digits)
     g.lineWidth = 3; g.strokeStyle = "#7a7a76"; g.stroke();
   } else {
     g.beginPath(); g.arc(CX, CY, 255, 0, 7); g.fillStyle = "#0b0b0c"; g.fill();
@@ -235,7 +237,7 @@ function buildLayers() {
   }
   var pc = layer(60, 60), pg = pc.getContext("2d");
   pg.fillStyle = RED; pg.shadowColor = RED; pg.shadowBlur = 16;
-  pg.beginPath(); pg.arc(30, 30, 11, 0, Math.PI * 2); pg.fill();
+  pg.beginPath(); pg.arc(30, 30, 13, 0, Math.PI * 2); pg.fill();
   digitSprites["."] = pc;
 }
 
@@ -398,9 +400,10 @@ function render() {
   ctx.globalAlpha = 1;
   if (peak >= 0 && !shiftOn) { var ps = ledSprites[peak]; ctx.drawImage(ps.img, ps.x, ps.y); }
   if (cold) {                                   // oil not up to temperature yet
+    ctx.fillStyle = "#000"; ctx.fillRect(CX - 120, TITLE_Y - 36, 240, 46);     // in place of the title
     ctx.fillStyle = "#3aa8ff"; ctx.textAlign = "center";
-    ctx.font = "bold 20px Arial, Helvetica, sans-serif";
-    ctx.fillText("COLD", CX, DY + DH + 72);
+    ctx.font = "bold 40px Arial, Helvetica, sans-serif";
+    ctx.fillText("COLD", CX, TITLE_Y);
   }
   if (digitsOn && digA > 0.01) {
     ctx.globalAlpha = digA;
@@ -413,10 +416,10 @@ function render() {
     ctx.globalAlpha = 1;
   }
   if (recalling) {                              // swap the title for "PEAK"
-    ctx.fillStyle = "#000"; ctx.fillRect(CX - 90, DY + DH + 24, 180, 30);
+    ctx.fillStyle = "#000"; ctx.fillRect(CX - 120, TITLE_Y - 36, 240, 46);
     ctx.fillStyle = "#ffb300"; ctx.textAlign = "center";
-    ctx.font = "bold 22px Arial, Helvetica, sans-serif";
-    ctx.fillText("PEAK", CX, DY + DH + 46);
+    ctx.font = "bold 40px Arial, Helvetica, sans-serif";
+    ctx.fillText("PEAK", CX, TITLE_Y);
   }
   if (dim < 0.99) {                             // darken the whole display
     ctx.globalAlpha = 1 - dim;
