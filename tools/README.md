@@ -16,7 +16,6 @@ These scripts produce or validate the mod's generated assets.
 | `fit_check_render.py` | Software render of the car interior with the gauges, used to check the fit |
 | `check_rhd.py` | Measures every mounting's clearance and face visibility against the game's real LHD and RHD interiors |
 | `fit_check_lr.py` | Renders every mounting from the driver's camera, left-hand drive next to right-hand drive, using the game's real LHD and RHD interior meshes; output in `docs/fitcheck/` |
-| `build_release.py` | Assembles the release folder and zip from the working files |
 | `bake_faces.py` | Runs `bake_faceplates.html` in headless Chrome and writes all six face textures |
 | `bake_faceplates.html` | Bakes the printed face textures from the display page's own drawing code |
 | `validate_assets.py` | Checks JBeam structure, DAE mesh/material references, material texture paths, JavaScript syntax, Python syntax, and generated JBeam consistency |

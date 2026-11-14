@@ -6,6 +6,8 @@ multi-function display, and a full digital instrument cluster that replaces the 
 Works on the **Ibishu Covet** and the **Ibishu 200BX**. The display and the cluster are Covet only
 for now.
 
+**Version 1.2.1** · [Changelog](CHANGELOG.md)
+
 ![Digital cluster on the Covet's race dashboard](docs/cluster-race-dash.jpg)
 
 ## Install
@@ -30,7 +32,7 @@ the **Lower Gauge** and **Upper Gauge** positions. Each position can hold any ga
 | Boost | Vacuum and boost on a 24-LED sweep, scaled to the turbo's wastegate limit, with peak recall |
 | Oil temperature | Oil temperature with a blue COLD mark until the engine is warm |
 | Coolant temperature | Coolant temperature with a COLD mark and a warning limit |
-| Exhaust gas temperature | EGT from the game's engine heat simulation |
+| Exhaust gas temperature | EGT from the game's engine heat simulation; in °F a full 4-digit readout (1370) |
 | Fuel level | Fuel left, with a low-fuel warning |
 
 Choose **Automatic Mounting** (black, or silver with a white face) and the gauge finds its own
@@ -88,16 +90,13 @@ Tuning menu, category **Gauges**:
 - Oil, coolant and exhaust warning temperatures, cold-mark temperatures, low-fuel warning
 - Night brightness for the gauges, the display and the cluster
 - First page shown on the display and on the cluster
+- Shut-down sweep: when the ignition is switched off, the round gauges sweep their LED ring and fade
+  out and the screens fade to black (1 = on, 0 = switch off at once)
 
 ## Known limits
 
 - The pillar gauges and the display use the car's single **Additional Modification** slot, so they
   can't be combined with another mod that uses that slot. The cluster uses the Gauges slot instead.
-- On the 200BX the pillar gauges can sit too large and close to the driver's camera. A fix is
-  planned.
-- Right-hand-drive mountings are mirrored from the left-hand ones and haven't all been checked in
-  game.
-- In °F the round EGT gauge reads in hundreds (13.7 = 1370 °F), because its display has three digits.
 - Each mounting has a pod mesh shaped to that interior, so moving a gauge by editing coordinates
   only works for small nudges.
 
