@@ -17,6 +17,7 @@ These scripts produce or validate the mod's generated assets.
 | `check_rhd.py` | Measures every mounting's clearance and face visibility against the game's real LHD and RHD interiors |
 | `fit_check_lr.py` | Renders every mounting from the driver's camera, left-hand drive next to right-hand drive, using the game's real LHD and RHD interior meshes; output in `docs/fitcheck/` |
 | `render_previews.py` | Renders every screen (round gauges, display pages, cluster pages) with fixed sample data, and compares two versions; the Screen previews workflow posts the changed ones on pull requests |
+| `render_demo_gif.py` | Renders `docs/demo-sweep.gif` for the README: a boost and an oil gauge through ignition on, a pull, peak recall and ignition off, on a fixed clock so it comes out the same every time |
 | `bake_faces.py` | Runs `bake_faceplates.html` in headless Chrome and writes all six face textures |
 | `bake_faceplates.html` | Bakes the printed face textures from the display page's own drawing code |
 | `validate_assets.py` | Checks JBeam structure, DAE mesh/material references, material texture paths, JavaScript syntax, Python syntax, and generated JBeam consistency |

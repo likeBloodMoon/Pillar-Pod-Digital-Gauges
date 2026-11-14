@@ -1,5 +1,11 @@
 # Pillar Pod Digital Gauges
 
+[![Latest release](https://img.shields.io/github/v/release/likeBloodMoon/Pillar-Pod-Digital-Gauges?label=release)](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/likeBloodMoon/Pillar-Pod-Digital-Gauges/total?label=downloads)](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/releases)
+[![Validate mod assets](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/actions/workflows/validate-assets.yml/badge.svg?branch=main)](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/actions/workflows/validate-assets.yml)
+[![BeamNG repository](https://img.shields.io/badge/BeamNG-repository-orange)](https://www.beamng.com/resources/pillar-pod-digital-gauges.40320/)
+[![Licence: MIT](https://img.shields.io/badge/licence-MIT-blue)](LICENSE)
+
 Digital gauges for BeamNG.drive. Round gauges on the A-pillar or roll cage, a pillar-mounted
 multi-function display, and a full digital instrument cluster that replaces the car's own gauges.
 
@@ -23,6 +29,10 @@ game. Use the zip from the release.
 ## What's in it
 
 ### Pillar gauges (Covet and 200BX)
+
+![Boost and oil temperature gauges: start-up sweep, a pull to full boost, peak recall, shut-down sweep](docs/demo-sweep.gif)
+
+*Ignition on, a pull to full boost, lift off (the boost gauge shows the peak), ignition off.*
 
 Parts selector → **Additional Modification** → **Digital Pillar Gauges**, then pick what goes in
 the **Lower Gauge** and **Upper Gauge** positions. Each position can hold any gauge:
@@ -99,6 +109,24 @@ Tuning menu, category **Gauges**:
   can't be combined with another mod that uses that slot. The cluster uses the Gauges slot instead.
 - Each mounting has a pod mesh shaped to that interior, so moving a gauge by editing coordinates
   only works for small nudges.
+
+## Roadmap
+
+What's planned next is on GitHub as [milestones](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/milestones), one per release, each with its
+issues:
+
+- **[1.3](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/milestone/1)**: peak and warning lights on every gauge, key bindings to show and reset
+  the peak, `--` when a car doesn't report a reading, tachometer and G-meter gauges
+- **[1.4](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/milestone/2)**: more cars (Pessima, Sunburst, ETK 800), the display and cluster on the
+  200BX, a triple pillar pod and other mounts
+- **[1.5](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/milestone/3)**: a race-dash cluster with a shift-light strip, warning banner and timers
+- **[2.0](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/milestone/4)**: needle-style faces, clearly labelled estimated readings (oil pressure,
+  air-fuel ratio), colour themes and ready-made configs
+
+The order isn't fixed. Give an issue a 👍 if you want it, or suggest something in
+[Discussions](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/discussions). Issues marked
+[good first issue](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/labels/good%20first%20issue) are a good place to start if you'd like to
+help; see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## For developers
 
