@@ -1,0 +1,136 @@
+# Renders every screen (round gauges, multi-function display, cluster) before and after a pull
+# request and posts the ones that changed as a PR comment, so visual changes can be reviewed
+# without loading the game. The pictures live on the "previews" branch: one commit holding the
+# latest pictures of each open PR, rewritten on every run (no history builds up), and a PR's
+# folder is removed when it closes. Pull requests from forks get the pictures as a downloadable
+# artifact only, because their token cannot push or comment.
+name: Screen previews
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    paths:
+      - "vehicles/common/pillar_pod_gauges/*.html"
+      - "vehicles/common/pillar_pod_gauges/*.png"
+      - "vehicles/common/pillar_pod_gauges/fonts/**"
+      - "tools/render_previews.py"
+      - ".github/workflows/screen-previews.yml"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: screen-previews-branch      # runs take turns rewriting the previews branch
+  cancel-in-progress: false
+
+jobs:
+  previews:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install the renderer
+        run: pip install playwright==1.48.0 pillow
+
+      - name: Render the pull request
+        # page errors are reported at the end, after the pictures are published
+        run: python tools/render_previews.py . previews/after || true
+
+      - name: Render the base branch (with this PR's renderer)
+        run: |
+          git worktree add /tmp/base "${{ github.event.pull_request.base.sha }}"
+          python tools/render_previews.py /tmp/base previews/before || true
+
+      - name: Compare
+        run: python tools/render_previews.py --compare previews/before previews/after previews/compare || true
+
+      - name: Upload the pictures
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: screen-previews-pr${{ github.event.pull_request.number }}
+          path: previews/compare
+          retention-days: 30
+
+      - name: Publish the changed pictures to the previews branch
+        id: publish
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -e
+          dir="pr-$PR"
+          rm -rf /tmp/pub && mkdir -p /tmp/pub
+          if git fetch -q origin previews 2>/dev/null; then git archive FETCH_HEAD | tar -x -C /tmp/pub; fi
+          rm -rf "/tmp/pub/$dir" && mkdir -p "/tmp/pub/$dir"
+          # only the screens that changed (or are new); the full set is in the artifact
+          grep -E '\*\*(changed|new)\*\*' previews/compare/changes.md | sed -E 's/^\| `([^`]+)`.*/\1/' > /tmp/changed.txt || true
+          while read -r n; do [ -n "$n" ] && cp "previews/compare/$n.png" "/tmp/pub/$dir/"; done < /tmp/changed.txt
+          echo "count=$(grep -c . /tmp/changed.txt || true)" >> "$GITHUB_OUTPUT"
+          cd /tmp/pub
+          git init -q -b previews
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q --allow-empty -m "Screen previews for open pull requests"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" previews:previews
+
+      - name: Comment on the pull request
+        if: steps.publish.outcome == 'success'
+        uses: actions/github-script@v7
+        env:
+          ARTIFACT_URL: ${{ steps.upload.outputs.artifact-url }}
+        with:
+          script: |
+            const fs = require('fs');
+            const pr = context.payload.pull_request.number;
+            const table = fs.readFileSync('previews/compare/changes.md', 'utf8');
+            const changed = fs.existsSync('/tmp/changed.txt') ? fs.readFileSync('/tmp/changed.txt', 'utf8').split('\n').filter(Boolean) : [];
+            const raw = `https://raw.githubusercontent.com/${context.repo.owner}/${context.repo.repo}/previews/pr-${pr}`;
+            const pics = changed.slice(0, 20).map(n => `**${n}** (before · after)\n\n![${n}](${raw}/${n}.png?run=${context.runId})`).join('\n\n');
+            const marker = '<!-- screen-previews -->';
+            const body = `${marker}\n### Screen previews\n\n` +
+              (changed.length ? `${changed.length} screen(s) look different from the base branch.\n\n${pics}\n\n` : 'No screen looks different from the base branch.\n\n') +
+              `<details><summary>All screens</summary>\n\n${table}\n</details>\n\n` +
+              `Rendered with fixed sample data in headless Chrome by \`tools/render_previews.py\`. ` +
+              `[Download every picture](${process.env.ARTIFACT_URL})`;
+            const { data: comments } = await github.rest.issues.listComments({ ...context.repo, issue_number: pr, per_page: 100 });
+            const old = comments.find(c => c.body && c.body.startsWith(marker));
+            if (old) await github.rest.issues.updateComment({ ...context.repo, comment_id: old.id, body });
+            else await github.rest.issues.createComment({ ...context.repo, issue_number: pr, body });
+
+      - name: Fail on JavaScript errors in the screens
+        run: |
+          python - <<'PY'
+          import json, sys
+          errors = json.load(open("previews/after/errors.json")) if __import__("os").path.exists("previews/after/errors.json") else ["the renderer did not finish"]
+          for e in errors: print("::error::" + e)
+          sys.exit(1 if errors else 0)
+          PY
+
+  clean-up:
+    if: github.event.action == 'closed' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Remove this pull request's pictures from the previews branch
+        env:
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -e
+          git init -q -b fresh /tmp/pub && cd /tmp/pub
+          git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          git fetch -q origin previews || exit 0
+          git archive FETCH_HEAD | tar -x && rm -rf "pr-$PR"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q --allow-empty -m "Screen previews for open pull requests"
+          git push -q -f origin fresh:previews
