@@ -7,6 +7,12 @@
   limit, with the last three (red) LEDs past it, and the digits show thousands (6.8 = 6800 rpm). The
   whole ring flashes red at the shift point. Tuning → Gauges has the shift light on/off, the RPM it
   starts at (96 % of the limit by default) and an optional fixed scale maximum.
+- **PEAK and WARN lights** on every round gauge, under the label. PEAK (blue) lights for 1.5 s
+  whenever the reading sets a new high for the drive in the top 40 % of the scale, so a warming
+  engine or cruising doesn't keep it on. WARN (red) stays on while the reading is past the warning
+  limit (overboost, oil, coolant or exhaust too hot, low fuel), and on the tachometer from the shift
+  point. Both light up with the start-up test. The fuel gauge has WARN only. The unlit lights are
+  printed on the faces, which were re-baked.
 
 ### Changed
 - **Only automatic mounting.** The fixed mountings (one part per interior, side and finish for the

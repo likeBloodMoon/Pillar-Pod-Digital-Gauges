@@ -53,6 +53,7 @@ var cfg = {
   nightBrightness: 0.25, // display brightness with the headlights on (1 = no dimming)
   bootTime: 1.3,      // seconds of start-up sweep when the ignition comes on
   shutdownSweep: 1,   // 1 = sweep the LED ring up and down and fade out when the ignition is switched off
+  indicators: 1,      // 1 = PEAK and WARN lights under the title: PEAK when a new peak is set, WARN past the warning limit
   printedDigits: 1    // 1 = the unlit "8" segments are printed in the face texture; 0 = this page draws them
                       // (the EGT face, whose digit layout changes between 3 digits in deg C and 4 in deg F)
 };
@@ -118,7 +119,19 @@ var TITLE_Y = DY + DH + 52;   // baseline of the title (BOOST, OIL TEMP ...), al
 var S4 = 0.8, GAP4 = 10, TOTAL4 = DW * S4 * 4 + GAP4 * 3;
 var DX4 = [0, 1, 2, 3].map(function (k) { return CX - TOTAL4 / 2 + 4 + k * (DW * S4 + GAP4); });
 var DY4 = DY + DH * (1 - S4) / 2;
-var nDig = 3, DX = DX3, DS = 1, DYs = DY;  // active layout: digit count, x positions, scale, top
+var nDig = 3, DX = DX3, DS = 1, DYs = DY;
+// PEAK and WARN indicator lights, in the gap at the bottom of the LED ring under the title
+var IND_Y = TITLE_Y + 50, IND_DX = 50, IND_FONT = "bold 27px Arial, Helvetica, sans-serif";
+var PEAK_COL = "#3aa8ff", WARN_COL = "#ff2a1a";
+function hasPeakLight() { return cfg.indicators > 0 && cfg.warnLow <= 0; }   // a fuel gauge has no peak to show
+function warnX() { return hasPeakLight() ? CX + IND_DX : CX; }                  // WARN alone is centred
+function drawIndicator(g, label, x, col, glow) {
+  g.save();
+  g.font = IND_FONT; g.textAlign = "center"; g.fillStyle = col;
+  if (glow) { g.shadowColor = col; g.shadowBlur = 14; }
+  g.fillText(label, x, IND_Y);
+  g.restore();
+}  // active layout: digit count, x positions, scale, top
 function setDigits(n) {
   nDig = n; DX = n === 4 ? DX4 : DX3; DS = n === 4 ? S4 : 1; DYs = n === 4 ? DY4 : DY;
 }
@@ -131,7 +144,7 @@ function unlitDigits(g) {                        // the dark "8"s behind the lit
 }
 
 // ---- pre-rendered layers: everything expensive (glow) is drawn once ----
-var bgOn, bgOff, ledSprites = [], ledSpritesRed = [], digitSprites = {};
+var bgOn, bgOff, ledSprites = [], ledSpritesRed = [], digitSprites = {}, indSprites = {};
 
 function zeroLed() {     // index of the first LED above zero (0 when there is no vacuum zone)
   if (typeof cfg.zeroLed === "number") return cfg.zeroLed;   // fixed, so it matches the printed faceplate
@@ -210,6 +223,14 @@ function buildStaticFace(white) {
     drawLed(g, i, isRed(i) ? "#3a0f0b" : (i < z ? "#0c2540" : "#12380f"), false);   // unlit LEDs
   }
   if (cfg.printedDigits) for (var d = 0; d < 3; d++) drawDigit(g, "8", DX3[d], DY, "#210606", null);   // unlit segments
+  if (cfg.indicators > 0) {                       // unlit PEAK and WARN lights
+    var marks = [["WARN", warnX(), "#3a0f0b"]];
+    if (hasPeakLight()) marks.unshift(["PEAK", CX - IND_DX, "#0c2540"]);
+    marks.forEach(function (m) {
+      if (white) { g.fillStyle = "#060606"; g.fillRect(m[1] - 42, IND_Y - 27, 84, 35); }   // dark window in the faceplate
+      drawIndicator(g, m[0], m[1], m[2], false);
+    });
+  }
   g.shadowBlur = 0;
   return c;
 }
@@ -236,6 +257,13 @@ function buildLayers() {
     drawDigit(dg, ch, PAD + 8, PAD, RED, null);
     digitSprites[ch] = dc;
   }
+  indSprites = {};
+  [["PEAK", CX - IND_DX, PEAK_COL], ["WARN", warnX(), WARN_COL]].forEach(function (d) {
+    var ic = layer(140, 70), ig = ic.getContext("2d");
+    ig.translate(70 - d[1], 50 - IND_Y);
+    drawIndicator(ig, d[0], d[1], d[2], true);
+    indSprites[d[0]] = {img: ic, x: d[1] - 70, y: IND_Y - 50};
+  });
   var pc = layer(60, 60), pg = pc.getContext("2d");
   pg.fillStyle = RED; pg.shadowColor = RED; pg.shadowBlur = 16;
   pg.beginPath(); pg.arc(30, 30, 13, 0, Math.PI * 2); pg.fill();
@@ -257,6 +285,9 @@ var shifting = false;    // engine speed is at the shift point
 var ambient = 1;         // 1 = daylight .. 0 = night (from the mod's ambient light module)
 var runPeak = -1e9;      // highest value of the current pull
 var storedPeak = -1e9;   // highest value since the car was spawned
+var sesPeak = -1e9;      // highest value since the ignition came on (for the PEAK light)
+var peakLitT = 0;        // seconds the PEAK light stays on
+var overRev = false;     // tachometer: engine speed at or past the shift point (lights WARN)
 var offBoost = 0;        // seconds spent back at/below zero
 var recallT = -1;        // >= 0 while the peak is being shown
 var recallVal = 0;
@@ -376,12 +407,21 @@ function render() {
   var shiftOn = powered && !booting && shifting;
   var shiftPhase = shiftOn ? Math.floor(clock * 10) % 2 : 0;
   var cold = powered && !booting && isTemp() && cfg.coldBelow > 0 && target < cfg.coldBelow;
+  // indicator lights: both on during the start-up test, like the digits
+  var peakOn = false, warnOn = false;
+  if (cfg.indicators > 0) {
+    if (booting) { peakOn = hasPeakLight() && digitsOn; warnOn = digitsOn; }
+    else if (powered) {
+      peakOn = peakLitT > 0;
+      warnOn = warning(arcVal) || (cfg.source === "rpm" && overRev);
+    }
+  }
   // brightness: headlights on -> night level; otherwise follow the ambient light
   var dim = 1;
   if (powered || shutting) dim = lights > 0 ? cfg.nightBrightness : cfg.nightBrightness + (1 - cfg.nightBrightness) * ambient;
   var key = (powered ? "1" : "0") + Math.round(pos * 25) + txt + dot + peak + (digitsOn ? "d" : "x") + (ledsOn ? "l" : "o") +
             (recalling ? "r" : "") + Math.round(dim * 50) + (shiftOn ? "s" + shiftPhase : "") + (cold ? "c" : "") +
-            (shutting ? "o" + Math.round(u * 60) : "");
+            (shutting ? "o" + Math.round(u * 60) : "") + (peakOn ? "P" : "") + (warnOn ? "W" : "");
   if (key === lastKey) return;                  // nothing visible changed
   lastKey = key;
 
@@ -423,6 +463,8 @@ function render() {
     if (dot >= 0) ctx.drawImage(digitSprites["."], DX[dot] + DW + (dot === 0 ? 9 : 12) - 30, DY + DH + 1 - 30);
     ctx.globalAlpha = 1;
   }
+  if (peakOn) { var pk = indSprites.PEAK; ctx.drawImage(pk.img, pk.x, pk.y); }
+  if (warnOn) { var wn = indSprites.WARN; ctx.drawImage(wn.img, wn.x, wn.y); }
   if (recalling) {                              // swap the title for "PEAK"
     ctx.fillStyle = "#000"; ctx.fillRect(CX - 120, TITLE_Y - 36, 240, 46);
     ctx.fillStyle = "#ffb300"; ctx.textAlign = "center";
@@ -443,7 +485,7 @@ function tick() {
   lastT = now;
   clock += dt;
 
-  if (powered && !wasPowered) { bootT = 0; offT = -1; arcVal = 0; digitVal = 0; peakPos = 0; }
+  if (powered && !wasPowered) { bootT = 0; offT = -1; arcVal = 0; digitVal = 0; peakPos = 0; sesPeak = -1e9; peakLitT = 0; }
   // ignition switched off after running a while: shut-down sweep (not after a reset, and not when the
   // engine just stalls, since the ignition stays on then)
   if (!powered && wasPowered && cfg.shutdownSweep > 0 && onT > 0.5 && quietT <= 0) {
@@ -473,6 +515,14 @@ function tick() {
     }
     if (recallT >= 0) { recallT += dt; if (recallT >= cfg.recallTime) recallT = -1; }
   } else { recallT = -1; }
+
+  // PEAK light: comes on for a moment whenever the reading sets a new high for this drive in the top
+  // part of the scale (so a warming engine or idling doesn't keep it lit)
+  peakLitT = Math.max(0, peakLitT - dt);
+  if (hasPeakLight() && powered && bootT < 0 && offT < 0) {
+    var span = effMax() - cfg.minValue, top = cfg.minValue + span * 0.6;
+    if (arcVal >= top && arcVal > sesPeak + span * 0.01) { sesPeak = arcVal; peakLitT = 1.5; }
+  }
 
   // peak hold: follows the arc up, waits, then falls back
   var pos = (powered && bootT < 0) ? ledPos(arcVal) : 0;
@@ -531,6 +581,7 @@ function updateData(data) {
   shifting = (cfg.source === "boost" || cfg.source === "rpm") && cfg.shiftLight > 0 && !stopped && maxRpm > 0 && rpm >= maxRpm * cfg.shiftAt;
   if (cfg.source === "rpm") {
     target = stopped ? 0 : rpm;
+    overRev = !stopped && maxRpm > 0 && rpm >= maxRpm * cfg.shiftAt;
     if (maxRpm !== autoRpm) { autoRpm = maxRpm; lastKey = ""; }
   }
   if (cfg.source === "oiltemp") target = Number(e.oiltemp) || 0;
