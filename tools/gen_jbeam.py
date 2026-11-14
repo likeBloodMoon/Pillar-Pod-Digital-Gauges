@@ -162,6 +162,9 @@ FUEL_VARS='''        ["$dbg_fuel_low", "range", "%", "Gauges", 10, 0, 40, "Fuel 
 OIL_VARS='''        ["$dbg_oil_cold", "range", "C", "Gauges", 70, 0, 100, "Oil Temp Gauge: Cold Mark Below", "A blue COLD mark shows below this oil temperature (deg C). 0 = off", {"stepDis":1}],
         ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
         ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],'''
+# shared by every gauge, the display and the cluster (a variable defined in several parts is merged by the game)
+SHUT_VAR='''        ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],'''
+SHUT_CFG='''            "shutdownSweep":"$dbg_shutdown_sweep",'''
 def part(key,name,slot,gvars,ctrl,cfgf,el,fb):
     return f'''"{key}": {{
     "information":{{
@@ -174,6 +177,7 @@ def part(key,name,slot,gvars,ctrl,cfgf,el,fb):
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
 {gvars}
+{SHUT_VAR}
     ],
     "controller": [
         ["fileName"],
@@ -182,6 +186,7 @@ def part(key,name,slot,gvars,ctrl,cfgf,el,fb):
     "{ctrl}": {{
         "configuration": {{
 {cfgf}
+{SHUT_CFG}
         }},
         "displayData": {{
             "electrics": [
@@ -192,6 +197,7 @@ def part(key,name,slot,gvars,ctrl,cfgf,el,fb):
                 ["dbgAmbient", "light"],
                 ["dbgAmbient", "maxBoost"],
                 ["dbgAmbient", "egt"],
+                ["dbgAmbient", "resets"],
             ],
         }},
     }},
@@ -277,6 +283,7 @@ if "MFD" in CAR:
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
 {MFD_VARS}
+{SHUT_VAR}
     ],
     "controller": [
         ["fileName"],
@@ -290,6 +297,7 @@ if "MFD" in CAR:
             "displayHeight":512,
             "startPage":"$dbg_mfd_page",
             "nightBrightness":"$dbg_mfd_night",
+{SHUT_CFG}
         }},
         "displayData": {{
             "electrics": [
@@ -302,6 +310,7 @@ if "MFD" in CAR:
                 ["dbgAmbient", "light"],
                 ["dbgAmbient", "maxBoost"],
                 ["dbgAmbient", "egt"],
+                ["dbgAmbient", "resets"],
                 ["dbgAmbient", "mfd"],
             ],
         }},
@@ -343,6 +352,7 @@ for slot,kind,sx,meshes in CAR.get("CLUSTER",()):
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
 {CLUSTER_VARS}
+{SHUT_VAR}
     ],
     "controller": [
         ["fileName"],
@@ -357,6 +367,7 @@ for slot,kind,sx,meshes in CAR.get("CLUSTER",()):
             "displayHeight":272,
             "startPage":"$dbg_cluster_page",
             "nightBrightness":"$dbg_cluster_night",
+{SHUT_CFG}
             "shiftAt":0.92,
         }},
         "displayData": {{
@@ -370,6 +381,7 @@ for slot,kind,sx,meshes in CAR.get("CLUSTER",()):
                 ["dbgCluster", "light"],
                 ["dbgCluster", "maxBoost"],
                 ["dbgCluster", "egt"],
+                ["dbgCluster", "resets"],
                 ["dbgCluster", "mfd"],
             ],
         }},

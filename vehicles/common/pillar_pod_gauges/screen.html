@@ -51,6 +51,7 @@ var cfg = {
   peakHold: 1.5,      // seconds the peak LED stays lit after boost drops
   nightBrightness: 0.25, // display brightness with the headlights on (1 = no dimming)
   bootTime: 1.3,      // seconds of start-up sweep when the ignition comes on
+  shutdownSweep: 1,   // 1 = sweep the LED ring up and down and fade out when the ignition is switched off
   printedDigits: 1    // 1 = the unlit "8" segments are printed in the face texture; 0 = this page draws them
                       // (the EGT face, whose digit layout changes between 3 digits in deg C and 4 in deg F)
 };
@@ -256,6 +257,11 @@ var storedPeak = -1e9;   // highest value since the car was spawned
 var offBoost = 0;        // seconds spent back at/below zero
 var recallT = -1;        // >= 0 while the peak is being shown
 var recallVal = 0;
+var OFF_TIME = 1.0;      // seconds of shut-down sweep
+var offT = -1;           // >= 0 while the shut-down sweep is running (ignition just switched off)
+var offFrom = 0, offTxt = "", offDot = -1;   // LED position and digits when the ignition went off
+var onT = 0;             // seconds the ignition has been on
+var resets = null, quietT = 0;   // vehicle resets (from dbgAmbient): no shut-down sweep right after one
 var lastT = 0;
 var lastKey = "";
 
@@ -329,6 +335,7 @@ function ledPos(value) {
 function render() {
   var n = cfg.ledCount, z = zeroLed();
   var booting = powered && bootT >= 0, recalling = powered && !booting && recallT >= 0;
+  var shutting = !powered && offT >= 0, u = 0, digA = 1, bgA = 1;
   var pos = 0, txt = "", dot = -1, peak = -1, digitsOn = true, ledsOn = true, sweep = false;
   if (booting) {
     // LEDs run up and back down, digits show 88.8
@@ -342,6 +349,14 @@ function render() {
     pos = ledPos(recallVal);
     var dt0 = digitText(recallVal); txt = dt0[0]; dot = dt0[1];
     ledsOn = Math.floor(recallT * 6) % 2 === 0;
+  } else if (shutting) {
+    // shut-down: the ring sweeps up to full and back to empty while the digits and backlight fade out
+    u = Math.min(1, offT / OFF_TIME);
+    var up = Math.min(1, u / 0.4), down = Math.max(0, (u - 0.4) / 0.6);
+    pos = u < 0.4 ? offFrom + (n - offFrom) * (up * up * (3 - 2 * up)) : n * (1 - down * down * (3 - 2 * down));
+    txt = offTxt; dot = offDot; sweep = true;
+    digA = 1 - u;
+    bgA = u < 0.5 ? 1 : 1 - (u - 0.5) / 0.5;
   } else if (powered) {
     pos = ledPos(arcVal);                        // e.g. 13.4 = 13 LEDs full, the 14th at 40%
     var dt1 = digitText(digitVal); txt = dt1[0]; dot = dt1[1];
@@ -353,15 +368,17 @@ function render() {
   var cold = powered && !booting && isTemp() && cfg.coldBelow > 0 && target < cfg.coldBelow;
   // brightness: headlights on -> night level; otherwise follow the ambient light
   var dim = 1;
-  if (powered) dim = lights > 0 ? cfg.nightBrightness : cfg.nightBrightness + (1 - cfg.nightBrightness) * ambient;
+  if (powered || shutting) dim = lights > 0 ? cfg.nightBrightness : cfg.nightBrightness + (1 - cfg.nightBrightness) * ambient;
   var key = (powered ? "1" : "0") + Math.round(pos * 25) + txt + dot + peak + (digitsOn ? "d" : "x") + (ledsOn ? "l" : "o") +
-            (recalling ? "r" : "") + Math.round(dim * 50) + (shiftOn ? "s" + shiftPhase : "") + (cold ? "c" : "");
+            (recalling ? "r" : "") + Math.round(dim * 50) + (shiftOn ? "s" + shiftPhase : "") + (cold ? "c" : "") +
+            (shutting ? "o" + Math.round(u * 60) : "");
   if (key === lastKey) return;                  // nothing visible changed
   lastKey = key;
 
   ctx.globalAlpha = 1;
   ctx.drawImage(powered ? bgOn : bgOff, 0, 0);
-  if (!powered) return;
+  if (shutting && bgA > 0) { ctx.globalAlpha = bgA; ctx.drawImage(bgOn, 0, 0); ctx.globalAlpha = 1; }
+  if (!powered && !shutting) return;
   if (shiftOn) {                                // shift light: the whole ring flashes red
     if (shiftPhase === 0) {
       for (var q = 0; q < n; q++) { var rs = ledSpritesRed[q]; ctx.drawImage(rs.img, rs.x, rs.y); }
@@ -385,13 +402,15 @@ function render() {
     ctx.font = "bold 20px Arial, Helvetica, sans-serif";
     ctx.fillText("COLD", CX, DY + DH + 72);
   }
-  if (digitsOn) {
+  if (digitsOn && digA > 0.01) {
+    ctx.globalAlpha = digA;
     for (var d = 0; d < nDig; d++) {
       var sp = digitSprites[txt[d]];
       if (sp) ctx.drawImage(sp, DX[d] - (PAD + 8) * DS, DYs - PAD * DS, sp.width * DS, sp.height * DS);
     }
     if (booting && nDig === 3) dot = 1;
     if (dot >= 0) ctx.drawImage(digitSprites["."], DX[dot] + DW + (dot === 0 ? 9 : 12) - 30, DY + DH + 1 - 30);
+    ctx.globalAlpha = 1;
   }
   if (recalling) {                              // swap the title for "PEAK"
     ctx.fillStyle = "#000"; ctx.fillRect(CX - 90, DY + DH + 24, 180, 30);
@@ -413,8 +432,18 @@ function tick() {
   lastT = now;
   clock += dt;
 
-  if (powered && !wasPowered) { bootT = 0; arcVal = 0; digitVal = 0; peakPos = 0; }
+  if (powered && !wasPowered) { bootT = 0; offT = -1; arcVal = 0; digitVal = 0; peakPos = 0; }
+  // ignition switched off after running a while: shut-down sweep (not after a reset, and not when the
+  // engine just stalls, since the ignition stays on then)
+  if (!powered && wasPowered && cfg.shutdownSweep > 0 && onT > 0.5 && quietT <= 0) {
+    offT = 0; offFrom = bootT >= 0 ? 0 : ledPos(arcVal);
+    var t0 = digitText(digitVal); offTxt = bootT >= 0 ? "" : t0[0]; offDot = bootT >= 0 ? -1 : t0[1];
+    bootT = -1; recallT = -1;
+  }
+  onT = powered ? onT + dt : 0;
+  quietT = Math.max(0, quietT - dt);
   wasPowered = powered;
+  if (offT >= 0) { offT += dt; if (offT >= OFF_TIME || powered) { offT = -1; lastKey = ""; } }
   if (bootT >= 0) { bootT += dt; if (bootT >= cfg.bootTime || !powered) bootT = -1; }
 
   // time-based easing: same feel at any frame rate
@@ -500,6 +529,10 @@ function updateData(data) {
   var lim = (am && typeof am.maxBoost === "number" && am.maxBoost > 0) ? am.maxBoost : 0;
   if (cfg.source === "boost" && lim !== autoLimit) {
     autoLimit = lim; lastKey = "";
+  }
+  if (am && typeof am.resets === "number") {      // the car was reset: cancel any shut-down sweep
+    if (resets !== null && am.resets !== resets) { quietT = 1; offT = -1; lastKey = ""; }
+    resets = am.resets;
   }
   var ign = e.ignitionLevel;
   powered = (ign === undefined || ign === null) ? true : (Number(ign) >= 1);
