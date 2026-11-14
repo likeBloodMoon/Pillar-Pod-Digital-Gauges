@@ -1,8 +1,8 @@
 {
 //Pillar Pod Digital Gauges - parts for the Ibishu 200BX.
 //  Additional Modification -> Digital Pillar Gauges
-//      Lower Gauge: boost (default), oil temp, coolant temp, exhaust temp or fuel level
-//      Upper Gauge: empty (default), oil temp, coolant temp, exhaust temp, fuel level or boost
+//      Lower Gauge: boost (default), oil temp, coolant temp, exhaust temp, fuel level or tachometer
+//      Upper Gauge: empty (default), oil temp, coolant temp, exhaust temp, fuel level, tachometer or boost
 //Every gauge type comes with automatic mounting in black or silver: it picks the position that
 //matches the car's interior. Boost (lower) and oil temp (upper) are also offered in fixed mountings,
 //which always use the position they name.
@@ -774,6 +774,158 @@
         ["dbgvJ1pod", ["bx_body"],[],{"pos":{"x":-0.5245,"y":-0.1621,"z":1.0259},"rot":{"x":0,"y":0,"z":-22.3}}],
         ["dbgvJ1bzs", ["bx_body"],[],{"pos":{"x":-0.5245,"y":-0.1621,"z":1.0259},"rot":{"x":0,"y":0,"z":-22.3}}],
         ["dbgvJ1sfs", ["bx_body"],[],{"pos":{"x":-0.5245,"y":-0.1621,"z":1.0259},"rot":{"x":0,"y":0,"z":-22.3}}],
+    ],
+},
+"bx_dbg_boost_tach_auto": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Tachometer - Automatic Mounting",
+        "value":180,
+    },
+    "slotType" : "bx_dbg_boost",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_tach_shift", "range", "", "Gauges", 1, 0, 1, "Tachometer: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
+        ["$dbg_tach_shift_at", "range", "%", "Gauges", 96, 75, 100, "Tachometer: Shift Light At", "Engine speed where the shift light starts, in percent of the engine's maximum RPM", {"stepDis":1}],
+        ["$dbg_tach_max", "range", "rpm", "Gauges", 0, 0, 12000, "Tachometer: Scale Maximum", "RPM at the last LED. 0 = automatic: the red LEDs start at the engine's rev limit", {"stepDis":250}],
+        ["$dbg_tach_night", "range", "%", "Gauges", 12, 3, 100, "Tachometer: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+        ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgGauge"}],
+    ],
+    "dbgGauge": {
+        "configuration": {
+            "materialName": "@dbg_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"rpm",
+            //LED arc range in RPM (the digits show thousands: 6.8 = 6800). 0 = automatic: the last three
+            //(red) LEDs start at the engine's rev limit
+            "minValue":0,
+            "maxValue":"$dbg_tach_max",
+            "titleLabel":"RPM",
+            //1 = the whole LED ring flashes red near the rev limit (shiftAt = percent of maximum RPM)
+            "shiftLight":"$dbg_tach_shift",
+            "shiftAt":"$dbg_tach_shift_at",
+            //seconds the peak LED stays lit
+            "peakHold":1.5,
+            "nightBrightness":"$dbg_tach_night",
+            "face":"black",
+            "shutdownSweep":"$dbg_shutdown_sweep",
+        },
+        "displayData": {
+            "electrics": [
+                "rpm",
+                "maxrpm",
+                "engineRunning",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+                ["dbgAmbient", "egt"],
+                ["dbgAmbient", "resets"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //meshes for every mounting (GHIJ); dbgAmbient.lua hides all but the one matching the car's interior
+        ["dbgvG1pod", ["bx_body"],[],{"pos":{"x":0.6081,"y":-0.2417,"z":1.015},"rot":{"x":0,"y":0,"z":27}}],
+        ["dbgvG1bzk", ["bx_body"],[],{"pos":{"x":0.6081,"y":-0.2417,"z":1.015},"rot":{"x":0,"y":0,"z":27}}],
+        ["dbgvG1stk", ["bx_body"],[],{"pos":{"x":0.6081,"y":-0.2417,"z":1.015},"rot":{"x":0,"y":0,"z":27}}],
+        ["dbgvH1pod", ["bx_body"],[],{"pos":{"x":0.5245,"y":-0.1621,"z":1.0259},"rot":{"x":0,"y":0,"z":22.3}}],
+        ["dbgvH1bzk", ["bx_body"],[],{"pos":{"x":0.5245,"y":-0.1621,"z":1.0259},"rot":{"x":0,"y":0,"z":22.3}}],
+        ["dbgvH1stk", ["bx_body"],[],{"pos":{"x":0.5245,"y":-0.1621,"z":1.0259},"rot":{"x":0,"y":0,"z":22.3}}],
+        ["dbgvI1pod", ["bx_body"],[],{"pos":{"x":-0.6081,"y":-0.2417,"z":1.015},"rot":{"x":0,"y":0,"z":-27}}],
+        ["dbgvI1bzk", ["bx_body"],[],{"pos":{"x":-0.6081,"y":-0.2417,"z":1.015},"rot":{"x":0,"y":0,"z":-27}}],
+        ["dbgvI1stk", ["bx_body"],[],{"pos":{"x":-0.6081,"y":-0.2417,"z":1.015},"rot":{"x":0,"y":0,"z":-27}}],
+        ["dbgvJ1pod", ["bx_body"],[],{"pos":{"x":-0.5245,"y":-0.1621,"z":1.0259},"rot":{"x":0,"y":0,"z":-22.3}}],
+        ["dbgvJ1bzk", ["bx_body"],[],{"pos":{"x":-0.5245,"y":-0.1621,"z":1.0259},"rot":{"x":0,"y":0,"z":-22.3}}],
+        ["dbgvJ1stk", ["bx_body"],[],{"pos":{"x":-0.5245,"y":-0.1621,"z":1.0259},"rot":{"x":0,"y":0,"z":-22.3}}],
+    ],
+},
+"bx_dbg_boost_tach_auto_silver": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Tachometer - Automatic Mounting, Silver",
+        "value":180,
+    },
+    "slotType" : "bx_dbg_boost",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_tach_shift", "range", "", "Gauges", 1, 0, 1, "Tachometer: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
+        ["$dbg_tach_shift_at", "range", "%", "Gauges", 96, 75, 100, "Tachometer: Shift Light At", "Engine speed where the shift light starts, in percent of the engine's maximum RPM", {"stepDis":1}],
+        ["$dbg_tach_max", "range", "rpm", "Gauges", 0, 0, 12000, "Tachometer: Scale Maximum", "RPM at the last LED. 0 = automatic: the red LEDs start at the engine's rev limit", {"stepDis":250}],
+        ["$dbg_tach_night", "range", "%", "Gauges", 12, 3, 100, "Tachometer: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+        ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgGauge"}],
+    ],
+    "dbgGauge": {
+        "configuration": {
+            "materialName": "@dbg_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"rpm",
+            //LED arc range in RPM (the digits show thousands: 6.8 = 6800). 0 = automatic: the last three
+            //(red) LEDs start at the engine's rev limit
+            "minValue":0,
+            "maxValue":"$dbg_tach_max",
+            "titleLabel":"RPM",
+            //1 = the whole LED ring flashes red near the rev limit (shiftAt = percent of maximum RPM)
+            "shiftLight":"$dbg_tach_shift",
+            "shiftAt":"$dbg_tach_shift_at",
+            //seconds the peak LED stays lit
+            "peakHold":1.5,
+            "nightBrightness":"$dbg_tach_night",
+            "face":"white",
+            "shutdownSweep":"$dbg_shutdown_sweep",
+        },
+        "displayData": {
+            "electrics": [
+                "rpm",
+                "maxrpm",
+                "engineRunning",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+                ["dbgAmbient", "egt"],
+                ["dbgAmbient", "resets"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //meshes for every mounting (GHIJ); dbgAmbient.lua hides all but the one matching the car's interior
+        ["dbgvG1pod", ["bx_body"],[],{"pos":{"x":0.6081,"y":-0.2417,"z":1.015},"rot":{"x":0,"y":0,"z":27}}],
+        ["dbgvG1bzs", ["bx_body"],[],{"pos":{"x":0.6081,"y":-0.2417,"z":1.015},"rot":{"x":0,"y":0,"z":27}}],
+        ["dbgvG1sts", ["bx_body"],[],{"pos":{"x":0.6081,"y":-0.2417,"z":1.015},"rot":{"x":0,"y":0,"z":27}}],
+        ["dbgvH1pod", ["bx_body"],[],{"pos":{"x":0.5245,"y":-0.1621,"z":1.0259},"rot":{"x":0,"y":0,"z":22.3}}],
+        ["dbgvH1bzs", ["bx_body"],[],{"pos":{"x":0.5245,"y":-0.1621,"z":1.0259},"rot":{"x":0,"y":0,"z":22.3}}],
+        ["dbgvH1sts", ["bx_body"],[],{"pos":{"x":0.5245,"y":-0.1621,"z":1.0259},"rot":{"x":0,"y":0,"z":22.3}}],
+        ["dbgvI1pod", ["bx_body"],[],{"pos":{"x":-0.6081,"y":-0.2417,"z":1.015},"rot":{"x":0,"y":0,"z":-27}}],
+        ["dbgvI1bzs", ["bx_body"],[],{"pos":{"x":-0.6081,"y":-0.2417,"z":1.015},"rot":{"x":0,"y":0,"z":-27}}],
+        ["dbgvI1sts", ["bx_body"],[],{"pos":{"x":-0.6081,"y":-0.2417,"z":1.015},"rot":{"x":0,"y":0,"z":-27}}],
+        ["dbgvJ1pod", ["bx_body"],[],{"pos":{"x":-0.5245,"y":-0.1621,"z":1.0259},"rot":{"x":0,"y":0,"z":-22.3}}],
+        ["dbgvJ1bzs", ["bx_body"],[],{"pos":{"x":-0.5245,"y":-0.1621,"z":1.0259},"rot":{"x":0,"y":0,"z":-22.3}}],
+        ["dbgvJ1sts", ["bx_body"],[],{"pos":{"x":-0.5245,"y":-0.1621,"z":1.0259},"rot":{"x":0,"y":0,"z":-22.3}}],
     ],
 },
 "bx_dbg_boost_pillar_lhd": {
@@ -1988,6 +2140,158 @@
         ["dbgvJ2pod", ["bx_body"],[],{"pos":{"x":-0.4943,"y":-0.0712,"z":1.0781},"rot":{"x":0,"y":0,"z":-23.3}}],
         ["dbgvJ2bzs", ["bx_body"],[],{"pos":{"x":-0.4943,"y":-0.0712,"z":1.0781},"rot":{"x":0,"y":0,"z":-23.3}}],
         ["dbgvJ2sfs", ["bx_body"],[],{"pos":{"x":-0.4943,"y":-0.0712,"z":1.0781},"rot":{"x":0,"y":0,"z":-23.3}}],
+    ],
+},
+"bx_dbg_oil_tach_auto": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Tachometer - Automatic Mounting",
+        "value":180,
+    },
+    "slotType" : "bx_dbg_oil",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_tach_shift", "range", "", "Gauges", 1, 0, 1, "Tachometer: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
+        ["$dbg_tach_shift_at", "range", "%", "Gauges", 96, 75, 100, "Tachometer: Shift Light At", "Engine speed where the shift light starts, in percent of the engine's maximum RPM", {"stepDis":1}],
+        ["$dbg_tach_max", "range", "rpm", "Gauges", 0, 0, 12000, "Tachometer: Scale Maximum", "RPM at the last LED. 0 = automatic: the red LEDs start at the engine's rev limit", {"stepDis":250}],
+        ["$dbg_tach_night", "range", "%", "Gauges", 12, 3, 100, "Tachometer: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+        ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgOilGauge"}],
+    ],
+    "dbgOilGauge": {
+        "configuration": {
+            "materialName": "@dbg_oil_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"rpm",
+            //LED arc range in RPM (the digits show thousands: 6.8 = 6800). 0 = automatic: the last three
+            //(red) LEDs start at the engine's rev limit
+            "minValue":0,
+            "maxValue":"$dbg_tach_max",
+            "titleLabel":"RPM",
+            //1 = the whole LED ring flashes red near the rev limit (shiftAt = percent of maximum RPM)
+            "shiftLight":"$dbg_tach_shift",
+            "shiftAt":"$dbg_tach_shift_at",
+            //seconds the peak LED stays lit
+            "peakHold":1.5,
+            "nightBrightness":"$dbg_tach_night",
+            "face":"black",
+            "shutdownSweep":"$dbg_shutdown_sweep",
+        },
+        "displayData": {
+            "electrics": [
+                "rpm",
+                "maxrpm",
+                "engineRunning",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+                ["dbgAmbient", "egt"],
+                ["dbgAmbient", "resets"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //meshes for every mounting (GHIJ); dbgAmbient.lua hides all but the one matching the car's interior
+        ["dbgvG2pod", ["bx_body"],[],{"pos":{"x":0.5753,"y":-0.1308,"z":1.0769},"rot":{"x":0,"y":0,"z":29.7}}],
+        ["dbgvG2bzk", ["bx_body"],[],{"pos":{"x":0.5753,"y":-0.1308,"z":1.0769},"rot":{"x":0,"y":0,"z":29.7}}],
+        ["dbgvG2stk", ["bx_body"],[],{"pos":{"x":0.5753,"y":-0.1308,"z":1.0769},"rot":{"x":0,"y":0,"z":29.7}}],
+        ["dbgvH2pod", ["bx_body"],[],{"pos":{"x":0.4943,"y":-0.0712,"z":1.0781},"rot":{"x":0,"y":0,"z":23.3}}],
+        ["dbgvH2bzk", ["bx_body"],[],{"pos":{"x":0.4943,"y":-0.0712,"z":1.0781},"rot":{"x":0,"y":0,"z":23.3}}],
+        ["dbgvH2stk", ["bx_body"],[],{"pos":{"x":0.4943,"y":-0.0712,"z":1.0781},"rot":{"x":0,"y":0,"z":23.3}}],
+        ["dbgvI2pod", ["bx_body"],[],{"pos":{"x":-0.5753,"y":-0.1308,"z":1.0769},"rot":{"x":0,"y":0,"z":-29.7}}],
+        ["dbgvI2bzk", ["bx_body"],[],{"pos":{"x":-0.5753,"y":-0.1308,"z":1.0769},"rot":{"x":0,"y":0,"z":-29.7}}],
+        ["dbgvI2stk", ["bx_body"],[],{"pos":{"x":-0.5753,"y":-0.1308,"z":1.0769},"rot":{"x":0,"y":0,"z":-29.7}}],
+        ["dbgvJ2pod", ["bx_body"],[],{"pos":{"x":-0.4943,"y":-0.0712,"z":1.0781},"rot":{"x":0,"y":0,"z":-23.3}}],
+        ["dbgvJ2bzk", ["bx_body"],[],{"pos":{"x":-0.4943,"y":-0.0712,"z":1.0781},"rot":{"x":0,"y":0,"z":-23.3}}],
+        ["dbgvJ2stk", ["bx_body"],[],{"pos":{"x":-0.4943,"y":-0.0712,"z":1.0781},"rot":{"x":0,"y":0,"z":-23.3}}],
+    ],
+},
+"bx_dbg_oil_tach_auto_silver": {
+    "information":{
+        "authors":"Kristof",
+        "name":"Tachometer - Automatic Mounting, Silver",
+        "value":180,
+    },
+    "slotType" : "bx_dbg_oil",
+    //sliders in the Tuning menu
+    "variables": [
+        ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
+        ["$dbg_tach_shift", "range", "", "Gauges", 1, 0, 1, "Tachometer: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
+        ["$dbg_tach_shift_at", "range", "%", "Gauges", 96, 75, 100, "Tachometer: Shift Light At", "Engine speed where the shift light starts, in percent of the engine's maximum RPM", {"stepDis":1}],
+        ["$dbg_tach_max", "range", "rpm", "Gauges", 0, 0, 12000, "Tachometer: Scale Maximum", "RPM at the last LED. 0 = automatic: the red LEDs start at the engine's rev limit", {"stepDis":250}],
+        ["$dbg_tach_night", "range", "%", "Gauges", 12, 3, 100, "Tachometer: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+        ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],
+    ],
+    "controller": [
+        ["fileName"],
+        ["gauges/genericGauges", {"name":"dbgOilGauge"}],
+    ],
+    "dbgOilGauge": {
+        "configuration": {
+            "materialName": "@dbg_oil_screen",
+            "htmlPath": "local://local/vehicles/common/pillar_pod_gauges/screen.html",
+            "displayWidth":512,
+            "displayHeight":512,
+            "source":"rpm",
+            //LED arc range in RPM (the digits show thousands: 6.8 = 6800). 0 = automatic: the last three
+            //(red) LEDs start at the engine's rev limit
+            "minValue":0,
+            "maxValue":"$dbg_tach_max",
+            "titleLabel":"RPM",
+            //1 = the whole LED ring flashes red near the rev limit (shiftAt = percent of maximum RPM)
+            "shiftLight":"$dbg_tach_shift",
+            "shiftAt":"$dbg_tach_shift_at",
+            //seconds the peak LED stays lit
+            "peakHold":1.5,
+            "nightBrightness":"$dbg_tach_night",
+            "face":"white",
+            "shutdownSweep":"$dbg_shutdown_sweep",
+        },
+        "displayData": {
+            "electrics": [
+                "rpm",
+                "maxrpm",
+                "engineRunning",
+                "ignitionLevel",
+                "lights",
+                "lowhighbeam",
+            ],
+            "customModules": [
+                ["moduleName", "property"],
+                ["dbgAmbient", "light"],
+                ["dbgAmbient", "maxBoost"],
+                ["dbgAmbient", "egt"],
+                ["dbgAmbient", "resets"],
+            ],
+        },
+    },
+    "flexbodies": [
+        ["mesh", "[group]:", "nonFlexMaterials"],
+        //meshes for every mounting (GHIJ); dbgAmbient.lua hides all but the one matching the car's interior
+        ["dbgvG2pod", ["bx_body"],[],{"pos":{"x":0.5753,"y":-0.1308,"z":1.0769},"rot":{"x":0,"y":0,"z":29.7}}],
+        ["dbgvG2bzs", ["bx_body"],[],{"pos":{"x":0.5753,"y":-0.1308,"z":1.0769},"rot":{"x":0,"y":0,"z":29.7}}],
+        ["dbgvG2sts", ["bx_body"],[],{"pos":{"x":0.5753,"y":-0.1308,"z":1.0769},"rot":{"x":0,"y":0,"z":29.7}}],
+        ["dbgvH2pod", ["bx_body"],[],{"pos":{"x":0.4943,"y":-0.0712,"z":1.0781},"rot":{"x":0,"y":0,"z":23.3}}],
+        ["dbgvH2bzs", ["bx_body"],[],{"pos":{"x":0.4943,"y":-0.0712,"z":1.0781},"rot":{"x":0,"y":0,"z":23.3}}],
+        ["dbgvH2sts", ["bx_body"],[],{"pos":{"x":0.4943,"y":-0.0712,"z":1.0781},"rot":{"x":0,"y":0,"z":23.3}}],
+        ["dbgvI2pod", ["bx_body"],[],{"pos":{"x":-0.5753,"y":-0.1308,"z":1.0769},"rot":{"x":0,"y":0,"z":-29.7}}],
+        ["dbgvI2bzs", ["bx_body"],[],{"pos":{"x":-0.5753,"y":-0.1308,"z":1.0769},"rot":{"x":0,"y":0,"z":-29.7}}],
+        ["dbgvI2sts", ["bx_body"],[],{"pos":{"x":-0.5753,"y":-0.1308,"z":1.0769},"rot":{"x":0,"y":0,"z":-29.7}}],
+        ["dbgvJ2pod", ["bx_body"],[],{"pos":{"x":-0.4943,"y":-0.0712,"z":1.0781},"rot":{"x":0,"y":0,"z":-23.3}}],
+        ["dbgvJ2bzs", ["bx_body"],[],{"pos":{"x":-0.4943,"y":-0.0712,"z":1.0781},"rot":{"x":0,"y":0,"z":-23.3}}],
+        ["dbgvJ2sts", ["bx_body"],[],{"pos":{"x":-0.4943,"y":-0.0712,"z":1.0781},"rot":{"x":0,"y":0,"z":-23.3}}],
     ],
 },
 "bx_dbg_oil_boost_auto": {

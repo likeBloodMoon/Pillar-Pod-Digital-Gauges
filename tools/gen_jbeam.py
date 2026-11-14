@@ -119,6 +119,18 @@ FUEL_CFG='''            "source":"fuel",
             "warnValue":"$dbg_fuel_low",
             "peakHold":0,
             "nightBrightness":"$dbg_fuel_night",'''
+TACH_CFG='''            "source":"rpm",
+            //LED arc range in RPM (the digits show thousands: 6.8 = 6800). 0 = automatic: the last three
+            //(red) LEDs start at the engine's rev limit
+            "minValue":0,
+            "maxValue":"$dbg_tach_max",
+            "titleLabel":"RPM",
+            //1 = the whole LED ring flashes red near the rev limit (shiftAt = percent of maximum RPM)
+            "shiftLight":"$dbg_tach_shift",
+            "shiftAt":"$dbg_tach_shift_at",
+            //seconds the peak LED stays lit
+            "peakHold":1.5,
+            "nightBrightness":"$dbg_tach_night",'''
 AUTO_DEFAULT=P+"_dbg_boost_auto"
 _rows=[['"name"','"allowTypes"','"denyTypes"','"default"','"description"'],
        ['"%s_dbg_boost"'%P,'["%s_dbg_boost"]'%P,'[]','"%s"'%AUTO_DEFAULT,'"Lower Gauge"'],
@@ -128,8 +140,8 @@ SLOTS2="\n".join("        ["+" ".join((c+",").ljust(_w[i]+1) if i<4 else c for i
 out=f'''{{
 //Pillar Pod Digital Gauges - parts for the {CAR["label"]}.
 //  Additional Modification -> Digital Pillar Gauges
-//      Lower Gauge: boost (default), oil temp, coolant temp, exhaust temp or fuel level
-//      Upper Gauge: empty (default), oil temp, coolant temp, exhaust temp, fuel level or boost
+//      Lower Gauge: boost (default), oil temp, coolant temp, exhaust temp, fuel level or tachometer
+//      Upper Gauge: empty (default), oil temp, coolant temp, exhaust temp, fuel level, tachometer or boost
 //Every gauge type comes with automatic mounting in black or silver: it picks the position that
 //matches the car's interior. Boost (lower) and oil temp (upper) are also offered in fixed mountings,
 //which always use the position they name.
@@ -164,6 +176,10 @@ FUEL_VARS='''        ["$dbg_fuel_low", "range", "%", "Gauges", 10, 0, 40, "Fuel 
 OIL_VARS='''        ["$dbg_oil_cold", "range", "C", "Gauges", 70, 0, 100, "Oil Temp Gauge: Cold Mark Below", "A blue COLD mark shows below this oil temperature (deg C). 0 = off", {"stepDis":1}],
         ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
         ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],'''
+TACH_VARS='''        ["$dbg_tach_shift", "range", "", "Gauges", 1, 0, 1, "Tachometer: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
+        ["$dbg_tach_shift_at", "range", "%", "Gauges", 96, 75, 100, "Tachometer: Shift Light At", "Engine speed where the shift light starts, in percent of the engine's maximum RPM", {"stepDis":1}],
+        ["$dbg_tach_max", "range", "rpm", "Gauges", 0, 0, 12000, "Tachometer: Scale Maximum", "RPM at the last LED. 0 = automatic: the red LEDs start at the engine's rev limit", {"stepDis":250}],
+        ["$dbg_tach_night", "range", "%", "Gauges", 12, 3, 100, "Tachometer: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],'''
 # shared by every gauge, the display and the cluster (a variable defined in several parts is merged by the game)
 SHUT_VAR='''        ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],'''
 SHUT_CFG='''            "shutdownSweep":"$dbg_shutdown_sweep",'''
@@ -215,10 +231,12 @@ TYPES={"boost":("Boost",BOOST_CFG,BOOST_VARS,["turboBoost","superchargerBoost","
        "oil":("Oil Temp",OIL_CFG,OIL_VARS,["oiltemp"]+LIGHT,"t"),
        "water":("Coolant Temp",WATER_CFG,WATER_VARS,["watertemp"]+LIGHT,"t"),
        "fuel":("Fuel Level",FUEL_CFG,FUEL_VARS,["fuel"]+LIGHT,"f"),
-       "egt":("Exhaust Temp",EGT_CFG,EGT_VARS,LIGHT,"e")}
+       "egt":("Exhaust Temp",EGT_CFG,EGT_VARS,LIGHT,"e"),
+       # the tachometer uses the temperature gauges' printed face: green LEDs, the last three red, three digits
+       "tach":("Tachometer",TACH_CFG,TACH_VARS,["rpm","maxrpm","engineRunning"]+LIGHT,"t")}
 # positions: (slot, controller, screen material, fixed pod mesh, fixed screen mesh, its own gauge type, other types in list order)
-POSITIONS=((P+"_dbg_boost","dbgGauge","dbg_screen","dbg_pod","dbg_screen","boost",("oil","water","egt","fuel")),
-           (P+"_dbg_oil","dbgOilGauge","dbg_oil_screen","dbg_pod2","dbg_oil_screen","oil",("water","egt","fuel","boost")))
+POSITIONS=((P+"_dbg_boost","dbgGauge","dbg_screen","dbg_pod","dbg_screen","boost",("oil","water","egt","fuel","tach")),
+           (P+"_dbg_oil","dbgOilGauge","dbg_oil_screen","dbg_pod2","dbg_oil_screen","oil",("water","egt","fuel","tach","boost")))
 FINS=(("black","","","dbg_gauge","","black"),("silver","_silver",", Silver","dbg_gauge_silver","_w","white"))
 SIDES=(("lhd",1,"","LHD"),("rhd",-1,"_rhd","RHD"))
 def auto_part(gi,slot,ctrl,mat,tkey,keyname):

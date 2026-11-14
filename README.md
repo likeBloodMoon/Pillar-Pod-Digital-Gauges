@@ -44,6 +44,7 @@ the **Lower Gauge** and **Upper Gauge** positions. Each position can hold any ga
 | Coolant temperature | Coolant temperature with a COLD mark and a warning limit |
 | Exhaust gas temperature | EGT from the game's engine heat simulation; in °F a full 4-digit readout (1370) |
 | Fuel level | Fuel left, with a low-fuel warning |
+| Tachometer | Engine speed in thousands (6.8 = 6800 rpm), scaled to the engine's rev limit, with a shift light |
 
 Choose **Automatic Mounting** (black, or silver with a white face) and the gauge finds its own
 place: on the A-pillar trim, on the bare pillar of a stripped or race interior, or on the roll cage
@@ -97,6 +98,7 @@ gallons). All screens dim at night and with the headlights on.
 Tuning menu, category **Gauges**:
 
 - Overboost warning, peak recall time, shift light on/off
+- Tachometer: shift light on/off, the RPM where it starts, scale maximum
 - Oil, coolant and exhaust warning temperatures, cold-mark temperatures, low-fuel warning
 - Night brightness for the gauges, the display and the cluster
 - First page shown on the display and on the cluster

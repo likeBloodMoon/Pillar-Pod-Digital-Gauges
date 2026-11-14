@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- **Tachometer** for the pillar gauges, in either position. The LED ring runs up to the engine's rev
+  limit, with the last three (red) LEDs past it, and the digits show thousands (6.8 = 6800 rpm). The
+  whole ring flashes red at the shift point. Tuning → Gauges has the shift light on/off, the RPM it
+  starts at (96 % of the limit by default) and an optional fixed scale maximum.
+
 ## 1.2.1
 
 Fixes and polish. No new gauges, cars or parts.
