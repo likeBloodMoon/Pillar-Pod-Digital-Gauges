@@ -47,7 +47,7 @@ def node(name,mats):
       </node>
 '''
 mats=[("dbg_body","0.03 0.03 0.03"),("dbg_bezel","0.01 0.01 0.01"),("dbg_screen","0.05 0.05 0.05"),("dbg_oil_screen","0.05 0.05 0.05"),("dbg_bezel_silver","0.7 0.7 0.7"),("dbg_screen_w","0.8 0.8 0.8"),("dbg_oil_screen_w","0.8 0.8 0.8")]
-# screens with the other printed faces, for any gauge type in either position (automatic mounting only)
+# screens with the other printed faces, for any gauge type in either position
 mats+=[("dbg_mfd_screen","0.02 0.02 0.025"),("dbg_mfd_frame","0.025 0.025 0.028"),("dbg_cluster_screen","0.02 0.02 0.025")]   # display, cluster
 mats+=[(m,"0.05 0.05 0.05" if not m.endswith("_w") else "0.8 0.8 0.8") for m in
        ("dbg_screen_t","dbg_screen_t_w","dbg_screen_f","dbg_screen_f_w","dbg_oil_screen_b","dbg_oil_screen_b_w","dbg_oil_screen_f","dbg_oil_screen_f_w",
@@ -60,22 +60,8 @@ def mirror(part):
     p=p.copy(); n=n.copy(); p[:,0]*=-1; n[:,0]*=-1
     return p,n,t[:,::-1].copy(),uv
 geoms="";nodes=""
-for tag,src,sc in (("80","std",0.8),("65","cage",0.65)):     # two gauge sizes: A-pillar mountings and roll-cage mounting
-    g=D[src]['gauge']
-    geoms+=geom("dbg_gauge_"+tag,[("dbg_bezel",g)])+geom("dbg_screen_"+tag,[("dbg_screen",(sp*sc,sn,st,suv))])+geom("dbg_oil_screen_"+tag,[("dbg_oil_screen",(sp*sc,sn,st,suv))])
-    nodes+=node("dbg_gauge_"+tag,["dbg_bezel"])+node("dbg_screen_"+tag,["dbg_screen"])+node("dbg_oil_screen_"+tag,["dbg_oil_screen"])
-    # silver bezel + white faceplate versions
-    geoms+=geom("dbg_gauge_silver_"+tag,[("dbg_bezel_silver",g)])+geom("dbg_screen_w_"+tag,[("dbg_screen_w",(sp*sc,sn,st,suv))])+geom("dbg_oil_screen_w_"+tag,[("dbg_oil_screen_w",(sp*sc,sn,st,suv))])
-    nodes+=node("dbg_gauge_silver_"+tag,["dbg_bezel_silver"])+node("dbg_screen_w_"+tag,["dbg_screen_w"])+node("dbg_oil_screen_w_"+tag,["dbg_oil_screen_w"])
-POD_NAME={'bx_std':'bx_pillar'}   # mesh name differs from the parts file name
-for n in names:
-    base_n=n[:-2] if n.endswith("_2") else n
-    base_n=POD_NAME.get(base_n,base_n)
-    nm=("dbg_pod2_" if n.endswith("_2") else "dbg_pod_")+base_n
-    geoms+=geom(nm,[("dbg_body",D[n]['pod'])]); nodes+=node(nm,["dbg_body"])
-    geoms+=geom(nm+"_rhd",[("dbg_body",mirror(D[n]['pod']))]); nodes+=node(nm+"_rhd",["dbg_body"])
-# ---- automatic mounting: every mounting of every gauge gets its own uniquely named meshes, so the
-# mod's script can show one set and hide the rest. Names are all 9 characters and none is a
+# ---- the gauges (automatic mounting only): every mounting of every gauge gets its own uniquely named
+# meshes, so the mod's script can show one set and hide the rest. Names are all 9 characters and none is a
 # substring of another: dbgv + mounting (A-J) + position (1 lower, 2 upper) + one of
 #   pod, bzk / bzs (black / silver bezel),
 #   s + printed face (b boost, t temperature, f fuel, e exhaust temperature) + k / s (black face / white face of the silver version)

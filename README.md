@@ -46,10 +46,9 @@ the **Lower Gauge** and **Upper Gauge** positions. Each position can hold any ga
 | Fuel level | Fuel left, with a low-fuel warning |
 | Tachometer | Engine speed in thousands (6.8 = 6800 rpm), scaled to the engine's rev limit, with a shift light |
 
-Choose **Automatic Mounting** (black, or silver with a white face) and the gauge finds its own
-place: on the A-pillar trim, on the bare pillar of a stripped or race interior, or on the roll cage
-bar, for left- or right-hand drive. Fixed mountings for each interior are there too if you want to
-pick yourself.
+Every gauge comes as **Automatic Mounting**, in black or in silver with a white face. It finds its
+own place: on the A-pillar trim, on the bare pillar of a stripped or race interior, or on the roll
+cage bar, for left- or right-hand drive.
 
 ### Digital cluster (Covet)
 
@@ -109,15 +108,14 @@ Tuning menu, category **Gauges**:
 
 - The pillar gauges and the display use the car's single **Additional Modification** slot, so they
   can't be combined with another mod that uses that slot. The cluster uses the Gauges slot instead.
-- Each mounting has a pod mesh shaped to that interior, so moving a gauge by editing coordinates
-  only works for small nudges.
 
 ## Roadmap
 
 Planned work is tracked as [milestones](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/milestones), one per release:
 
 - [1.3](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/milestone/1): peak and warning lights on every gauge, key bindings to show and reset
-  the peak, `--` when a car doesn't report a reading, and tachometer and G-meter gauges
+  the peak, `--` when a car doesn't report a reading, tachometer and G-meter gauges, and a shorter
+  parts list with only automatic mounting
 - [1.4](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/milestone/2): the Pessima, Sunburst and ETK 800, the display and cluster on the 200BX,
   a triple pillar pod and other mounts
 - [1.5](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/milestone/3): a race-dash cluster with a shift-light strip, a warning banner and timers
