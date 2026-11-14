@@ -14,6 +14,8 @@ Open an [issue](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/issue
 
 Security problems go through private reporting instead. See [SECURITY.md](SECURITY.md).
 
+Everyone taking part in issues, pull requests and Discussions is expected to follow the [code of conduct](CODE_OF_CONDUCT.md).
+
 ## Suggesting a feature
 
 Open an issue first and describe what you'd like to see and on which car. A screenshot or a photo of a real gauge helps a lot. Talking it through before you build saves work on both sides.
