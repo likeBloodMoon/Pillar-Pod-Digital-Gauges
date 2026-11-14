@@ -99,8 +99,10 @@ def changed(a, b):
     """True when two renders differ by more than easing noise."""
     if a.size != b.size:
         return True
+    # two renders of the same version are pixel-identical, so a handful of clearly different pixels
+    # is already a real change (a recoloured unit label is a few hundred)
     d = ImageChops.difference(a, b).convert("L").point(lambda v: 255 if v > 48 else 0)
-    return sum(d.histogram()[255:]) > a.size[0] * a.size[1] * 0.002
+    return sum(d.histogram()[255:]) > 20
 
 
 def compare(before, after, out):
