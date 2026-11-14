@@ -64,7 +64,7 @@ The mesh scripts in `tools/` need geometry from your own copy of the game (extra
 2. Test in the game: load the car, fit the parts, sit in the driver's seat and check the screens update.
 3. Keep each pull request to one change and explain what it does and how you tested it. Screenshots from the game help for anything visual.
 
-CI runs the validator on every push and pull request.
+CI runs the validator on every push and pull request. When a pull request changes a screen page or a face texture, the **Screen previews** workflow renders every screen before and after the change and posts the ones that look different as a comment. You can render them yourself with `python tools/render_previews.py . previews`.
 
 ## Releases
 

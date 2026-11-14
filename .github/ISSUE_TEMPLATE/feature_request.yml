@@ -1,0 +1,32 @@
+name: Feature request
+description: Suggest a gauge, a car, a mounting or a change
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like?
+      description: The gauge, car, mounting, page or behaviour you have in mind.
+      placeholder: A water temperature page on the multi-function display.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: How you would use it, or what is missing today.
+  - type: input
+    id: car
+    attributes:
+      label: Car
+      description: Which car it is for, if it is about one car.
+      placeholder: Ibishu Covet
+  - type: textarea
+    id: reference
+    attributes:
+      label: Reference
+      description: A photo of a real gauge or install, or a screenshot from the game, helps a lot. Drag images in here.
+  - type: markdown
+    attributes:
+      value: |
+        The mod only shows what BeamNG simulates (boost, oil, coolant and exhaust temperatures, fuel, speed, rpm, tyres, brakes, g-force). Readings the game doesn't simulate, such as oil pressure or AFR, could only be estimates.

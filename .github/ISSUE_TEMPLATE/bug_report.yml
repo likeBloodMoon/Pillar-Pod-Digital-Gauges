@@ -1,0 +1,111 @@
+name: Bug report
+description: Something in the mod doesn't work or looks wrong in game
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! The details below let me reproduce the problem in the same car and setup.
+        Security problems go through [private reporting](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/security/advisories/new) instead.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happens?
+      description: What you see, and what you expected instead.
+      placeholder: The upper gauge on the roll cage is cut off at the top of the screen.
+    validations:
+      required: true
+  - type: dropdown
+    id: part
+    attributes:
+      label: Which part?
+      multiple: true
+      options:
+        - Pillar gauges (round)
+        - Multi-function display
+        - Digital cluster (standard dashboard)
+        - Digital cluster (race dashboard)
+        - Not sure
+    validations:
+      required: true
+  - type: dropdown
+    id: car
+    attributes:
+      label: Car
+      options:
+        - Ibishu Covet
+        - Ibishu 200BX
+    validations:
+      required: true
+  - type: input
+    id: config
+    attributes:
+      label: Car configuration
+      description: The configuration name, and the interior (standard, stripped, race, roll cage) if you changed it.
+      placeholder: "200BX Race (RHD), roll cage"
+  - type: dropdown
+    id: side
+    attributes:
+      label: Driving side
+      options:
+        - Left-hand drive
+        - Right-hand drive
+        - Both
+  - type: input
+    id: gauges
+    attributes:
+      label: Gauges and mounting
+      description: What is in the Lower and Upper Gauge slots, the mounting, and black or silver.
+      placeholder: "Lower: Boost – Automatic Mounting (black). Upper: Oil Temp – Automatic Mounting"
+  - type: input
+    id: units
+    attributes:
+      label: Units
+      description: Only if a reading looks wrong. Your pressure, temperature and speed units.
+      placeholder: "bar, °F, km/h"
+  - type: input
+    id: modversion
+    attributes:
+      label: Mod version
+      description: From the zip name, e.g. pillar_pod_gauges_v1.2.1.zip
+      placeholder: "1.2.1"
+    validations:
+      required: true
+  - type: input
+    id: gameversion
+    attributes:
+      label: BeamNG.drive version
+      description: Shown at the bottom of the main menu.
+      placeholder: "0.40.5"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Spawn the 200BX Race (RHD)
+        2. Fit Digital Pillar Gauges with Automatic Mounting
+        3. Switch to the default driver camera
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot
+      description: From the default driver camera if it is about placement or readability. Drag the image in here.
+  - type: textarea
+    id: log
+    attributes:
+      label: beamng.log
+      description: |
+        Needed if a part doesn't load or a screen stays blank. The file is in `%LocalAppData%\BeamNG\BeamNG.drive\current\beamng.log`.
+        Attach the file, or paste the lines that mention `pillar_pod_gauges`.
+      render: text
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you send
+      options:
+        - label: I'm using the zip from the latest release, not GitHub's "Download ZIP" button.
+          required: true
+        - label: Only one version of the mod is in my mods folder.
+          required: true
