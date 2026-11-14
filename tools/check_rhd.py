@@ -46,6 +46,39 @@ def samples(P,T,n=3):
     for a in np.linspace(0,1,n+1):
         for b in np.linspace(0,1-a,n+1): out.append(A*(1-a-b)+B*a+C*b)
     return np.vstack(out)
+def point_tri_dist(P,A,B,C):
+    """Exact distance from each point in P (n,3) to each triangle (m,3 each): (n,m). Ericson's
+    closest-point-on-triangle, vectorised."""
+    P=P[:,None,:]; A=A[None]; B=B[None]; C=C[None]
+    ab=B-A; ac=C-A; ap=P-A
+    d1=(ab*ap).sum(-1); d2=(ac*ap).sum(-1)
+    bp=P-B; d3=(ab*bp).sum(-1); d4=(ac*bp).sum(-1)
+    cp=P-C; d5=(ab*cp).sum(-1); d6=(ac*cp).sum(-1)
+    va=d3*d6-d5*d4; vb=d5*d2-d1*d6; vc=d1*d4-d3*d2
+    den=va+vb+vc; den=np.where(np.abs(den)<1e-18,1e-18,den)
+    v=vb/den; w=vc/den
+    Q=A+ab*v[...,None]+ac*w[...,None]                                   # inside the face
+    def seg(X,Y,t): return X+(Y-X)*np.clip(t,0,1)[...,None]
+    tab=d1/np.where(d1-d3==0,1e-18,d1-d3); tac=d2/np.where(d2-d6==0,1e-18,d2-d6)
+    tbc=(d4-d3)/np.where((d4-d3)+(d5-d6)==0,1e-18,(d4-d3)+(d5-d6))
+    regions=[(d1<=0)&(d2<=0),(d3>=0)&(d4<=d3),(d6>=0)&(d5<=d6),(vc<=0)&(d1>=0)&(d3<=0),(vb<=0)&(d2>=0)&(d6<=0),(va<=0)&((d4-d3)>=0)&((d5-d6)>=0)]
+    cands=[np.broadcast_to(A,Q.shape),np.broadcast_to(B,Q.shape),np.broadcast_to(C,Q.shape),seg(A,B,tab),seg(A,C,tac),seg(B,C,tbc)]
+    for m,c in zip(regions,cands): Q=np.where(m[...,None],c,Q)
+    return np.linalg.norm(P-Q,axis=-1)
+def tri_clearance(P,d,names,reach=0.25):
+    """Smallest distance from the points P to the surfaces (triangles) of the named meshes, and which mesh."""
+    lo=P.min(0)-reach; hi=P.max(0)+reach; best=(np.inf,None)
+    for k in names:
+        V=d[k][0].astype(float); T=d[k][1].astype(int); A,B,C=V[T[:,0]],V[T[:,1]],V[T[:,2]]
+        tmin=np.minimum(np.minimum(A,B),C); tmax=np.maximum(np.maximum(A,B),C)
+        near=((tmax>=lo)&(tmin<=hi)).all(1)                             # triangles near the pod only
+        if not near.any(): continue
+        A,B,C=A[near],B[near],C[near]
+        for i in range(0,len(P),256):
+            m=point_tri_dist(P[i:i+256],A,B,C).min()
+            if m<best[0]: best=(m,k)
+    if best[1] is None: best=(reach,'(nothing within %d mm)'%int(reach*1000))
+    return best
 results=[]
 for car,mount,names,items in ROWS:
     d=cov if car=='covet' else bxc
@@ -66,14 +99,13 @@ for car,mount,names,items in ROWS:
             if sx<0: Pm=Pm*[-1,1,1]; F=F*[-1,1,1]
             # clearance to everything except the mounting surface (body / stripped trim / cage tube)
             others=[k for k in nm if not any(s in k for s in ('body','stripped_int','rollcage','intcarpet','intpanels'))]
-            Q=np.vstack([d[k][0].astype(float) for k in others]); own=np.concatenate([[k]*len(d[k][0]) for k in others])
-            dd,ii=cKDTree(Q).query(Pm); j=np.argmin(dd); jn=ii[j]
+            dmin,jn=tri_clearance(Pm,d,others)
             eye=EYE[car]*[sx,1,1]; occ=Occ(d,nm); vis=0; blockers={}
             for p in F:
                 v=p-eye; L=np.linalg.norm(v); h=occ.hit(eye,v/L,L-0.006)
                 if h is None: vis+=1
                 else: blockers[h]=blockers.get(h,0)+1
-            row+=[own[jn],dd[j]*1000,100*vis/len(F),blockers]
+            row+=[jn,dmin*1000,100*vis/len(F),blockers]
         results.append(row)
         print('%-5s %-8s %-8s | LHD: nearest %-26s %5.1f mm, face visible %5.1f %% %s | RHD: nearest %-26s %5.1f mm, face visible %5.1f %% %s'%tuple(row))
 
