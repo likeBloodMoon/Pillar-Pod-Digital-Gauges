@@ -31,9 +31,11 @@ CARS={
  "bx":dict(
   label="Ibishu 200BX", root="bx_pillar_pod_gauges", mod_slot="bx_mod", group="bx_body",
   out="vehicles/bx/bx_pillar_pod_gauges.jbeam",
-  # the 200BX's A-pillar is the same shape with every interior, coupe or liftback, so one pillar mounting covers them all
-  POS={"pillar":(((0.5837,-0.1443,1.0671),24.7),((0.5502,-0.0285,1.1255),26.9)),
-       "cage":(((0.4943,-0.0537,1.0857),19.6),((0.4630,0.0510,1.1297),20.4))},
+  # the 200BX's A-pillar trim is the same shape with every interior (coupe, liftback, stripped), so one
+  # pillar mounting covers them all. Positions from find_positions_bx.py with the driver camera measured
+  # in game: the bezels look the same size from the seat as the Covet's (1.2.1; they were 15-45 % bigger)
+  POS={"pillar":(((0.6081,-0.2417,1.0150),27.0),((0.5753,-0.1308,1.0769),29.7)),
+       "cage":(((0.5245,-0.1621,1.0259),22.3),((0.4943,-0.0712,1.0781),23.3))},
   SIZE={"pillar":"80","cage":"65"},
   NAMES={"pillar":"A-Pillar, Any Interior","cage":"Roll Cage Bar"},
   MESH={"pillar":"bx_pillar","cage":"bx_cage"},

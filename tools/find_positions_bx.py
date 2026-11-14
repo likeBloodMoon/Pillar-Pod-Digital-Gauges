@@ -1,5 +1,10 @@
 """200BX version of find_positions.py: driver eye, pillar aim point and occluder meshes for the Ibishu 200BX.
-    python find_positions_bx.py bx_cabin.npy <scale 0.8|0.65> [std|cage]
+    python find_positions_bx.py bx_cabin.npy <scale 0.8|0.65> [std|cage] [lower deg] [upper deg]
+
+The eye is the game's default driver camera, measured in game (1.2.1). The two gauges are placed
+as high up the pillar as they can go while their bezels look no bigger from the driver's seat than
+the Covet's (lower about 2.85 deg, upper about 3.45 deg radius), so a 52 mm gauge looks the same
+size in both cars. The steering wheel counts as an occluder.
 """
 import numpy as np, sys, math
 cab=np.load(sys.argv[1],allow_pickle=True).item()
@@ -17,7 +22,7 @@ class Occ:
         m=ok&(u>=0)&(v>=0)&(u+v<=1)&(t>1e-5)&(t<tmax)
         if not m.any(): return np.inf,None
         i=np.where(m)[0][np.argmin(t[m])]; return t[i],s.own[i]
-eye=np.array([0.333,0.40,1.07]); eye2=np.array([0.0,0.35,1.09])
+eye=np.array([0.349,0.266,1.049]); eye2=np.array([0.0,0.216,1.069])   # driver camera (measured), and a head leaned to the centre
 CA=np.array([0.6152,-0.2008,1.0668])
 f=CA-eye; f/=np.linalg.norm(f); left=-np.cross(f,[0,0,1]); left/=np.linalg.norm(left); up=np.cross(left,-f)
 S=float(sys.argv[2])
@@ -31,7 +36,7 @@ def clear(occ,C,yaw,R=0.036*S):
                     d=p-e; L=np.linalg.norm(d)
                     if occ.hit(e,d/L,L-1e-4)[0]<np.inf: return False
     return True
-COMMON=['bx_intcarpet_hatch','bx_body_hatch','bx_door_L','bx_doorpanel_L','bx_sunvisor_L','bx_sunvisor_mounts','bx_dash','bx_grp_dash','bx_dash_rally','bx_rollcage_derby','bx_windshield_bar','bx_mirror_int_lhd']
+COMMON=['bx_intcarpet_hatch','bx_body_hatch','bx_door_L','bx_doorpanel_L','bx_sunvisor_L','bx_sunvisor_mounts','bx_dash','bx_grp_dash','bx_dash_rally','bx_rollcage_derby','bx_windshield_bar','bx_mirror_int_lhd','bx_steer','bx_grp_column']
 V={'std':COMMON,'cage':COMMON+['bx_rollcage']}
 TARGET={'std':'bx_intcarpet_hatch','cage':'bx_rollcage'}
 SL=np.array([0.40,-0.45,0.95])
@@ -49,17 +54,26 @@ def place(occ,name,du):
             C=Sp-d*off; e=eye-C; yaw=math.degrees(math.atan2(-e[0],e[1]))
             if clear(occ,C,yaw): return C,yaw,off
     return None
+T1=float(sys.argv[4]) if len(sys.argv)>4 else 2.85    # bezel angular radius limits, deg
+T2=float(sys.argv[5]) if len(sys.argv)>5 else 3.45
+def rad(C): return math.degrees(0.034*S/np.linalg.norm(C-eye))
 for name,names in V.items():
     if ONLY and name!=ONLY: continue
-    occ=Occ(names); du0=0.025 if name=='cage' else 0.0
-    r0=place(occ,name,du0)
-    if not r0: print(name,'no pos1'); continue
-    C1,y1,o1=r0; r1=math.degrees(0.034*S/np.linalg.norm(C1-eye))
-    print('%s_1 %.4f,%.4f,%.4f %.1f   # off %.3f, %.2f m from eye, radius %.1f deg, shiftlight %.1f deg'%(name,*C1,y1,o1,np.linalg.norm(C1-eye),r1,ang(C1-eye,SL-eye)))
-    for du in np.arange(0.05,0.16,0.005):
-        r=place(occ,name,du0+du)
+    occ=Occ(names); done=False
+    # walk the lower gauge down the pillar until both gauges are no bigger than the limits
+    for du1 in np.arange(0.06,-0.30,-0.005):
+        r=place(occ,name,du1)
         if not r: continue
-        C2,y2,o2=r; r2=math.degrees(0.034*S/np.linalg.norm(C2-eye)); gap=ang(C2-eye,C1-eye)-r1-r2
-        if gap>=1.2 and np.linalg.norm(C2-C1)>=0.068*S+0.01:
-            print('%s_2 %.4f,%.4f,%.4f %.1f   # du %.3f off %.3f, %.2f m from eye, radius %.1f deg, gap %.1f deg, z %.3f'%(name,*C2,y2,du,o2,np.linalg.norm(C2-eye),r2,gap,C2[2])); break
-    else: print(name,'no pos2')
+        C1,y1,o1=r; r1=rad(C1)
+        if r1>T1: continue
+        for du in np.arange(0.05,0.16,0.005):
+            r=place(occ,name,du1+du)
+            if not r: continue
+            C2,y2,o2=r; r2=rad(C2); gap=ang(C2-eye,C1-eye)-r1-r2
+            if gap>=1.2 and np.linalg.norm(C2-C1)>=0.068*S+0.01: break
+        else: continue
+        if r2>T2: continue
+        print('%s_1 %.4f,%.4f,%.4f %.1f   # du %.3f off %.3f, %.2f m from eye, radius %.2f deg'%(name,*C1,y1,du1,o1,np.linalg.norm(C1-eye),r1))
+        print('%s_2 %.4f,%.4f,%.4f %.1f   # du %.3f off %.3f, %.2f m from eye, radius %.2f deg, gap %.1f deg, z %.3f'%(name,*C2,y2,du1+du,o2,np.linalg.norm(C2-eye),r2,gap,C2[2]))
+        done=True; break
+    if not done: print(name,'no position within the size limits at this scale')
