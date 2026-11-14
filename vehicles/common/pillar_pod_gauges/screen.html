@@ -50,7 +50,9 @@ var cfg = {
   warnValue: 26,      // overboost: digits flash at or above this value
   peakHold: 1.5,      // seconds the peak LED stays lit after boost drops
   nightBrightness: 0.25, // display brightness with the headlights on (1 = no dimming)
-  bootTime: 1.3       // seconds of start-up sweep when the ignition comes on
+  bootTime: 1.3,      // seconds of start-up sweep when the ignition comes on
+  printedDigits: 1    // 1 = the unlit "8" segments are printed in the face texture; 0 = this page draws them
+                      // (the EGT face, whose digit layout changes between 3 digits in deg C and 4 in deg F)
 };
 
 var cv = document.getElementById("c");
@@ -104,10 +106,25 @@ function drawDigit(g, ch, x, y, onCol, offCol) {
   g.restore();
 }
 
-// digit x positions
+// digit x positions: three digits normally; exhaust temperature in deg F needs four (1370 deg F), drawn
+// at 80 % size with tighter spacing so they fit the same window, like a 4-digit aftermarket EGT gauge
 var TOTAL = DW * 3 + GAP * 2 + 14;
-var DX = [CX - TOTAL / 2 + 6, CX - TOTAL / 2 + 6 + DW + GAP, CX - TOTAL / 2 + 6 + DW * 2 + GAP * 2 + 14];
+var DX3 = [CX - TOTAL / 2 + 6, CX - TOTAL / 2 + 6 + DW + GAP, CX - TOTAL / 2 + 6 + DW * 2 + GAP * 2 + 14];
 var DY = 181;
+var S4 = 0.8, GAP4 = 14, TOTAL4 = DW * S4 * 4 + GAP4 * 3;
+var DX4 = [0, 1, 2, 3].map(function (k) { return CX - TOTAL4 / 2 + 4 + k * (DW * S4 + GAP4); });
+var DY4 = DY + DH * (1 - S4) / 2;
+var nDig = 3, DX = DX3, DS = 1, DYs = DY;  // active layout: digit count, x positions, scale, top
+function setDigits(n) {
+  nDig = n; DX = n === 4 ? DX4 : DX3; DS = n === 4 ? S4 : 1; DYs = n === 4 ? DY4 : DY;
+}
+function unlitDigits(g) {                        // the dark "8"s behind the lit segments
+  for (var d = 0; d < nDig; d++) {
+    g.save(); g.translate(DX[d], DYs); g.scale(DS, DS);
+    drawDigit(g, "8", 0, 0, "#210606", null);
+    g.restore();
+  }
+}
 
 // ---- pre-rendered layers: everything expensive (glow) is drawn once ----
 var bgOn, bgOff, ledSprites = [], ledSpritesRed = [], digitSprites = {};
@@ -162,6 +179,7 @@ function buildBackground(on) {
   g.fillStyle = "#ffb300";
   g.font = "bold 20px Arial, Helvetica, sans-serif";
   g.fillText(cfg.unitLabel, CX, DY - 24);
+  if (!cfg.printedDigits) { unlitDigits(g); g.shadowBlur = 0; }
   return c;
 }
 
@@ -187,7 +205,7 @@ function buildStaticFace(white) {
     }
     drawLed(g, i, isRed(i) ? "#3a0f0b" : (i < z ? "#0c2540" : "#12380f"), false);   // unlit LEDs
   }
-  for (var d = 0; d < 3; d++) drawDigit(g, "8", DX[d], DY, "#210606", null);       // unlit segments
+  if (cfg.printedDigits) for (var d = 0; d < 3; d++) drawDigit(g, "8", DX3[d], DY, "#210606", null);   // unlit segments
   g.shadowBlur = 0;
   return c;
 }
@@ -243,14 +261,12 @@ var lastKey = "";
 
 var tempF = false;       // temperatures follow the game's temperature unit setting
 function isTemp() { return cfg.source === "oiltemp" || cfg.source === "watertemp" || cfg.source === "egt"; }
-var egtHundreds = false; // exhaust temp in deg F needs 4 digits, so it is shown in hundreds (16.5 = 1650 deg F)
 function isRed(i) { return cfg.warnLow > 0 ? i < cfg.warnLeds : i >= cfg.ledCount - cfg.warnLeds; }
 function warning(v) { return cfg.warnLow > 0 ? (cfg.warnValue > 0 && v <= cfg.warnValue) : v >= effWarn(); }
 var pUnit = "psi";       // boost follows the game's pressure unit setting (or cfg.unit)
 function shown(value) {
   if (isTemp()) {
-    var t = tempF ? value * 9 / 5 + 32 : value;
-    return egtHundreds ? t / 100 : t;
+    return tempF ? value * 9 / 5 + 32 : value;
   }
   if (cfg.source === "fuel") return value;
   if (pUnit === "bar") return value * 0.0689476;
@@ -258,9 +274,15 @@ function shown(value) {
   return value;
 }
 
-// returns three characters plus the index of the digit the decimal point follows (-1 = none)
+// returns three (or four) characters plus the index of the digit the decimal point follows (-1 = none)
 function digitText(value) {
   value = shown(value);
+  if (nDig === 4) {                              // whole numbers up to 9999, right-aligned
+    var w4 = Math.round(value), t4 = String(Math.min(9999, Math.abs(w4)));
+    if (w4 < 0) t4 = "-" + t4.slice(0, 3);
+    while (t4.length < 4) t4 = " " + t4;
+    return [t4, -1];
+  }
   var d = cfg.decimals;
   if (d >= 2 && (value < -0.004 || Math.abs(value) >= 9.995)) d = 1;   // "-0.3", "12.5"
   if (d < 1) {
@@ -313,7 +335,7 @@ function render() {
     var u = bootT / cfg.bootTime;
     var tri = u < 0.5 ? u * 2 : (1 - u) * 2;
     pos = n * (tri * tri * (3 - 2 * tri));
-    txt = "888"; sweep = true;
+    txt = nDig === 4 ? "8888" : "888"; sweep = true;
     digitsOn = u < 0.8 || Math.floor(u * 40) % 2 === 0;
   } else if (recalling) {
     // peak recall: digits hold the peak, the outer LEDs flash up to it
@@ -364,11 +386,11 @@ function render() {
     ctx.fillText("COLD", CX, DY + DH + 72);
   }
   if (digitsOn) {
-    for (var d = 0; d < 3; d++) {
+    for (var d = 0; d < nDig; d++) {
       var sp = digitSprites[txt[d]];
-      if (sp) ctx.drawImage(sp, DX[d] - PAD - 8, DY - PAD);
+      if (sp) ctx.drawImage(sp, DX[d] - (PAD + 8) * DS, DYs - PAD * DS, sp.width * DS, sp.height * DS);
     }
-    if (booting) dot = 1;
+    if (booting && nDig === 3) dot = 1;
     if (dot >= 0) ctx.drawImage(digitSprites["."], DX[dot] + DW + (dot === 0 ? 9 : 12) - 30, DY + DH + 1 - 30);
   }
   if (recalling) {                              // swap the title for "PEAK"
@@ -434,8 +456,7 @@ function setup(config) {
   if (isTemp()) {
     tempF = !!config && String(config.uiUnitTemperature || "c").toLowerCase() === "f";
     cfg.unitLabel = tempF ? "\u00b0F" : "\u00b0C";
-    egtHundreds = cfg.source === "egt" && tempF;
-    if (egtHundreds) { cfg.decimals = 1; cfg.unitLabel = "\u00b0F x100"; }
+    setDigits(cfg.source === "egt" && tempF ? 4 : 3);   // exhaust temp in deg F reaches 4 digits
   } else if (cfg.source === "fuel") {
     cfg.decimals = 0;
     cfg.unitLabel = "%";
