@@ -36,7 +36,7 @@
         ["$dbg_boost_shift", "range", "", "Gauges", 1, 0, 1, "Boost Gauge: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
         ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
         ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],
-        ["$dbg_boost_night", "range", "%", "Gauges", 12, 3, 100, "Boost Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+        ["$dbg_gauge_night", "range", "%", "Gauges", 12, 3, 100, "Gauges: Night Brightness", "Brightness of the round gauges at night or with the headlights on", {"stepDis":1}],
         ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],
     ],
     "controller": [
@@ -71,8 +71,8 @@
             //seconds the peak LED stays lit
             "peakHold":1.5,
             //display brightness at night or with headlights on (1 = no dimming)
-            "nightBrightness":"$dbg_boost_night",
             "face":"black",
+            "nightBrightness":"$dbg_gauge_night",
             "shutdownSweep":"$dbg_shutdown_sweep",
         },
         "displayData": {
@@ -126,7 +126,7 @@
         ["$dbg_boost_shift", "range", "", "Gauges", 1, 0, 1, "Boost Gauge: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
         ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
         ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],
-        ["$dbg_boost_night", "range", "%", "Gauges", 12, 3, 100, "Boost Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+        ["$dbg_gauge_night", "range", "%", "Gauges", 12, 3, 100, "Gauges: Night Brightness", "Brightness of the round gauges at night or with the headlights on", {"stepDis":1}],
         ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],
     ],
     "controller": [
@@ -161,8 +161,8 @@
             //seconds the peak LED stays lit
             "peakHold":1.5,
             //display brightness at night or with headlights on (1 = no dimming)
-            "nightBrightness":"$dbg_boost_night",
             "face":"white",
+            "nightBrightness":"$dbg_gauge_night",
             "shutdownSweep":"$dbg_shutdown_sweep",
         },
         "displayData": {
@@ -215,7 +215,7 @@
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
         ["$dbg_oil_cold", "range", "C", "Gauges", 70, 0, 100, "Oil Temp Gauge: Cold Mark Below", "A blue COLD mark shows below this oil temperature (deg C). 0 = off", {"stepDis":1}],
         ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
-        ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+        ["$dbg_gauge_night", "range", "%", "Gauges", 12, 3, 100, "Gauges: Night Brightness", "Brightness of the round gauges at night or with the headlights on", {"stepDis":1}],
         ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],
     ],
     "controller": [
@@ -239,8 +239,8 @@
             //a blue COLD mark shows below this oil temperature (deg C); 0 = off
             "coldBelow":"$dbg_oil_cold",
             "peakHold":0,
-            "nightBrightness":"$dbg_oil_night",
             "face":"black",
+            "nightBrightness":"$dbg_gauge_night",
             "shutdownSweep":"$dbg_shutdown_sweep",
         },
         "displayData": {
@@ -289,7 +289,7 @@
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
         ["$dbg_oil_cold", "range", "C", "Gauges", 70, 0, 100, "Oil Temp Gauge: Cold Mark Below", "A blue COLD mark shows below this oil temperature (deg C). 0 = off", {"stepDis":1}],
         ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
-        ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+        ["$dbg_gauge_night", "range", "%", "Gauges", 12, 3, 100, "Gauges: Night Brightness", "Brightness of the round gauges at night or with the headlights on", {"stepDis":1}],
         ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],
     ],
     "controller": [
@@ -313,8 +313,8 @@
             //a blue COLD mark shows below this oil temperature (deg C); 0 = off
             "coldBelow":"$dbg_oil_cold",
             "peakHold":0,
-            "nightBrightness":"$dbg_oil_night",
             "face":"white",
+            "nightBrightness":"$dbg_gauge_night",
             "shutdownSweep":"$dbg_shutdown_sweep",
         },
         "displayData": {
@@ -363,7 +363,7 @@
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
         ["$dbg_water_cold", "range", "C", "Gauges", 60, 0, 100, "Coolant Temp Gauge: Cold Mark Below", "A blue COLD mark shows below this coolant temperature (deg C). 0 = off", {"stepDis":1}],
         ["$dbg_water_warn", "range", "C", "Gauges", 110, 90, 130, "Coolant Temp Gauge: Warning Temperature", "The digits flash at or above this coolant temperature (deg C)", {"stepDis":1}],
-        ["$dbg_water_night", "range", "%", "Gauges", 12, 3, 100, "Coolant Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+        ["$dbg_gauge_night", "range", "%", "Gauges", 12, 3, 100, "Gauges: Night Brightness", "Brightness of the round gauges at night or with the headlights on", {"stepDis":1}],
         ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],
     ],
     "controller": [
@@ -387,8 +387,8 @@
             //a blue COLD mark shows below this coolant temperature (deg C); 0 = off
             "coldBelow":"$dbg_water_cold",
             "peakHold":0,
-            "nightBrightness":"$dbg_water_night",
             "face":"black",
+            "nightBrightness":"$dbg_gauge_night",
             "shutdownSweep":"$dbg_shutdown_sweep",
         },
         "displayData": {
@@ -437,7 +437,7 @@
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
         ["$dbg_water_cold", "range", "C", "Gauges", 60, 0, 100, "Coolant Temp Gauge: Cold Mark Below", "A blue COLD mark shows below this coolant temperature (deg C). 0 = off", {"stepDis":1}],
         ["$dbg_water_warn", "range", "C", "Gauges", 110, 90, 130, "Coolant Temp Gauge: Warning Temperature", "The digits flash at or above this coolant temperature (deg C)", {"stepDis":1}],
-        ["$dbg_water_night", "range", "%", "Gauges", 12, 3, 100, "Coolant Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+        ["$dbg_gauge_night", "range", "%", "Gauges", 12, 3, 100, "Gauges: Night Brightness", "Brightness of the round gauges at night or with the headlights on", {"stepDis":1}],
         ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],
     ],
     "controller": [
@@ -461,8 +461,8 @@
             //a blue COLD mark shows below this coolant temperature (deg C); 0 = off
             "coldBelow":"$dbg_water_cold",
             "peakHold":0,
-            "nightBrightness":"$dbg_water_night",
             "face":"white",
+            "nightBrightness":"$dbg_gauge_night",
             "shutdownSweep":"$dbg_shutdown_sweep",
         },
         "displayData": {
@@ -510,7 +510,7 @@
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
         ["$dbg_egt_warn", "range", "C", "Gauges", 900, 500, 1100, "Exhaust Temp Gauge: Warning Temperature", "The digits flash at or above this exhaust gas temperature (deg C)", {"stepDis":10}],
-        ["$dbg_egt_night", "range", "%", "Gauges", 12, 3, 100, "Exhaust Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+        ["$dbg_gauge_night", "range", "%", "Gauges", 12, 3, 100, "Gauges: Night Brightness", "Brightness of the round gauges at night or with the headlights on", {"stepDis":1}],
         ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],
     ],
     "controller": [
@@ -532,10 +532,10 @@
             //digits flash at or above this temperature (deg C)
             "warnValue":"$dbg_egt_warn",
             "peakHold":0,
-            "nightBrightness":"$dbg_egt_night",
             //the EGT face has no printed digits: the page draws a 3-digit (deg C) or 4-digit (deg F) window itself
             "printedDigits":0,
             "face":"black",
+            "nightBrightness":"$dbg_gauge_night",
             "shutdownSweep":"$dbg_shutdown_sweep",
         },
         "displayData": {
@@ -582,7 +582,7 @@
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
         ["$dbg_egt_warn", "range", "C", "Gauges", 900, 500, 1100, "Exhaust Temp Gauge: Warning Temperature", "The digits flash at or above this exhaust gas temperature (deg C)", {"stepDis":10}],
-        ["$dbg_egt_night", "range", "%", "Gauges", 12, 3, 100, "Exhaust Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+        ["$dbg_gauge_night", "range", "%", "Gauges", 12, 3, 100, "Gauges: Night Brightness", "Brightness of the round gauges at night or with the headlights on", {"stepDis":1}],
         ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],
     ],
     "controller": [
@@ -604,10 +604,10 @@
             //digits flash at or above this temperature (deg C)
             "warnValue":"$dbg_egt_warn",
             "peakHold":0,
-            "nightBrightness":"$dbg_egt_night",
             //the EGT face has no printed digits: the page draws a 3-digit (deg C) or 4-digit (deg F) window itself
             "printedDigits":0,
             "face":"white",
+            "nightBrightness":"$dbg_gauge_night",
             "shutdownSweep":"$dbg_shutdown_sweep",
         },
         "displayData": {
@@ -654,7 +654,7 @@
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
         ["$dbg_fuel_low", "range", "%", "Gauges", 10, 0, 40, "Fuel Gauge: Low Fuel Warning", "The digits flash at or below this tank level (percent). 0 = off", {"stepDis":1}],
-        ["$dbg_fuel_night", "range", "%", "Gauges", 12, 3, 100, "Fuel Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+        ["$dbg_gauge_night", "range", "%", "Gauges", 12, 3, 100, "Gauges: Night Brightness", "Brightness of the round gauges at night or with the headlights on", {"stepDis":1}],
         ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],
     ],
     "controller": [
@@ -676,8 +676,8 @@
             "warnLow":1,
             "warnValue":"$dbg_fuel_low",
             "peakHold":0,
-            "nightBrightness":"$dbg_fuel_night",
             "face":"black",
+            "nightBrightness":"$dbg_gauge_night",
             "shutdownSweep":"$dbg_shutdown_sweep",
         },
         "displayData": {
@@ -725,7 +725,7 @@
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
         ["$dbg_fuel_low", "range", "%", "Gauges", 10, 0, 40, "Fuel Gauge: Low Fuel Warning", "The digits flash at or below this tank level (percent). 0 = off", {"stepDis":1}],
-        ["$dbg_fuel_night", "range", "%", "Gauges", 12, 3, 100, "Fuel Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+        ["$dbg_gauge_night", "range", "%", "Gauges", 12, 3, 100, "Gauges: Night Brightness", "Brightness of the round gauges at night or with the headlights on", {"stepDis":1}],
         ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],
     ],
     "controller": [
@@ -747,8 +747,8 @@
             "warnLow":1,
             "warnValue":"$dbg_fuel_low",
             "peakHold":0,
-            "nightBrightness":"$dbg_fuel_night",
             "face":"white",
+            "nightBrightness":"$dbg_gauge_night",
             "shutdownSweep":"$dbg_shutdown_sweep",
         },
         "displayData": {
@@ -798,7 +798,7 @@
         ["$dbg_tach_shift", "range", "", "Gauges", 1, 0, 1, "Tachometer: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
         ["$dbg_tach_shift_at", "range", "%", "Gauges", 96, 75, 100, "Tachometer: Shift Light At", "Engine speed where the shift light starts, in percent of the engine's maximum RPM", {"stepDis":1}],
         ["$dbg_tach_max", "range", "rpm", "Gauges", 0, 0, 12000, "Tachometer: Scale Maximum", "RPM at the last LED. 0 = automatic: the red LEDs start at the engine's rev limit", {"stepDis":250}],
-        ["$dbg_tach_night", "range", "%", "Gauges", 12, 3, 100, "Tachometer: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+        ["$dbg_gauge_night", "range", "%", "Gauges", 12, 3, 100, "Gauges: Night Brightness", "Brightness of the round gauges at night or with the headlights on", {"stepDis":1}],
         ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],
     ],
     "controller": [
@@ -822,8 +822,8 @@
             "shiftAt":"$dbg_tach_shift_at",
             //seconds the peak LED stays lit
             "peakHold":1.5,
-            "nightBrightness":"$dbg_tach_night",
             "face":"black",
+            "nightBrightness":"$dbg_gauge_night",
             "shutdownSweep":"$dbg_shutdown_sweep",
         },
         "displayData": {
@@ -875,7 +875,7 @@
         ["$dbg_tach_shift", "range", "", "Gauges", 1, 0, 1, "Tachometer: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
         ["$dbg_tach_shift_at", "range", "%", "Gauges", 96, 75, 100, "Tachometer: Shift Light At", "Engine speed where the shift light starts, in percent of the engine's maximum RPM", {"stepDis":1}],
         ["$dbg_tach_max", "range", "rpm", "Gauges", 0, 0, 12000, "Tachometer: Scale Maximum", "RPM at the last LED. 0 = automatic: the red LEDs start at the engine's rev limit", {"stepDis":250}],
-        ["$dbg_tach_night", "range", "%", "Gauges", 12, 3, 100, "Tachometer: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+        ["$dbg_gauge_night", "range", "%", "Gauges", 12, 3, 100, "Gauges: Night Brightness", "Brightness of the round gauges at night or with the headlights on", {"stepDis":1}],
         ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],
     ],
     "controller": [
@@ -899,8 +899,8 @@
             "shiftAt":"$dbg_tach_shift_at",
             //seconds the peak LED stays lit
             "peakHold":1.5,
-            "nightBrightness":"$dbg_tach_night",
             "face":"white",
+            "nightBrightness":"$dbg_gauge_night",
             "shutdownSweep":"$dbg_shutdown_sweep",
         },
         "displayData": {
@@ -951,7 +951,7 @@
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
         ["$dbg_oil_cold", "range", "C", "Gauges", 70, 0, 100, "Oil Temp Gauge: Cold Mark Below", "A blue COLD mark shows below this oil temperature (deg C). 0 = off", {"stepDis":1}],
         ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
-        ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+        ["$dbg_gauge_night", "range", "%", "Gauges", 12, 3, 100, "Gauges: Night Brightness", "Brightness of the round gauges at night or with the headlights on", {"stepDis":1}],
         ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],
     ],
     "controller": [
@@ -975,8 +975,8 @@
             //a blue COLD mark shows below this oil temperature (deg C); 0 = off
             "coldBelow":"$dbg_oil_cold",
             "peakHold":0,
-            "nightBrightness":"$dbg_oil_night",
             "face":"black",
+            "nightBrightness":"$dbg_gauge_night",
             "shutdownSweep":"$dbg_shutdown_sweep",
         },
         "displayData": {
@@ -1025,7 +1025,7 @@
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
         ["$dbg_oil_cold", "range", "C", "Gauges", 70, 0, 100, "Oil Temp Gauge: Cold Mark Below", "A blue COLD mark shows below this oil temperature (deg C). 0 = off", {"stepDis":1}],
         ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
-        ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+        ["$dbg_gauge_night", "range", "%", "Gauges", 12, 3, 100, "Gauges: Night Brightness", "Brightness of the round gauges at night or with the headlights on", {"stepDis":1}],
         ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],
     ],
     "controller": [
@@ -1049,8 +1049,8 @@
             //a blue COLD mark shows below this oil temperature (deg C); 0 = off
             "coldBelow":"$dbg_oil_cold",
             "peakHold":0,
-            "nightBrightness":"$dbg_oil_night",
             "face":"white",
+            "nightBrightness":"$dbg_gauge_night",
             "shutdownSweep":"$dbg_shutdown_sweep",
         },
         "displayData": {
@@ -1099,7 +1099,7 @@
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
         ["$dbg_water_cold", "range", "C", "Gauges", 60, 0, 100, "Coolant Temp Gauge: Cold Mark Below", "A blue COLD mark shows below this coolant temperature (deg C). 0 = off", {"stepDis":1}],
         ["$dbg_water_warn", "range", "C", "Gauges", 110, 90, 130, "Coolant Temp Gauge: Warning Temperature", "The digits flash at or above this coolant temperature (deg C)", {"stepDis":1}],
-        ["$dbg_water_night", "range", "%", "Gauges", 12, 3, 100, "Coolant Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+        ["$dbg_gauge_night", "range", "%", "Gauges", 12, 3, 100, "Gauges: Night Brightness", "Brightness of the round gauges at night or with the headlights on", {"stepDis":1}],
         ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],
     ],
     "controller": [
@@ -1123,8 +1123,8 @@
             //a blue COLD mark shows below this coolant temperature (deg C); 0 = off
             "coldBelow":"$dbg_water_cold",
             "peakHold":0,
-            "nightBrightness":"$dbg_water_night",
             "face":"black",
+            "nightBrightness":"$dbg_gauge_night",
             "shutdownSweep":"$dbg_shutdown_sweep",
         },
         "displayData": {
@@ -1173,7 +1173,7 @@
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
         ["$dbg_water_cold", "range", "C", "Gauges", 60, 0, 100, "Coolant Temp Gauge: Cold Mark Below", "A blue COLD mark shows below this coolant temperature (deg C). 0 = off", {"stepDis":1}],
         ["$dbg_water_warn", "range", "C", "Gauges", 110, 90, 130, "Coolant Temp Gauge: Warning Temperature", "The digits flash at or above this coolant temperature (deg C)", {"stepDis":1}],
-        ["$dbg_water_night", "range", "%", "Gauges", 12, 3, 100, "Coolant Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+        ["$dbg_gauge_night", "range", "%", "Gauges", 12, 3, 100, "Gauges: Night Brightness", "Brightness of the round gauges at night or with the headlights on", {"stepDis":1}],
         ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],
     ],
     "controller": [
@@ -1197,8 +1197,8 @@
             //a blue COLD mark shows below this coolant temperature (deg C); 0 = off
             "coldBelow":"$dbg_water_cold",
             "peakHold":0,
-            "nightBrightness":"$dbg_water_night",
             "face":"white",
+            "nightBrightness":"$dbg_gauge_night",
             "shutdownSweep":"$dbg_shutdown_sweep",
         },
         "displayData": {
@@ -1246,7 +1246,7 @@
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
         ["$dbg_egt_warn", "range", "C", "Gauges", 900, 500, 1100, "Exhaust Temp Gauge: Warning Temperature", "The digits flash at or above this exhaust gas temperature (deg C)", {"stepDis":10}],
-        ["$dbg_egt_night", "range", "%", "Gauges", 12, 3, 100, "Exhaust Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+        ["$dbg_gauge_night", "range", "%", "Gauges", 12, 3, 100, "Gauges: Night Brightness", "Brightness of the round gauges at night or with the headlights on", {"stepDis":1}],
         ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],
     ],
     "controller": [
@@ -1268,10 +1268,10 @@
             //digits flash at or above this temperature (deg C)
             "warnValue":"$dbg_egt_warn",
             "peakHold":0,
-            "nightBrightness":"$dbg_egt_night",
             //the EGT face has no printed digits: the page draws a 3-digit (deg C) or 4-digit (deg F) window itself
             "printedDigits":0,
             "face":"black",
+            "nightBrightness":"$dbg_gauge_night",
             "shutdownSweep":"$dbg_shutdown_sweep",
         },
         "displayData": {
@@ -1318,7 +1318,7 @@
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
         ["$dbg_egt_warn", "range", "C", "Gauges", 900, 500, 1100, "Exhaust Temp Gauge: Warning Temperature", "The digits flash at or above this exhaust gas temperature (deg C)", {"stepDis":10}],
-        ["$dbg_egt_night", "range", "%", "Gauges", 12, 3, 100, "Exhaust Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+        ["$dbg_gauge_night", "range", "%", "Gauges", 12, 3, 100, "Gauges: Night Brightness", "Brightness of the round gauges at night or with the headlights on", {"stepDis":1}],
         ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],
     ],
     "controller": [
@@ -1340,10 +1340,10 @@
             //digits flash at or above this temperature (deg C)
             "warnValue":"$dbg_egt_warn",
             "peakHold":0,
-            "nightBrightness":"$dbg_egt_night",
             //the EGT face has no printed digits: the page draws a 3-digit (deg C) or 4-digit (deg F) window itself
             "printedDigits":0,
             "face":"white",
+            "nightBrightness":"$dbg_gauge_night",
             "shutdownSweep":"$dbg_shutdown_sweep",
         },
         "displayData": {
@@ -1390,7 +1390,7 @@
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
         ["$dbg_fuel_low", "range", "%", "Gauges", 10, 0, 40, "Fuel Gauge: Low Fuel Warning", "The digits flash at or below this tank level (percent). 0 = off", {"stepDis":1}],
-        ["$dbg_fuel_night", "range", "%", "Gauges", 12, 3, 100, "Fuel Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+        ["$dbg_gauge_night", "range", "%", "Gauges", 12, 3, 100, "Gauges: Night Brightness", "Brightness of the round gauges at night or with the headlights on", {"stepDis":1}],
         ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],
     ],
     "controller": [
@@ -1412,8 +1412,8 @@
             "warnLow":1,
             "warnValue":"$dbg_fuel_low",
             "peakHold":0,
-            "nightBrightness":"$dbg_fuel_night",
             "face":"black",
+            "nightBrightness":"$dbg_gauge_night",
             "shutdownSweep":"$dbg_shutdown_sweep",
         },
         "displayData": {
@@ -1461,7 +1461,7 @@
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
         ["$dbg_fuel_low", "range", "%", "Gauges", 10, 0, 40, "Fuel Gauge: Low Fuel Warning", "The digits flash at or below this tank level (percent). 0 = off", {"stepDis":1}],
-        ["$dbg_fuel_night", "range", "%", "Gauges", 12, 3, 100, "Fuel Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+        ["$dbg_gauge_night", "range", "%", "Gauges", 12, 3, 100, "Gauges: Night Brightness", "Brightness of the round gauges at night or with the headlights on", {"stepDis":1}],
         ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],
     ],
     "controller": [
@@ -1483,8 +1483,8 @@
             "warnLow":1,
             "warnValue":"$dbg_fuel_low",
             "peakHold":0,
-            "nightBrightness":"$dbg_fuel_night",
             "face":"white",
+            "nightBrightness":"$dbg_gauge_night",
             "shutdownSweep":"$dbg_shutdown_sweep",
         },
         "displayData": {
@@ -1534,7 +1534,7 @@
         ["$dbg_tach_shift", "range", "", "Gauges", 1, 0, 1, "Tachometer: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
         ["$dbg_tach_shift_at", "range", "%", "Gauges", 96, 75, 100, "Tachometer: Shift Light At", "Engine speed where the shift light starts, in percent of the engine's maximum RPM", {"stepDis":1}],
         ["$dbg_tach_max", "range", "rpm", "Gauges", 0, 0, 12000, "Tachometer: Scale Maximum", "RPM at the last LED. 0 = automatic: the red LEDs start at the engine's rev limit", {"stepDis":250}],
-        ["$dbg_tach_night", "range", "%", "Gauges", 12, 3, 100, "Tachometer: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+        ["$dbg_gauge_night", "range", "%", "Gauges", 12, 3, 100, "Gauges: Night Brightness", "Brightness of the round gauges at night or with the headlights on", {"stepDis":1}],
         ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],
     ],
     "controller": [
@@ -1558,8 +1558,8 @@
             "shiftAt":"$dbg_tach_shift_at",
             //seconds the peak LED stays lit
             "peakHold":1.5,
-            "nightBrightness":"$dbg_tach_night",
             "face":"black",
+            "nightBrightness":"$dbg_gauge_night",
             "shutdownSweep":"$dbg_shutdown_sweep",
         },
         "displayData": {
@@ -1611,7 +1611,7 @@
         ["$dbg_tach_shift", "range", "", "Gauges", 1, 0, 1, "Tachometer: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
         ["$dbg_tach_shift_at", "range", "%", "Gauges", 96, 75, 100, "Tachometer: Shift Light At", "Engine speed where the shift light starts, in percent of the engine's maximum RPM", {"stepDis":1}],
         ["$dbg_tach_max", "range", "rpm", "Gauges", 0, 0, 12000, "Tachometer: Scale Maximum", "RPM at the last LED. 0 = automatic: the red LEDs start at the engine's rev limit", {"stepDis":250}],
-        ["$dbg_tach_night", "range", "%", "Gauges", 12, 3, 100, "Tachometer: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+        ["$dbg_gauge_night", "range", "%", "Gauges", 12, 3, 100, "Gauges: Night Brightness", "Brightness of the round gauges at night or with the headlights on", {"stepDis":1}],
         ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],
     ],
     "controller": [
@@ -1635,8 +1635,8 @@
             "shiftAt":"$dbg_tach_shift_at",
             //seconds the peak LED stays lit
             "peakHold":1.5,
-            "nightBrightness":"$dbg_tach_night",
             "face":"white",
+            "nightBrightness":"$dbg_gauge_night",
             "shutdownSweep":"$dbg_shutdown_sweep",
         },
         "displayData": {
@@ -1688,7 +1688,7 @@
         ["$dbg_boost_shift", "range", "", "Gauges", 1, 0, 1, "Boost Gauge: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
         ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
         ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],
-        ["$dbg_boost_night", "range", "%", "Gauges", 12, 3, 100, "Boost Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+        ["$dbg_gauge_night", "range", "%", "Gauges", 12, 3, 100, "Gauges: Night Brightness", "Brightness of the round gauges at night or with the headlights on", {"stepDis":1}],
         ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],
     ],
     "controller": [
@@ -1723,8 +1723,8 @@
             //seconds the peak LED stays lit
             "peakHold":1.5,
             //display brightness at night or with headlights on (1 = no dimming)
-            "nightBrightness":"$dbg_boost_night",
             "face":"black",
+            "nightBrightness":"$dbg_gauge_night",
             "shutdownSweep":"$dbg_shutdown_sweep",
         },
         "displayData": {
@@ -1778,7 +1778,7 @@
         ["$dbg_boost_shift", "range", "", "Gauges", 1, 0, 1, "Boost Gauge: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
         ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
         ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],
-        ["$dbg_boost_night", "range", "%", "Gauges", 12, 3, 100, "Boost Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],
+        ["$dbg_gauge_night", "range", "%", "Gauges", 12, 3, 100, "Gauges: Night Brightness", "Brightness of the round gauges at night or with the headlights on", {"stepDis":1}],
         ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],
     ],
     "controller": [
@@ -1813,8 +1813,8 @@
             //seconds the peak LED stays lit
             "peakHold":1.5,
             //display brightness at night or with headlights on (1 = no dimming)
-            "nightBrightness":"$dbg_boost_night",
             "face":"white",
+            "nightBrightness":"$dbg_gauge_night",
             "shutdownSweep":"$dbg_shutdown_sweep",
         },
         "displayData": {

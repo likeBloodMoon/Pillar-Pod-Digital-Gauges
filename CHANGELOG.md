@@ -20,6 +20,11 @@
   PEAK or WARN; the display and the cluster show `---` with an empty bar. A real 0 still reads 0.
 
 ### Changed
+- **One Night Brightness setting for all round gauges** (Tuning → Gauges → Gauges: Night
+  Brightness) instead of one per gauge type. Two fitted gauges now dim the same, and swapping a
+  gauge for another type keeps the setting. The display and the cluster keep their own, since those
+  screens are much brighter. A config saved with the old per-gauge values goes back to the default
+  (12 %) once; set it again and save.
 - **Only automatic mounting.** The fixed mountings (one part per interior, side and finish for the
   Boost and Oil Temp gauges) are gone, since automatic mounting finds the same spots by itself. The
   parts list is much shorter (30 parts instead of 54 on the Covet, 25 instead of 41 on the 200BX),

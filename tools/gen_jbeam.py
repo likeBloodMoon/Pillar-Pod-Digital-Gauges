@@ -65,8 +65,7 @@ BOOST_CFG='''            "source":"boost",
             "warnValue":"$dbg_boost_warn_at",
             //seconds the peak LED stays lit
             "peakHold":1.5,
-            //display brightness at night or with headlights on (1 = no dimming)
-            "nightBrightness":"$dbg_boost_night",'''
+            //display brightness at night or with headlights on (1 = no dimming)'''
 OIL_CFG='''            "source":"oiltemp",
             "decimals":0,
             //LED arc range in deg C (the digits follow the game's temperature unit setting)
@@ -77,8 +76,7 @@ OIL_CFG='''            "source":"oiltemp",
             "warnValue":"$dbg_oil_warn",
             //a blue COLD mark shows below this oil temperature (deg C); 0 = off
             "coldBelow":"$dbg_oil_cold",
-            "peakHold":0,
-            "nightBrightness":"$dbg_oil_night",'''
+            "peakHold":0,'''
 WATER_CFG='''            "source":"watertemp",
             "decimals":0,
             //LED arc range in deg C (the digits follow the game's temperature unit setting)
@@ -89,8 +87,7 @@ WATER_CFG='''            "source":"watertemp",
             "warnValue":"$dbg_water_warn",
             //a blue COLD mark shows below this coolant temperature (deg C); 0 = off
             "coldBelow":"$dbg_water_cold",
-            "peakHold":0,
-            "nightBrightness":"$dbg_water_night",'''
+            "peakHold":0,'''
 EGT_CFG='''            "source":"egt",
             "decimals":0,
             //LED arc range in deg C (the digits follow the game's temperature unit setting; deg F uses four digits)
@@ -100,7 +97,6 @@ EGT_CFG='''            "source":"egt",
             //digits flash at or above this temperature (deg C)
             "warnValue":"$dbg_egt_warn",
             "peakHold":0,
-            "nightBrightness":"$dbg_egt_night",
             //the EGT face has no printed digits: the page draws a 3-digit (deg C) or 4-digit (deg F) window itself
             "printedDigits":0,'''
 FUEL_CFG='''            "source":"fuel",
@@ -111,8 +107,7 @@ FUEL_CFG='''            "source":"fuel",
             //the warning is at the low end: red LEDs first, digits flash at or below warnValue (percent)
             "warnLow":1,
             "warnValue":"$dbg_fuel_low",
-            "peakHold":0,
-            "nightBrightness":"$dbg_fuel_night",'''
+            "peakHold":0,'''
 TACH_CFG='''            "source":"rpm",
             //LED arc range in RPM (the digits show thousands: 6.8 = 6800). 0 = automatic: the last three
             //(red) LEDs start at the engine's rev limit
@@ -123,8 +118,7 @@ TACH_CFG='''            "source":"rpm",
             "shiftLight":"$dbg_tach_shift",
             "shiftAt":"$dbg_tach_shift_at",
             //seconds the peak LED stays lit
-            "peakHold":1.5,
-            "nightBrightness":"$dbg_tach_night",'''
+            "peakHold":1.5,'''
 AUTO_DEFAULT=P+"_dbg_boost_auto"
 _rows=[['"name"','"allowTypes"','"denyTypes"','"default"','"description"'],
        ['"%s_dbg_boost"'%P,'["%s_dbg_boost"]'%P,'[]','"%s"'%AUTO_DEFAULT,'"Lower Gauge"'],
@@ -157,25 +151,22 @@ out=f'''{{
 '''
 BOOST_VARS='''        ["$dbg_boost_shift", "range", "", "Gauges", 1, 0, 1, "Boost Gauge: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
         ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
-        ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],
-        ["$dbg_boost_night", "range", "%", "Gauges", 12, 3, 100, "Boost Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],'''
+        ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],'''
 WATER_VARS='''        ["$dbg_water_cold", "range", "C", "Gauges", 60, 0, 100, "Coolant Temp Gauge: Cold Mark Below", "A blue COLD mark shows below this coolant temperature (deg C). 0 = off", {"stepDis":1}],
-        ["$dbg_water_warn", "range", "C", "Gauges", 110, 90, 130, "Coolant Temp Gauge: Warning Temperature", "The digits flash at or above this coolant temperature (deg C)", {"stepDis":1}],
-        ["$dbg_water_night", "range", "%", "Gauges", 12, 3, 100, "Coolant Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],'''
-EGT_VARS='''        ["$dbg_egt_warn", "range", "C", "Gauges", 900, 500, 1100, "Exhaust Temp Gauge: Warning Temperature", "The digits flash at or above this exhaust gas temperature (deg C)", {"stepDis":10}],
-        ["$dbg_egt_night", "range", "%", "Gauges", 12, 3, 100, "Exhaust Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],'''
-FUEL_VARS='''        ["$dbg_fuel_low", "range", "%", "Gauges", 10, 0, 40, "Fuel Gauge: Low Fuel Warning", "The digits flash at or below this tank level (percent). 0 = off", {"stepDis":1}],
-        ["$dbg_fuel_night", "range", "%", "Gauges", 12, 3, 100, "Fuel Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],'''
+        ["$dbg_water_warn", "range", "C", "Gauges", 110, 90, 130, "Coolant Temp Gauge: Warning Temperature", "The digits flash at or above this coolant temperature (deg C)", {"stepDis":1}],'''
+EGT_VARS='''        ["$dbg_egt_warn", "range", "C", "Gauges", 900, 500, 1100, "Exhaust Temp Gauge: Warning Temperature", "The digits flash at or above this exhaust gas temperature (deg C)", {"stepDis":10}],'''
+FUEL_VARS='''        ["$dbg_fuel_low", "range", "%", "Gauges", 10, 0, 40, "Fuel Gauge: Low Fuel Warning", "The digits flash at or below this tank level (percent). 0 = off", {"stepDis":1}],'''
 OIL_VARS='''        ["$dbg_oil_cold", "range", "C", "Gauges", 70, 0, 100, "Oil Temp Gauge: Cold Mark Below", "A blue COLD mark shows below this oil temperature (deg C). 0 = off", {"stepDis":1}],
-        ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],
-        ["$dbg_oil_night", "range", "%", "Gauges", 12, 3, 100, "Oil Temp Gauge: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],'''
+        ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],'''
 TACH_VARS='''        ["$dbg_tach_shift", "range", "", "Gauges", 1, 0, 1, "Tachometer: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
         ["$dbg_tach_shift_at", "range", "%", "Gauges", 96, 75, 100, "Tachometer: Shift Light At", "Engine speed where the shift light starts, in percent of the engine's maximum RPM", {"stepDis":1}],
-        ["$dbg_tach_max", "range", "rpm", "Gauges", 0, 0, 12000, "Tachometer: Scale Maximum", "RPM at the last LED. 0 = automatic: the red LEDs start at the engine's rev limit", {"stepDis":250}],
-        ["$dbg_tach_night", "range", "%", "Gauges", 12, 3, 100, "Tachometer: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],'''
+        ["$dbg_tach_max", "range", "rpm", "Gauges", 0, 0, 12000, "Tachometer: Scale Maximum", "RPM at the last LED. 0 = automatic: the red LEDs start at the engine's rev limit", {"stepDis":250}],'''
 # shared by every gauge, the display and the cluster (a variable defined in several parts is merged by the game)
 SHUT_VAR='''        ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],'''
 SHUT_CFG='''            "shutdownSweep":"$dbg_shutdown_sweep",'''
+# shared by every round gauge (the display and the cluster are much brighter and keep their own)
+NIGHT_VAR='''        ["$dbg_gauge_night", "range", "%", "Gauges", 12, 3, 100, "Gauges: Night Brightness", "Brightness of the round gauges at night or with the headlights on", {"stepDis":1}],'''
+NIGHT_CFG='''            "nightBrightness":"$dbg_gauge_night",'''
 def part(key,name,slot,gvars,ctrl,cfgf,el,fb):
     return f'''"{key}": {{
     "information":{{
@@ -188,6 +179,7 @@ def part(key,name,slot,gvars,ctrl,cfgf,el,fb):
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
 {gvars}
+{NIGHT_VAR}
 {SHUT_VAR}
     ],
     "controller": [
@@ -197,6 +189,7 @@ def part(key,name,slot,gvars,ctrl,cfgf,el,fb):
     "{ctrl}": {{
         "configuration": {{
 {cfgf}
+{NIGHT_CFG}
 {SHUT_CFG}
         }},
         "displayData": {{
