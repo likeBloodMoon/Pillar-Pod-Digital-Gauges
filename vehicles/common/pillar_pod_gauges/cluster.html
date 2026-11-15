@@ -182,12 +182,18 @@ function label(s, x, y, align, col, size) { txt(s.toUpperCase(), x, y, size || 2
 function bandColour(c, cold, warm, hot) { return c < cold ? C.sky : (c < warm ? C.white : (c < hot ? C.amber : C.red)); }
 function icon(fn, x, y, col, sc) { ctx.save(); ctx.translate(x, y); ctx.scale(sc, sc); fn(0, 0, col); ctx.restore(); }
 
+// readings the car doesn't have (the mod's module reports them; the game would send 0): shown as "---"
+var NA = "---";
+function gone(k) { var mm = data.m && data.m.missing; return !!(mm && mm[k]); }
+function noBoost() { return gone("turboBoost") && gone("superchargerBoost"); }
+function noEgt() { return data.m.missing !== undefined && (data.m.egt === undefined || data.m.egt === null); }
+
 function tach() {
   var e = data.e, rpm = Number(e.rpm) || 0, maxR = Math.max(3000, Number(e.maxrpm) || 7000);
   var top = Math.ceil((maxR + 500) / 1000) * 1000;           // at least half a thousand past the limit, shown red
   var n = TACH.seg, w = (TACH.x1 - TACH.x0) / n, red = maxR / top, shift = cfg.shiftAt * maxR / top;
-  var lit = Math.max(0, Math.min(1, rpm / top)) * n;
-  var flash = rpm >= cfg.shiftAt * maxR && Math.floor(clock * 10) % 2 === 0;
+  var lit = gone("rpm") ? 0 : Math.max(0, Math.min(1, rpm / top)) * n;     // no engine speed: the bar stays dark
+  var flash = !gone("rpm") && rpm >= cfg.shiftAt * maxR && Math.floor(clock * 10) % 2 === 0;
   for (var i = 0; i < n; i++) {
     var f = (i + 0.5) / n, x = TACH.x0 + i * w;
     var part = Math.max(0, Math.min(1, lit - i));             // the leading segment fades in, so the bar glides
@@ -214,7 +220,7 @@ function centre() {
   var water = Number(e.watertemp) || 0, on = [];
   if (Number(e.parkingbrake) > 0) on.push([icoBrake, C.red]);
   if (Number(e.checkengine) > 0) on.push([icoEngine, C.amber]);
-  if (water >= cfg.waterWarn) on.push([icoTemp, C.red]);
+  if (!gone("watertemp") && water >= cfg.waterWarn) on.push([icoTemp, C.red]);
   if (lights > 0) on.push([icoLights, C.green]);
   // room for two between the gear box and the red rule; the most urgent ones win (a hot engine also
   // turns the coolant reading red, so nothing is lost when that light has to wait its turn)
@@ -236,10 +242,13 @@ function reading(name, v, u, col, x0, x1, y, size, bar) {
 function leftPanel() {
   var e = data.e, x0 = LEFT.x0, x1 = LEFT.x1;
   var fv = vol(Number(e.fuelVolume) || 0), fuelP = Number(e.fuel) || 0; fuelP = fuelP > 1.5 ? fuelP / 100 : fuelP;
-  var lowFuel = Number(e.lowfuel) > 0 || fuelP * 100 <= cfg.lowFuel;
-  reading("Fuel", fmt(fv[0], 0), fv[1], lowFuel ? C.amber : C.white, x0, x1, 150, 64, [fuelP, lowFuel ? C.amber : C.sky, cfg.lowFuel / 100]);
-  var water = Number(e.watertemp) || 0, hot = water >= cfg.waterWarn;
-  reading("Coolant", fmt(tC(water), 0), deg(), hot ? C.red : C.white, x0, x1, 238, 64, [(water - 40) / 90, hot ? C.red : C.sky, (cfg.waterWarn - 40) / 90]);
+  var noFuel = gone("fuelVolume") && gone("fuel");
+  var lowFuel = !noFuel && (Number(e.lowfuel) > 0 || fuelP * 100 <= cfg.lowFuel);
+  reading("Fuel", gone("fuelVolume") ? NA : fmt(fv[0], 0), fv[1], noFuel ? C.dim : (lowFuel ? C.amber : C.white), x0, x1, 150, 64,
+          [gone("fuel") ? 0 : fuelP, lowFuel ? C.amber : C.sky, cfg.lowFuel / 100]);
+  var noWater = gone("watertemp"), water = Number(e.watertemp) || 0, hot = !noWater && water >= cfg.waterWarn;
+  reading("Coolant", noWater ? NA : fmt(tC(water), 0), deg(), noWater ? C.dim : (hot ? C.red : C.white), x0, x1, 238, 64,
+          [noWater ? 0 : (water - 40) / 90, hot ? C.red : C.sky, (cfg.waterWarn - 40) / 90]);
 }
 
 // ---- right panel: one page of the multi-function display ----
@@ -257,12 +266,12 @@ function dialArc(cx, cy, R, f, col, under) {
 }
 function pBoost(x0, y0, w) {
   var m = data.m, psi = boost, lim = (typeof m.maxBoost === "number" && m.maxBoost > 0) ? m.maxBoost : 15;
-  var topPsi = lim * 1.3, f = Math.max(0, psi) / topPsi;
+  var none = noBoost(), topPsi = lim * 1.3, f = none ? 0 : Math.max(0, psi) / topPsi;
   dialArc(x0 + 56, y0 + 74, 48, f, psi > lim ? C.red : C.sky, lim / topPsi);
   var b = pPsi(psi), pk = pPsi(boostPeak);
-  valueUnit(fmt(b[0], b[1]), b[2], x0 + w, y0 + 84, 64, psi > lim ? C.red : C.white, "right");
+  valueUnit(none ? NA : fmt(b[0], b[1]), b[2], x0 + w, y0 + 84, 64, none ? C.dim : (psi > lim ? C.red : C.white), "right");
   label("Max", x0 + 128, y0 + 134, "left", C.grey, 24);
-  txt(fmt(pk[0], pk[1]), x0 + w, y0 + 134, 34, C.white, "right", 700);
+  txt(none ? NA : fmt(pk[0], pk[1]), x0 + w, y0 + 134, 34, none ? C.dim : C.white, "right", 700);
 }
 function quad(x0, y0, w, vals) {                 // four corner readings around a small car
   miniCar(x0 + w / 2, y0 + 74, 0.44);
@@ -291,10 +300,11 @@ function pBrakes(x0, y0, w) {
 }
 function pEngine(x0, y0, w) {
   var e = data.e, m = data.m, oil = Number(e.oiltemp) || 0, egt = Number(m.egt) || 0;
-  reading("Oil", fmt(tC(oil), 0), deg(), oil >= cfg.oilWarn ? C.red : C.white, x0, x0 + w, y0 + 46, 52,
-          [(oil - 40) / 110, oil >= cfg.oilWarn ? C.red : C.sky, (cfg.oilWarn - 40) / 110]);
-  reading("EGT", fmt(tC(egt), 0), deg(), egt >= cfg.egtWarn ? C.red : C.white, x0, x0 + w, y0 + 110, 52,
-          [(egt - 100) / 900, egt >= cfg.egtWarn ? C.red : C.sky, (cfg.egtWarn - 100) / 900]);
+  var noOil = gone("oiltemp"), noE = noEgt(), hotOil = !noOil && oil >= cfg.oilWarn, hotE = !noE && egt >= cfg.egtWarn;
+  reading("Oil", noOil ? NA : fmt(tC(oil), 0), deg(), noOil ? C.dim : (hotOil ? C.red : C.white), x0, x0 + w, y0 + 46, 52,
+          [noOil ? 0 : (oil - 40) / 110, hotOil ? C.red : C.sky, (cfg.oilWarn - 40) / 110]);
+  reading("EGT", noE ? NA : fmt(tC(egt), 0), deg(), noE ? C.dim : (hotE ? C.red : C.white), x0, x0 + w, y0 + 110, 52,
+          [noE ? 0 : (egt - 100) / 900, hotE ? C.red : C.sky, (cfg.egtWarn - 100) / 900]);
 }
 function pG(x0, y0, w) {
   var m = data.m, cx = x0 + 56, cy = y0 + 74, R = 52, scale = 1.5;
@@ -449,7 +459,7 @@ function updateData(d) {
   if (e.rpm !== undefined && Number(e.rpm) < 50) re.boost = 0;   // engine stopped: atmospheric
   raw.e = re;
   raw.m = { maxBoost: m.maxBoost, egt: m.egt, tp: mfd.tp, tt: mfd.tt, bt: mfd.bt, ws: mfd.ws, glat: mfd.glat, glon: mfd.glon,
-            range: mfd.range, envT: mfd.envT };
+            range: mfd.range, envT: mfd.envT, missing: m.missing };
   var rm = (d && d.customModules) || {}; rm = rm.dbgCluster || rm.dbgAmbient || {};
   if (typeof rm.resets === "number") {           // the car was reset: no shut-down fade
     if (resets !== null && rm.resets !== resets) { quietT = 1; offT = -1; }

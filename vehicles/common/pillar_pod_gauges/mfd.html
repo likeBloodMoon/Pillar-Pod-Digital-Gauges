@@ -188,6 +188,12 @@ var TOP = 88, BOTTOM = 408;                              // content area between
 function label(s, x, y, align, col) { txt(s.toUpperCase(), x, y, 12, col || C.grey, align || "left", 600); }
 function bandColour(c, cold, warm, hot) { return c < cold ? C.sky : (c < warm ? C.white : (c < hot ? C.amber : C.red)); }
 
+// readings the car doesn't have (the mod's module reports them; the game would send 0): shown as "---"
+var NA = "---";
+function gone(k) { var mm = data.m && data.m.missing; return !!(mm && mm[k]); }
+function noBoost() { return gone("turboBoost") && gone("superchargerBoost"); }
+function noEgt() { return data.m.missing !== undefined && (data.m.egt === undefined || data.m.egt === null); }
+
 // ---- pages ----
 function pageBoost() {
   var m = data.m, psi = boost;
@@ -208,7 +214,8 @@ function pageBoost() {
   ctx.strokeStyle = "#13294a"; ctx.beginPath(); ctx.arc(cx, cy, R, a0, a0 + span); ctx.stroke();
   var lit = ctx.createLinearGradient(cx - R, cy + R, cx + R, cy - R);
   lit.addColorStop(0, "#1d5fd6"); lit.addColorStop(0.6, "#4aa3ff"); lit.addColorStop(1, "#bfe3ff");
-  ctx.strokeStyle = lit; ctx.beginPath(); ctx.arc(cx, cy, R, a0, ang(vNow)); ctx.stroke();
+  var none = noBoost();
+  if (!none) { ctx.strokeStyle = lit; ctx.beginPath(); ctx.arc(cx, cy, R, a0, ang(vNow)); ctx.stroke(); }
   ctx.strokeStyle = C.red; ctx.beginPath(); ctx.arc(cx, cy, R, ang(vLim), a0 + span); ctx.stroke();
   // scale: fine minor ticks, longer majors, numerals inside
   function tick(vd, len, lw, col) {
@@ -227,17 +234,19 @@ function pageBoost() {
   }
   // tapered needle with a short tail, pivoting behind the readout
   var na = ang(vNow), nx = Math.cos(na), ny = Math.sin(na), px = -ny, py = nx;
-  ctx.fillStyle = C.red; ctx.beginPath();
-  ctx.moveTo(cx + nx * (R - 4), cy + ny * (R - 4));
-  ctx.lineTo(cx + nx * 56 + px * 3.5, cy + ny * 56 + py * 3.5);
-  ctx.lineTo(cx + nx * 56 - px * 3.5, cy + ny * 56 - py * 3.5); ctx.closePath(); ctx.fill();
+  if (!none) {                                   // no needle without a boost reading
+    ctx.fillStyle = C.red; ctx.beginPath();
+    ctx.moveTo(cx + nx * (R - 4), cy + ny * (R - 4));
+    ctx.lineTo(cx + nx * 56 + px * 3.5, cy + ny * 56 + py * 3.5);
+    ctx.lineTo(cx + nx * 56 - px * 3.5, cy + ny * 56 - py * 3.5); ctx.closePath(); ctx.fill();
+  }
   // readout in the centre
   ctx.fillStyle = "#0a1220"; ctx.beginPath(); ctx.arc(cx, cy, 64, 0, Math.PI * 2); ctx.fill();
   ctx.strokeStyle = "#24456f"; ctx.lineWidth = 1.5; ctx.stroke();
   var b = pPsi(psi), pk = pPsi(boostPeak);
   label("Turbo " + b[2], cx, cy - 24, "center");
-  txt(fmt(b[0], b[1]), cx, cy + 16, 44, psi > lim ? C.red : C.white, "center", 700);
-  label("max", cx - 4, cy + 40, "right"); txt(fmt(pk[0], pk[1]), cx + 4, cy + 41, 17, C.white, "left", 700);
+  txt(none ? NA : fmt(b[0], b[1]), cx, cy + 16, 44, none ? C.dim : (psi > lim ? C.red : C.white), "center", 700);
+  label("max", cx - 4, cy + 40, "right"); txt(none ? NA : fmt(pk[0], pk[1]), cx + 4, cy + 41, 17, none ? C.dim : C.white, "left", 700);
 }
 
 // wheel positions on the car drawing, and the reading column each one leads to
@@ -320,10 +329,12 @@ function pageEngine() {
   var oil = Number(e.oiltemp) || 0, water = Number(e.watertemp) || 0, egt = Number(m.egt) || 0, rpm = Number(e.rpm) || 0;
   var maxR = Math.max(1000, Number(e.maxrpm) || 7000);
   var lt = function (c) { return Math.round(tC(c)); };
-  row(120, "Oil temperature", fmt(tC(oil), 0), deg(), lt(40), lt(150), tC(oil), tC(cfg.oilWarn), oil >= cfg.oilWarn ? C.red : C.white);
-  row(200, "Coolant", fmt(tC(water), 0), deg(), lt(40), lt(130), tC(water), tC(cfg.waterWarn), water >= cfg.waterWarn ? C.red : C.white);
-  row(280, "Exhaust gas", fmt(tC(egt), 0), deg(), lt(100), lt(1000), tC(egt), tC(cfg.egtWarn), egt >= cfg.egtWarn ? C.red : C.white);
-  row(360, "Engine speed", fmt(rpm, 0), "rpm", 0, Math.round(maxR / 1000) * 1000, rpm, null, C.white);
+  // a reading the car doesn't have: "---", an empty bar
+  function r(y, name, none, v, unit, lo, hi, val, warn, col) { row(y, name, none ? NA : v, unit, lo, hi, none ? lo : val, warn, none ? C.dim : col); }
+  r(120, "Oil temperature", gone("oiltemp"), fmt(tC(oil), 0), deg(), lt(40), lt(150), tC(oil), tC(cfg.oilWarn), oil >= cfg.oilWarn ? C.red : C.white);
+  r(200, "Coolant", gone("watertemp"), fmt(tC(water), 0), deg(), lt(40), lt(130), tC(water), tC(cfg.waterWarn), water >= cfg.waterWarn ? C.red : C.white);
+  r(280, "Exhaust gas", noEgt(), fmt(tC(egt), 0), deg(), lt(100), lt(1000), tC(egt), tC(cfg.egtWarn), egt >= cfg.egtWarn ? C.red : C.white);
+  r(360, "Engine speed", gone("rpm"), fmt(rpm, 0), "rpm", 0, Math.round(maxR / 1000) * 1000, rpm, null, C.white);
 }
 
 function pageG() {
@@ -382,14 +393,15 @@ function draw() {
   }
   // status row (0..40): warning lights on the left, fuel on the right
   var water = Number(e.watertemp) || 0;
-  icoTemp(M, 20, water >= cfg.waterWarn ? C.red : (water < 60 ? C.sky : C.blue));
+  icoTemp(M, 20, gone("watertemp") ? C.dim : (water >= cfg.waterWarn ? C.red : (water < 60 ? C.sky : C.blue)));
   icoEngine(M + 40, 20, Number(e.checkengine) > 0 ? C.amber : C.dim);
   icoBrake(M + 80, 20, Number(e.parkingbrake) > 0 ? C.red : C.dim);
   icoLights(M + 120, 20, lights > 0 ? C.green : C.dim);
   var fv = vol(Number(e.fuelVolume) || 0), fuelP = Number(e.fuel) || 0; fuelP = fuelP > 1.5 ? fuelP / 100 : fuelP;
-  var lowFuel = Number(e.lowfuel) > 0 || fuelP * 100 <= cfg.lowFuel;
-  icoFuel(W - M - 4, 20, lowFuel ? C.amber : C.white);
-  valueUnit(fmt(fv[0], 0), fv[1], W - M - 20, 28, 22, lowFuel ? C.amber : C.white, "right");
+  var noFuel = gone("fuelVolume") && gone("fuel");
+  var lowFuel = !noFuel && (Number(e.lowfuel) > 0 || fuelP * 100 <= cfg.lowFuel);
+  icoFuel(W - M - 4, 20, noFuel ? C.dim : (lowFuel ? C.amber : C.white));
+  valueUnit(gone("fuelVolume") ? NA : fmt(fv[0], 0), fv[1], W - M - 20, 28, 22, lowFuel ? C.amber : C.white, "right");
   ctx.fillStyle = C.line; ctx.fillRect(M - 8, 40, W - 2 * M + 16, 2);
   // title (48..80)
   txt(PAGES[page], W / 2, 72, 24, C.white, "center", 600);
@@ -410,7 +422,7 @@ function draw() {
   ctx.fillStyle = "rgba(46,124,246,0.22)"; rr(W / 2 - 23, 457, 46, 46, 7); ctx.fill();
   txt(gearText(e.gear), W / 2, 492, 32, C.white, "center", 700);
   footCell(W - M - 88, "right", "Outside", typeof m.envT === "number" ? fmt(tC(m.envT), 0) : "---", deg());
-  footCell(W - M, "right", "Coolant", fmt(tC(water), 0), deg());
+  footCell(W - M, "right", "Coolant", gone("watertemp") ? NA : fmt(tC(water), 0), deg());
   dim();
 }
 function dim() {
@@ -498,7 +510,7 @@ function updateData(d) {
   if (e.rpm !== undefined && Number(e.rpm) < 50) re.boost = 0;   // engine stopped: atmospheric
   raw.e = re;
   raw.m = { maxBoost: m.maxBoost, egt: m.egt, tp: mfd.tp, tt: mfd.tt, bt: mfd.bt, ws: mfd.ws, glat: mfd.glat, glon: mfd.glon,
-            range: mfd.range, envT: mfd.envT };
+            range: mfd.range, envT: mfd.envT, missing: m.missing };
   var rm = (d && d.customModules) || {}; rm = rm.dbgCluster || rm.dbgAmbient || {};
   if (typeof rm.resets === "number") {           // the car was reset: no shut-down fade
     if (resets !== null && rm.resets !== resets) { quietT = 1; offT = -1; }

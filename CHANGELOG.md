@@ -13,6 +13,11 @@
   limit (overboost, oil, coolant or exhaust too hot, low fuel), and on the tachometer from the shift
   point. Both light up with the start-up test. The fuel gauge has WARN only. The unlit lights are
   printed on the faces, which were re-baked.
+- **`---` for a reading the car doesn't have.** The game sends 0 for a value a car doesn't
+  simulate, so a boost gauge on a car without a turbo read 0.0 and looked broken. The mod's module
+  now tells the screens which readings are really missing (boost, oil and coolant temperature,
+  fuel, engine speed, exhaust temperature). The round gauges show dashes with the ring dark and no
+  PEAK or WARN; the display and the cluster show `---` with an empty bar. A real 0 still reads 0.
 
 ### Changed
 - **Only automatic mounting.** The fixed mountings (one part per interior, side and finish for the

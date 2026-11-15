@@ -216,6 +216,15 @@ local function readMfd(dt)
   end
 end
 
+-- readings the screens show. The gauge controller fills a missing electrics value with 0, so this
+-- tells the screens which ones the car really doesn't have; they show dashes for those
+local CHECKED = {"oiltemp", "watertemp", "turboBoost", "superchargerBoost", "fuel", "fuelVolume", "rpm"}
+local missing = {}
+local function readMissing()
+  local ev = electrics.values
+  for _, k in ipairs(CHECKED) do missing[k] = (ev[k] == nil) end
+end
+
 local function updateGaugeData(moduleData, dt)
   timer = timer + (dt or 0)
   if timer > 2 then
@@ -229,7 +238,9 @@ local function updateGaugeData(moduleData, dt)
   end
   moduleData.maxBoost = maxBoost
   local okE, egt = pcall(readEgt)
-  moduleData.egt = (okE and egt) or 0
+  moduleData.egt = okE and egt or nil  -- nil (no key) when the engine has no exhaust temperature
+  pcall(readMissing)
+  moduleData.missing = missing
   pcall(readMfd, dt or 0)
   moduleData.mfd = mfd
   moduleData.resets = resets            -- the screens skip their shut-down animation right after a reset
