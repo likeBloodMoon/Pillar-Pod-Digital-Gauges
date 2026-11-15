@@ -60,18 +60,11 @@ angular.module('beamng.apps')
         }
       };
 
-      // the mod's own font, from its vehicle folder
-      var FONT_DIR = '/vehicles/common/pillar_pod_gauges/fonts/barlow-semi-condensed-latin-';
-      var fontCSS = [500, 600, 700].map(function (w) {
-        return '@font-face{font-family:"Barlow SC";font-weight:' + w + ';src:url("' + FONT_DIR + w + '-normal.woff2") format("woff2");}';
-      }).join('');
-
       var clearArmed = false, saveTimer = null;
       var viewer = window.PillarPodViewer.create(element[0], {
         source: source,
         live: true,
         units: gameUnits(),
-        fontCSS: fontCSS,
         buttons: [
           {id: 'save', needsData: true, label: 'Save', title: 'Save this drive to pillar_pod_gauges/recordings in your BeamNG user folder', onClick: function (v, btn) {
             btn.textContent = 'Saving…'; btn.className = 'ppv-btn'; ask('save');

@@ -1,7 +1,8 @@
 # Event History: design contract
 
-The viewer is the car's own data logger, so it looks like the rest of the mod: the multi-function
-display and the digital cluster. It is not a generic dashboard.
+The viewer is the car's own data logger. It should look like a factory performance display (the
+GT-R's multi-function screen is the reference): flat charcoal panels, thin grey outlines, white
+numerals, one red accent. It is not a web dashboard.
 
 ## Who and what for
 A player, after a drive or a crash, wants to know **what happened and how bad it was**. They pick an
@@ -9,22 +10,26 @@ event, read the answer in a couple of seconds, then scrub the readings around it
 compare drives and export data.
 
 ## Hierarchy (per event)
-1. **The answer**: one hero reading, big, like the cluster's speed (`1.21 bar`, `PEAK BOOST`).
+1. **The answer**: one hero reading, big and light (`1.21 bar`, `Peak boost`).
 2. **The situation**: a single row of context at the peak: RPM, speed, the gear in its box,
-   temperatures, throttle. Grey uppercase label above white numerals with a small unit, as on the display.
+   temperatures, throttle. Grey label above white numerals with a small grey unit.
 3. **The readings**: stacked lanes on one shared time axis, the event's main channel first and
    tallest. One cursor runs through every lane and shows the values. With no cursor, each lane shows
    its value at the peak.
 4. **Where in the drive**: the timeline strip on top, with every event on the drive's speed trace.
 
-## Tokens (from `mfd.html` / `cluster.html`)
-- Background: navy-black `#05080d` to `#0a111b`. Panels `#0c1420`, hairlines `#16202e`.
-- Text: white `#f4f6f8`, grey `#8d99a8`, dim `#3b4757`.
-- Traces: blue `#2e7cf6`, sky `#7cc4ff`. Throttle green `#7ed321`, brake red.
-- Red `#e8262d` is reserved for rules and the moment an event starts. Amber `#f5b31a` marks engine
-  events, sky marks driving events (braking, cornering), red marks impacts.
-- Font: Barlow Semi Condensed 500/600/700 (the mod's own, OFL). Labels are uppercase and
-  letter-spaced; numbers use tabular figures.
+## Tokens (`K` in `viewer.js`)
+- Every colour is solid. No gradients, glows, tints or see-through fills.
+- Page `#0d0d0d`. Panels `#181818` with a 1 px `#4a4a4a` outline and 6 px corners; hover and selected
+  rows, and an event's time window in the lanes, are `#232323`. Dividers `#2e2e2e`.
+- Text: white `#f2f2f2`, grey `#a6a6a6`, dim `#666666`.
+- Traces are white; a second trace in the same lane (brake under throttle) is grey and dashed, so
+  lanes never need colour to tell lines apart.
+- One accent, red `#e3241b`, and only for: the line where an event starts, the selected event (its
+  numbered circle and its timeline marker), the recording dot and errors. Event kinds are not
+  colour-coded; the list numbers them in circles, like the display's preset row.
+- Font: the system UI font (Segoe UI in the game and on Windows). Sentence case, no letter-spacing;
+  numbers use tabular figures.
 
 ## Honesty
 - Only readings the recorder stored. No made-up metrics, scores or ratings.
@@ -38,7 +43,7 @@ compare drives and export data.
 | in game | connecting | "Connecting to the car…" until the first answer |
 | in game | no recorder | which parts to fit to start recording |
 | both | recording, no events | that it's recording, and what makes an event (real thresholds) |
-| both | event still recording | a REC mark on the event; its window grows |
+| both | event still recording | a red "Recording" on the event; its window grows |
 | in game | save | Saving… / Saved, with the path / Save failed |
 | in game | clear | asks again before clearing |
 | PC | no file | a drop zone, where the files are, how they get there |

@@ -15,13 +15,12 @@
   "use strict";
 
   // ------------------------------------------------------------ tokens (from mfd.html / cluster.html)
-  var K = {bg: "#05080d", bg2: "#0a111b", panel: "#0c1420", line: "#16202e", line2: "#1f2b3c",
-           white: "#f4f6f8", grey: "#8d99a8", dim: "#3b4757", blue: "#2e7cf6", sky: "#7cc4ff",
-           red: "#e8262d", amber: "#f5b31a", green: "#7ed321"};
-  var CAT = {overboost: "engine", limiter: "engine", coolant: "engine", oil: "engine", stall: "engine", damage: "engine",
-             braking: "drive", lateral: "drive", impact: "crash"};
-  var CATCOL = {engine: K.amber, drive: K.sky, crash: K.red};
-  function catCol(kind) { return CATCOL[CAT[kind]] || K.grey; }
+  // Flat and neutral: solid charcoal panels with thin grey outlines, white numerals and traces,
+  // one red accent for the moment an event starts and for the selection. No tints, gradients or
+  // see-through fills. Style reference: a factory performance display, not a web dashboard.
+  var K = {page: "#0d0d0d", panel: "#181818", panel2: "#232323", outline: "#4a4a4a", rule: "#2e2e2e",
+           text: "#f2f2f2", text2: "#a6a6a6", dim: "#666666", trace: "#f2f2f2", trace2: "#9a9a9a", accent: "#e3241b"};
+  function catCol() { return K.text; }
 
   // ------------------------------------------------------------ units
   function units(sys) {
@@ -43,18 +42,18 @@
   function channelInfo(U) {
     var id = function (v) { return v; };
     return {
-      rpm:      {label: "RPM", f: id, unit: "rpm", dec: 0, col: K.sky},
-      boost:    {label: "BOOST", f: U.pressure, unit: U.pressureUnit, dec: U.pressureDec, col: K.sky, opt: true},
-      speed:    {label: "SPEED", f: U.speed, unit: U.speedUnit, dec: 0, col: K.white},
-      throttle: {label: "THROTTLE", f: function (v) { return v * 100; }, unit: "%", dec: 0, col: K.green},
-      brake:    {label: "BRAKE", f: function (v) { return v * 100; }, unit: "%", dec: 0, col: K.red},
-      coolant:  {label: "COOLANT", f: U.temp, unit: U.tempUnit, dec: 0, col: K.sky, opt: true},
-      oil:      {label: "OIL", f: U.temp, unit: U.tempUnit, dec: 0, col: K.amber, opt: true},
-      egt:      {label: "EGT", f: U.temp, unit: U.tempUnit, dec: 0, col: K.amber, opt: true},
-      glat:     {label: "LATERAL G", f: id, unit: "g", dec: 2, col: K.sky},
-      glon:     {label: "LONG. G", f: id, unit: "g", dec: 2, col: K.white},
-      damage:   {label: "CRASH ENERGY", f: id, unit: "kJ", dec: 1, col: K.red},
-      gear:     {label: "GEAR", f: id, unit: "", dec: 0, col: K.white}
+      rpm:      {label: "RPM", f: id, unit: "rpm", dec: 0, col: K.trace},
+      boost:    {label: "Boost", f: U.pressure, unit: U.pressureUnit, dec: U.pressureDec, col: K.trace, opt: true},
+      speed:    {label: "Speed", f: U.speed, unit: U.speedUnit, dec: 0, col: K.trace},
+      throttle: {label: "Throttle", f: function (v) { return v * 100; }, unit: "%", dec: 0, col: K.trace},
+      brake:    {label: "Brake", f: function (v) { return v * 100; }, unit: "%", dec: 0, col: K.trace2, dash: true},
+      coolant:  {label: "Coolant", f: U.temp, unit: U.tempUnit, dec: 0, col: K.trace, opt: true},
+      oil:      {label: "Oil", f: U.temp, unit: U.tempUnit, dec: 0, col: K.trace, opt: true},
+      egt:      {label: "EGT", f: U.temp, unit: U.tempUnit, dec: 0, col: K.trace, opt: true},
+      glat:     {label: "Lateral g", f: id, unit: "g", dec: 2, col: K.trace},
+      glon:     {label: "Longitudinal g", f: id, unit: "g", dec: 2, col: K.trace},
+      damage:   {label: "Crash energy", f: id, unit: "kJ", dec: 1, col: K.trace},
+      gear:     {label: "Gear", f: id, unit: "", dec: 0, col: K.trace}
     };
   }
 
@@ -104,6 +103,10 @@
     return Math.floor(t / 60) + ":" + (t % 60 < 10 ? "0" : "") + (t % 60);
   }
   function pad2(n) { return (n < 10 ? "0" : "") + n; }
+  function nice(title) {                  // OVERBOOST -> Overboost, LATERAL G -> Lateral g
+    var t = String(title || "").toLowerCase();
+    return t.charAt(0).toUpperCase() + t.slice(1).replace(/\brpm\b/g, "RPM").replace(/\begt\b/g, "EGT");
+  }
   function el(tag, cls, text) {
     var e = document.createElement(tag);
     if (cls) e.className = cls;
@@ -127,34 +130,34 @@
   function hero(ev, U) {
     var p = ev.peak;
     switch (ev.kind) {
-      case "overboost": return {label: "PEAK BOOST", value: fmt(U.pressure(p), U.pressureDec), unit: U.pressureUnit};
-      case "limiter":   return {label: "MAX RPM", value: fmt(p, 0), unit: "rpm"};
-      case "coolant":   return {label: "PEAK COOLANT", value: fmt(U.temp(p), 0), unit: U.tempUnit};
-      case "oil":       return {label: "PEAK OIL", value: fmt(U.temp(p), 0), unit: U.tempUnit};
-      case "braking":   return {label: "PEAK DECELERATION", value: fmt(p, 2), unit: "g"};
-      case "lateral":   return {label: "PEAK LATERAL", value: fmt(p, 2), unit: "g"};
-      case "impact":    return {label: "CRASH ENERGY", value: fmt(p, 1), unit: "kJ"};
-      case "stall":     return {label: "SPEED AT STALL", value: fmt(U.speed(p), 0), unit: U.speedUnit};
-      case "damage":    return {label: "THE GAME REPORTED", text: ev.detail || "Engine damage"};
+      case "overboost": return {label: "Peak boost", value: fmt(U.pressure(p), U.pressureDec), unit: U.pressureUnit};
+      case "limiter":   return {label: "Max RPM", value: fmt(p, 0), unit: "rpm"};
+      case "coolant":   return {label: "Peak coolant", value: fmt(U.temp(p), 0), unit: U.tempUnit};
+      case "oil":       return {label: "Peak oil", value: fmt(U.temp(p), 0), unit: U.tempUnit};
+      case "braking":   return {label: "Peak deceleration", value: fmt(p, 2), unit: "g"};
+      case "lateral":   return {label: "Peak lateral", value: fmt(p, 2), unit: "g"};
+      case "impact":    return {label: "Crash energy", value: fmt(p, 1), unit: "kJ"};
+      case "stall":     return {label: "Speed at stall", value: fmt(U.speed(p), 0), unit: U.speedUnit};
+      case "damage":    return {label: "The game reported", text: ev.detail || "Engine damage"};
     }
-    return {label: "PEAK", value: fmt(p, 1), unit: ev.peakUnit || ""};
+    return {label: "Peak", value: fmt(p, 1), unit: ev.peakUnit || ""};
   }
 
   function context(ev, U) {
     var at = ev.at || {}, out = [];
     var add = function (label, value, unit) { out.push({label: label, value: value, unit: unit || ""}); };
     if (ev.kind === "impact") {
-      if (typeof ev.speedBefore === "number") add("SPEED BEFORE", fmt(U.speed(ev.speedBefore), 0), U.speedUnit);
-      if (typeof ev.gPeak === "number") add("PEAK G", fmt(ev.gPeak, 1), "g");
+      if (typeof ev.speedBefore === "number") add("Speed before", fmt(U.speed(ev.speedBefore), 0), U.speedUnit);
+      if (typeof ev.gPeak === "number") add("Peak g", fmt(ev.gPeak, 1), "g");
     }
     if (ev.kind !== "limiter" && ev.kind !== "stall") add("RPM", fmt(at.rpm, 0));
-    if (ev.kind !== "stall" && ev.kind !== "impact") add("SPEED", fmt(U.speed(at.speed), 0), U.speedUnit);
+    if (ev.kind !== "stall" && ev.kind !== "impact") add("Speed", fmt(U.speed(at.speed), 0), U.speedUnit);
     if (ev.kind !== "overboost" && typeof at.boost === "number" && Math.abs(at.boost) > 1)
-      add("BOOST", fmt(U.pressure(at.boost), U.pressureDec), U.pressureUnit);
-    if (ev.kind !== "coolant" && at.coolant) add("COOLANT", fmt(U.temp(at.coolant), 0), U.tempUnit);
-    if (ev.kind !== "oil" && at.oil) add("OIL", fmt(U.temp(at.oil), 0), U.tempUnit);
-    add("THROTTLE", fmt((at.throttle || 0) * 100, 0), "%");
-    if (ev.kind === "braking" || ev.kind === "impact" || (at.brake || 0) > 0.05) add("BRAKE", fmt((at.brake || 0) * 100, 0), "%");
+      add("Boost", fmt(U.pressure(at.boost), U.pressureDec), U.pressureUnit);
+    if (ev.kind !== "coolant" && at.coolant) add("Coolant", fmt(U.temp(at.coolant), 0), U.tempUnit);
+    if (ev.kind !== "oil" && at.oil) add("Oil", fmt(U.temp(at.oil), 0), U.tempUnit);
+    add("Throttle", fmt((at.throttle || 0) * 100, 0), "%");
+    if (ev.kind === "braking" || ev.kind === "impact" || (at.brake || 0) > 0.05) add("Brake", fmt((at.brake || 0) * 100, 0), "%");
     return out;
   }
 
@@ -180,7 +183,8 @@
     return best;
   }
 
-  var FONT = function (w, px) { return w + " " + px + "px 'Barlow SC', 'Barlow Semi Condensed', 'Arial Narrow', Arial, sans-serif"; };
+  var FF = "'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif";
+  var FONT = function (w, px) { return w + " " + px + "px " + FF; };
 
   function drawLanes(canvas, win, lanes, CI, ev, cursor) {
     var dpr = root.devicePixelRatio || 1, W = canvas.clientWidth || 400, H = canvas.clientHeight || 200;
@@ -214,7 +218,7 @@
         series.push({c: c, info: info, vals: vals});
       });
       g.fillStyle = K.panel; g.fillRect(0, top, W, h);
-      g.fillStyle = "rgba(232,38,45,0.10)"; g.fillRect(xa, top, Math.max(2, xb - xa), h);
+      g.fillStyle = K.panel2; g.fillRect(xa, top, Math.max(2, xb - xa), h);          // how long the event lasted
       if (!series.length) return;
       var fixed = lane[0] === "throttle";
       if (fixed) { lo = 0; hi = 100; }
@@ -223,8 +227,9 @@
       if (!fixed) { lo -= span * 0.06; hi += span * 0.06; }
       var Y = function (v) { return pbot - (pbot - ptop) * (v - lo) / (hi - lo); };
       series.forEach(function (sr) {
-        var col = series.length > 1 ? sr.info.col : (li === 0 ? K.sky : "#4f8fe8");
-        g.strokeStyle = col; g.lineWidth = li === 0 ? 2 : 1.5; g.lineJoin = "round";
+        var col = series.length > 1 ? sr.info.col : (li === 0 ? K.trace : "#d0d0d0");
+        g.strokeStyle = col; g.lineWidth = li === 0 ? 2 : 1.4; g.lineJoin = "round";
+        g.setLineDash(sr.info.dash ? [5, 4] : []);
         g.beginPath();
         var started = false;
         for (var i = 0; i < t.length; i++) {
@@ -235,17 +240,21 @@
           g._lastY = py;
         }
         g.stroke();
+        g.setLineDash([]);
       });
       // label and range on the left, the value at the cursor (or the peak) on the right
       g.textAlign = "left";
       var lx = padL;
       series.forEach(function (sr) {
-        if (series.length > 1) { g.fillStyle = sr.info.col; g.fillRect(lx, top + 9, 6, 6); lx += 10; }
-        g.font = FONT(600, 11); g.fillStyle = K.grey; g.fillText(sr.info.label, lx, top + 16);
+        if (series.length > 1) {                      // the legend shows the line style
+          g.strokeStyle = sr.info.col; g.lineWidth = 2; g.setLineDash(sr.info.dash ? [3, 2] : []);
+          g.beginPath(); g.moveTo(lx, top + 12); g.lineTo(lx + 12, top + 12); g.stroke(); g.setLineDash([]); lx += 16;
+        }
+        g.font = FONT(600, 12); g.fillStyle = K.text2; g.fillText(sr.info.label, lx, top + 16);
         lx += g.measureText(sr.info.label).width + 10;
       });
       if (series[0].c !== "gear") {
-        g.font = FONT(500, 10); g.fillStyle = K.dim;
+        g.font = FONT(400, 11); g.fillStyle = K.dim;
         g.fillText(fmt(lo + span * 0.06 * (fixed ? 0 : 1), series[0].info.dec) + " – " + fmt(hi - span * 0.06 * (fixed ? 0 : 1), series[0].info.dec) +
                    (series[0].info.unit ? " " + series[0].info.unit : ""), lx + 2, top + 16);
       }
@@ -255,39 +264,39 @@
         for (var s = series.length - 1; s >= 0; s--) {
           var sr = series[s], v = sr.vals[shown];
           var txt = sr.c === "gear" ? gearName(v) : fmt(v, sr.info.dec);
-          if (sr.info.unit) { g.font = FONT(500, 11); g.fillStyle = K.grey; g.fillText(sr.info.unit, rx, top + 17); rx -= g.measureText(sr.info.unit).width + 3; }
-          g.font = FONT(700, li === 0 ? 18 : 15); g.fillStyle = series.length > 1 ? sr.info.col : K.white;
+          if (sr.info.unit) { g.font = FONT(400, 11); g.fillStyle = K.text2; g.fillText(sr.info.unit, rx, top + 17); rx -= g.measureText(sr.info.unit).width + 3; }
+          g.font = FONT(600, li === 0 ? 18 : 15); g.fillStyle = K.text;
           g.fillText(txt, rx, top + 17);
           rx -= g.measureText(txt).width + 12;
         }
-        if (ci < 0 && li === 0) { g.font = FONT(600, 10); g.fillStyle = K.grey; g.fillText(AT_START[ev.kind] ? "AT THE MOMENT" : "AT PEAK", rx, top + 16); }
+        if (ci < 0 && li === 0) { g.font = FONT(400, 11); g.fillStyle = K.text2; g.fillText(AT_START[ev.kind] ? "at the moment" : "at peak", rx, top + 16); }
       }
       if (li === 0 && pk >= 0 && !AT_START[ev.kind]) {   // the peak on the main lane
         var pv = series[0].vals[pk], ppx = X(t[pk]), ppy = Y(pv);
-        g.fillStyle = K.white; g.beginPath(); g.arc(ppx, ppy, 3.5, 0, Math.PI * 2); g.fill();
-        g.strokeStyle = K.bg; g.lineWidth = 1.5; g.stroke();
+        g.fillStyle = K.page; g.beginPath(); g.arc(ppx, ppy, 4, 0, Math.PI * 2); g.fill();
+        g.strokeStyle = K.trace; g.lineWidth = 2; g.stroke();
       }
-      g.fillStyle = K.line; g.fillRect(0, bot - 1, W, 1);
+      g.strokeStyle = K.outline; g.lineWidth = 1; g.strokeRect(0.5, top + 0.5, W - 1, h - 1);
     });
-    g.fillStyle = K.red; g.fillRect(Math.round(xa) - 1, 0, 2, H - axisH);   // where the event started
+    g.fillStyle = K.accent; g.fillRect(Math.round(xa) - 1, 0, 2, H - axisH);   // where the event started
     if (ci >= 0) {
       var cx = Math.round(X(t[ci])) + 0.5;
-      g.strokeStyle = "rgba(244,246,248,0.6)"; g.lineWidth = 1;
+      g.strokeStyle = K.text2; g.lineWidth = 1;
       g.beginPath(); g.moveTo(cx, 0); g.lineTo(cx, H - axisH); g.stroke();
     }
     // time axis, counted from the event
-    g.font = FONT(500, 10); g.textAlign = "center";
+    g.font = FONT(400, 11); g.textAlign = "center";
     var stepS = (t1 - t0) > 12 ? 2 : 1;
     for (var s2 = Math.ceil((t0 - ev.t) / stepS) * stepS; ev.t + s2 <= t1; s2 += stepS) {
       var ax = X(ev.t + s2);
       if (ax < padL + 10 || ax > W - padR - 10) continue;
       if (ci >= 0 && Math.abs(ax - X(t[ci])) < 34) continue;
-      g.fillStyle = s2 === 0 ? K.red : K.grey;
+      g.fillStyle = s2 === 0 ? K.accent : K.text2;
       g.fillText(s2 === 0 ? "0" : (s2 > 0 ? "+" : "") + s2 + "s", ax, H - 5);
     }
     if (ci >= 0) {
       var rel = t[ci] - ev.t, cxx = X(t[ci]);
-      g.fillStyle = K.white; g.font = FONT(700, 10); g.textAlign = "center";
+      g.fillStyle = K.text; g.font = FONT(600, 11); g.textAlign = "center";
       g.fillText((rel >= 0 ? "+" : "") + rel.toFixed(2) + " s", Math.max(padL + 22, Math.min(W - padR - 22, cxx)), H - 5);
     }
     return {t0: t0, t1: t1, padL: padL, padR: padR};
@@ -304,33 +313,35 @@
     events.forEach(function (e) { tEnd = Math.max(tEnd, e.t + (e.duration || 0)); });
     tEnd = Math.max(tEnd, 10);
     var X = function (tt) { return 8 + (W - 16) * tt / tEnd; };
-    g.fillStyle = K.line; g.fillRect(8, plotH - 1, W - 16, 1);
+    events.forEach(function (e) {           // the selected event's window sits under the speed trace
+      if (e.id === selected) { g.fillStyle = K.panel2; g.fillRect(X(e.t - 5), 0, X(e.t + 3) - X(e.t - 5), plotH); }
+    });
+    g.fillStyle = K.rule; g.fillRect(8, plotH - 1, W - 16, 1);
     if (t.length > 1) {
       var mx = 1; sp.forEach(function (v) { mx = Math.max(mx, v || 0); });
       var Y = function (v) { return plotH - 2 - (plotH - 10) * (v || 0) / mx; };
       g.beginPath(); g.moveTo(X(t[0]), plotH - 1);
       for (var i = 0; i < t.length; i++) g.lineTo(X(t[i]), Y(sp[i]));
       g.lineTo(X(t[t.length - 1]), plotH - 1); g.closePath();
-      g.fillStyle = "rgba(46,124,246,0.16)"; g.fill();
+      g.fillStyle = K.panel; g.fill();
       g.beginPath();
       for (var j = 0; j < t.length; j++) { if (j) g.lineTo(X(t[j]), Y(sp[j])); else g.moveTo(X(t[j]), Y(sp[j])); }
-      g.strokeStyle = "rgba(124,196,255,0.7)"; g.lineWidth = 1.2; g.stroke();
-      g.font = FONT(600, 9); g.fillStyle = K.dim; g.textAlign = "left"; g.fillText("SPEED", 10, 9);
+      g.strokeStyle = K.trace2; g.lineWidth = 1.2; g.stroke();
+      g.font = FONT(400, 10); g.fillStyle = K.dim; g.textAlign = "left"; g.fillText("Speed", 10, 10);
     }
     arr(resets).forEach(function (r) {
-      g.strokeStyle = "rgba(141,153,168,0.6)"; g.setLineDash([2, 3]); g.lineWidth = 1;
+      g.strokeStyle = K.dim; g.setLineDash([2, 3]); g.lineWidth = 1;
       g.beginPath(); g.moveTo(X(r) + 0.5, 2); g.lineTo(X(r) + 0.5, plotH); g.stroke(); g.setLineDash([]);
-      g.fillStyle = K.grey; g.font = FONT(600, 9); g.textAlign = "left"; g.fillText("RESET", X(r) + 3, 9);
+      g.fillStyle = K.text2; g.font = FONT(400, 10); g.textAlign = "left"; g.fillText("Reset", X(r) + 3, 10);
     });
     var marks = [];
     events.forEach(function (e) {
       var x = Math.round(X(e.t)), sel = e.id === selected;
-      if (sel) { g.fillStyle = "rgba(244,246,248,0.08)"; g.fillRect(X(e.t - 5), 0, X(e.t + 3) - X(e.t - 5), plotH); }
-      g.fillStyle = catCol(e.kind); g.fillRect(x - (sel ? 1.5 : 1), sel ? 0 : 5, sel ? 3 : 2, plotH - (sel ? 0 : 5));
-      if (sel) { g.fillStyle = K.white; g.fillRect(x - 3, 0, 6, 3); }
+      g.fillStyle = sel ? K.accent : K.text2; g.fillRect(x - (sel ? 1 : 0.5), sel ? 0 : 6, sel ? 2 : 1, plotH - (sel ? 0 : 6));
+      if (sel) { g.beginPath(); g.moveTo(x - 5, 0); g.lineTo(x + 5, 0); g.lineTo(x, 6); g.closePath(); g.fill(); }
       marks.push({x: x, id: e.id});
     });
-    g.font = FONT(500, 10); g.fillStyle = K.dim;
+    g.font = FONT(400, 10); g.fillStyle = K.dim;
     var stepT = tEnd > 1200 ? 300 : tEnd > 600 ? 120 : tEnd > 240 ? 60 : tEnd > 90 ? 30 : 10;
     for (var s = 0; s <= tEnd; s += stepT) {
       g.textAlign = s === 0 ? "left" : X(s) > W - 24 ? "right" : "center";
@@ -353,87 +364,85 @@
   }
 
   // ------------------------------------------------------------ styles
-  var FF = "'Barlow SC','Barlow Semi Condensed','Arial Narrow',Arial,sans-serif";
+  // Every colour below is solid. Panels are charcoal with a thin grey outline, the text is white or grey,
+  // and red is used only for "this is the moment" and "this one is selected".
   var CSS = "\
-.ppv{position:relative;width:100%;height:100%;display:flex;flex-direction:column;color:" + K.white + ";font-family:" + FF + ";\
-font-weight:500;font-size:13px;overflow:hidden;box-sizing:border-box;outline:none;\
-background:radial-gradient(120% 80% at 50% 0%," + K.bg2 + " 0%," + K.bg + " 70%);border:1px solid " + K.line + ";border-radius:4px;\
-font-variant-numeric:tabular-nums}\
+.ppv{position:relative;width:100%;height:100%;display:flex;flex-direction:column;color:" + K.text + ";font-family:" + FF + ";\
+font-weight:400;font-size:13px;overflow:hidden;box-sizing:border-box;outline:none;\
+background:" + K.page + ";border:1px solid " + K.outline + ";border-radius:6px;font-variant-numeric:tabular-nums}\
 .ppv *{box-sizing:border-box}\
 .ppv button,.ppv select{font-family:inherit}\
-.ppv-head{display:flex;align-items:center;gap:14px;padding:9px 14px 8px}\
-.ppv-brand{font-weight:700;font-size:16px;white-space:nowrap}\
-.ppv-meta{color:" + K.grey + ";font-size:12px;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}\
-.ppv-meta b{color:" + K.white + ";font-weight:600}\
-.ppv-rec{display:inline-flex;align-items:center;gap:5px;color:" + K.red + ";font-weight:700;font-size:11px;letter-spacing:.12em;margin-right:8px}\
-.ppv-rec i{width:7px;height:7px;border-radius:50%;background:" + K.red + ";animation:ppvblink 1.2s infinite}\
-@keyframes ppvblink{50%{opacity:.25}}\
+.ppv-head{display:flex;align-items:center;gap:14px;padding:9px 14px 8px;border-bottom:1px solid " + K.rule + "}\
+.ppv-brand{font-weight:600;font-size:15px;white-space:nowrap}\
+.ppv-meta{color:" + K.text2 + ";font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}\
+.ppv-meta b{color:" + K.text + ";font-weight:600}\
+.ppv-rec{display:inline-flex;align-items:center;gap:6px;color:" + K.text + ";font-size:12px;margin-right:10px}\
+.ppv-rec i{width:8px;height:8px;border-radius:50%;background:" + K.accent + "}\
 .ppv-tools{display:flex;gap:6px;align-items:center;flex:none}\
-.ppv-btn{background:transparent;color:" + K.white + ";border:1px solid " + K.line2 + ";border-radius:3px;padding:4px 11px;font-size:12px;\
-font-weight:600;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap}\
-.ppv-btn:hover{border-color:" + K.grey + "}\
-.ppv-btn:disabled{opacity:.35;cursor:default;border-color:" + K.line2 + "}\
-.ppv-btn.warn{border-color:" + K.red + ";color:" + K.red + "}\
-.ppv-btn.ok{border-color:" + K.green + ";color:" + K.green + "}\
-.ppv-sel{background:" + K.panel + ";color:" + K.white + ";border:1px solid " + K.line2 + ";border-radius:3px;padding:3px 4px;font-size:12px}\
-.ppv-rule{height:2px;background:" + K.red + ";margin:0 14px;flex:none}\
+.ppv-btn{background:" + K.panel + ";color:" + K.text + ";border:1px solid " + K.outline + ";border-radius:4px;padding:4px 12px;font-size:12px;\
+cursor:pointer;white-space:nowrap}\
+.ppv-btn:hover{background:" + K.panel2 + "}\
+.ppv-btn:disabled{color:" + K.dim + ";border-color:" + K.rule + ";background:" + K.page + ";cursor:default}\
+.ppv-btn.warn{border-color:" + K.accent + ";color:" + K.accent + "}\
+.ppv-btn.ok{border-color:" + K.text2 + ";color:" + K.text + "}\
+.ppv-sel{background:" + K.panel + ";color:" + K.text + ";border:1px solid " + K.outline + ";border-radius:4px;padding:3px 4px;font-size:12px}\
+.ppv-rule{display:none}\
 .ppv-tl{height:46px;margin:8px 14px 0;flex:none}\
 .ppv-tl canvas{width:100%;height:100%;display:block;cursor:pointer}\
 .ppv-body{flex:1;display:flex;min-height:0;padding:8px 14px 12px;gap:14px}\
-.ppv-list{width:236px;flex:none;overflow-y:auto;border-right:1px solid " + K.line + ";padding-right:8px}\
-.ppv-item{display:grid;grid-template-columns:3px 20px 1fr auto;column-gap:8px;row-gap:1px;align-items:center;padding:7px 6px 7px 0;\
-border-bottom:1px solid " + K.line + ";cursor:pointer}\
-.ppv-item:hover{background:rgba(244,246,248,.03)}\
-.ppv-item.sel{background:rgba(46,124,246,.16)}\
-.ppv-item .bar{grid-row:1 / span 2;align-self:stretch;border-radius:1px}\
-.ppv-item .num{grid-row:1 / span 2;color:" + K.grey + ";font-size:12px;text-align:right}\
-.ppv-item .name{font-weight:700;font-size:13px;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\
-.ppv-item .val{font-weight:700;font-size:13px;text-align:right;white-space:nowrap}\
-.ppv-item .sub{color:" + K.grey + ";font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\
-.ppv-item .sub2{color:" + K.grey + ";font-size:11px;text-align:right;white-space:nowrap}\
-.ppv-item .live{color:" + K.red + ";font-weight:700;letter-spacing:.1em;margin-right:4px}\
+.ppv-list{width:236px;flex:none;overflow-y:auto;background:" + K.panel + ";border:1px solid " + K.outline + ";border-radius:6px}\
+.ppv-item{display:grid;grid-template-columns:24px 1fr auto;column-gap:9px;row-gap:1px;align-items:center;padding:7px 9px;\
+border-bottom:1px solid " + K.rule + ";cursor:pointer}\
+.ppv-item:last-child{border-bottom:0}\
+.ppv-item:hover,.ppv-item.sel{background:" + K.panel2 + "}\
+.ppv-item .num{grid-row:1 / span 2;width:24px;height:24px;border-radius:50%;border:1.5px solid " + K.text2 + ";color:" + K.text + ";\
+font-size:12px;display:flex;align-items:center;justify-content:center}\
+.ppv-item.sel .num{border:2px solid " + K.accent + "}\
+.ppv-item .name{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\
+.ppv-item .val{font-weight:600;font-size:13px;text-align:right;white-space:nowrap}\
+.ppv-item .sub{color:" + K.text2 + ";font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\
+.ppv-item .sub2{color:" + K.text2 + ";font-size:11px;text-align:right;white-space:nowrap}\
+.ppv-item .live{color:" + K.accent + ";margin-right:6px}\
 .ppv-detail{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px;overflow-y:auto;overflow-x:hidden}\
 .ppv-evhead{display:flex;align-items:flex-end;gap:16px}\
 .ppv-evtitle{min-width:0}\
-.ppv-evtitle .no{color:" + K.grey + ";font-size:11px;letter-spacing:.14em}\
-.ppv-evtitle .t{font-weight:700;font-size:22px;letter-spacing:.03em;line-height:1.05}\
-.ppv-evtitle .when{color:" + K.grey + ";font-size:12px;margin-top:3px}\
+.ppv-evtitle .no{color:" + K.text2 + ";font-size:12px}\
+.ppv-evtitle .t{font-weight:600;font-size:22px;line-height:1.15}\
+.ppv-evtitle .when{color:" + K.text2 + ";font-size:12px;margin-top:3px}\
 .ppv-hero{margin-left:auto;text-align:right;flex:none}\
-.ppv-hero .k{color:" + K.grey + ";font-size:11px;letter-spacing:.12em}\
-.ppv-hero .v{font-weight:700;font-size:44px;line-height:.95}\
-.ppv-hero .v small{font-size:17px;font-weight:600;margin-left:3px}\
-.ppv-hero .txt{font-weight:700;font-size:20px;line-height:1.1;max-width:300px}\
-.ppv-ctx{display:flex;border-top:1px solid " + K.line + ";border-bottom:1px solid " + K.line + ";flex-wrap:wrap;flex:none}\
-.ppv-ctx .c{padding:6px 14px 6px 0;margin-right:14px;border-right:1px solid " + K.line + "}\
-.ppv-ctx .c:last-child{border-right:0}\
-.ppv-ctx .k{color:" + K.grey + ";font-size:10px;letter-spacing:.12em}\
-.ppv-ctx .v{font-weight:700;font-size:19px;line-height:1.15}\
-.ppv-ctx .v small{font-size:11px;font-weight:600;color:" + K.grey + ";margin-left:2px}\
-.ppv-ctx .gear{display:inline-block;min-width:24px;text-align:center;border:1.5px solid " + K.white + ";border-radius:4px;\
-background:rgba(46,124,246,.22);padding:0 5px;line-height:1.1}\
+.ppv-hero .k{color:" + K.text2 + ";font-size:12px}\
+.ppv-hero .v{font-weight:300;font-size:46px;line-height:1}\
+.ppv-hero .v small{font-size:16px;font-weight:400;color:" + K.text2 + ";margin-left:4px}\
+.ppv-hero .txt{font-weight:600;font-size:19px;line-height:1.2;max-width:300px}\
+.ppv-ctx{display:flex;flex-wrap:wrap;flex:none;background:" + K.panel + ";border:1px solid " + K.outline + ";border-radius:6px;padding:5px 12px}\
+.ppv-ctx .c{padding:1px 14px 1px 0;margin-right:14px;border-right:1px solid " + K.rule + "}\
+.ppv-ctx .c:last-child{border-right:0;margin-right:0}\
+.ppv-ctx .k{color:" + K.text2 + ";font-size:11px}\
+.ppv-ctx .v{font-weight:600;font-size:19px;line-height:1.2}\
+.ppv-ctx .v small{font-size:11px;font-weight:400;color:" + K.text2 + ";margin-left:3px}\
+.ppv-ctx .gear{display:inline-block;min-width:24px;text-align:center;border:1.5px solid " + K.text + ";border-radius:4px;padding:0 5px;line-height:1.15}\
 .ppv-lanes{flex:1;min-height:150px;position:relative}\
 .ppv-lanes canvas{width:100%;height:100%;display:block;cursor:crosshair}\
 .ppv-foot{display:flex;align-items:center;gap:5px;flex-wrap:wrap;flex:none}\
-.ppv-chip{border:1px solid " + K.line2 + ";background:transparent;color:" + K.grey + ";border-radius:11px;padding:2px 9px;font-size:11px;\
-cursor:pointer;font-weight:600}\
-.ppv-chip:hover{color:" + K.white + "}\
-.ppv-chip.on{border-color:" + K.blue + ";color:" + K.white + ";background:rgba(46,124,246,.2)}\
-.ppv-chip:disabled{opacity:.35;cursor:default;text-decoration:line-through}\
+.ppv-chip{border:1px solid " + K.outline + ";background:" + K.panel + ";color:" + K.text2 + ";border-radius:12px;padding:2px 10px;font-size:11px;cursor:pointer}\
+.ppv-chip:hover{color:" + K.text + "}\
+.ppv-chip.on{background:" + K.text + ";border-color:" + K.text + ";color:" + K.page + ";font-weight:600}\
+.ppv-chip:disabled{color:" + K.dim + ";border-color:" + K.rule + ";background:" + K.page + ";cursor:default;text-decoration:line-through}\
 .ppv-sp{flex:1}\
-.ppv-state{margin:auto;max-width:440px;text-align:center;color:" + K.grey + ";line-height:1.5;padding:16px}\
-.ppv-state h3{color:" + K.white + ";font-size:19px;margin:0 0 6px}\
+.ppv-state{margin:auto;max-width:440px;text-align:center;color:" + K.text2 + ";line-height:1.5;padding:16px}\
+.ppv-state h3{color:" + K.text + ";font-size:18px;font-weight:600;margin:0 0 6px}\
 .ppv-state ul{text-align:left;margin:10px auto 0;padding-left:18px;display:inline-block}\
-.ppv-state code{color:" + K.white + ";font-family:inherit;background:" + K.panel + ";padding:1px 5px;border-radius:2px}\
-.ppv-state .err{color:" + K.red + ";font-weight:600;margin-top:10px}\
+.ppv-state code{color:" + K.text + ";font-family:Consolas,'Courier New',monospace;font-size:12px;background:" + K.panel + ";border:1px solid " + K.rule + ";padding:1px 5px;border-radius:3px}\
+.ppv-state .err{color:" + K.accent + ";margin-top:10px}\
 .ppv-state .cta{margin-top:12px}\
-.ppv-drop{position:absolute;inset:0;background:rgba(5,8,13,.88);border:2px dashed " + K.blue + ";display:none;align-items:center;\
-justify-content:center;font-size:20px;font-weight:700;letter-spacing:.08em;z-index:5;border-radius:4px}\
+.ppv-drop{position:absolute;inset:0;background:" + K.page + ";border:2px dashed " + K.text2 + ";display:none;align-items:center;\
+justify-content:center;font-size:18px;font-weight:600;z-index:5;border-radius:6px}\
 .ppv.dragging .ppv-drop{display:flex}\
 .ppv.compact .ppv-ctx .c{padding-right:10px;margin-right:10px}\
 .ppv.compact .ppv-ctx .v{font-size:16px}\
-.ppv.compact .ppv-hero .v{font-size:36px}\
+.ppv.compact .ppv-hero .v{font-size:38px}\
 .ppv.narrow .ppv-list{width:172px}\
-.ppv.narrow .ppv-item{grid-template-columns:3px 18px 1fr}\
+.ppv.narrow .ppv-item{grid-template-columns:24px 1fr}\
 .ppv.narrow .ppv-item .val,.ppv.narrow .ppv-item .sub2{display:none}\
 .ppv.narrow .ppv-hero .v{font-size:32px}\
 .ppv.narrow .ppv-evtitle .t{font-size:18px}\
@@ -447,7 +456,7 @@ justify-content:center;font-size:20px;font-weight:700;letter-spacing:.08em;z-ind
     opts = opts || {};
     var doc = rootEl.ownerDocument || document;
     if (!doc.getElementById("ppv-style")) {
-      var st = doc.createElement("style"); st.id = "ppv-style"; st.textContent = (opts.fontCSS || "") + CSS;
+      var st = doc.createElement("style"); st.id = "ppv-style"; st.textContent = CSS;
       (doc.head || doc.documentElement).appendChild(st);
     }
     var U = units(opts.units), CI = channelInfo(U);
@@ -483,7 +492,7 @@ justify-content:center;font-size:20px;font-weight:700;letter-spacing:.08em;z-ind
     box.appendChild(el("div", "ppv-rule"));
     var tl = el("div", "ppv-tl"); var tlc = el("canvas"); tl.appendChild(tlc); box.appendChild(tl);
     var body = el("div", "ppv-body"); box.appendChild(body);
-    box.appendChild(el("div", "ppv-drop", "DROP THE RECORDING"));
+    box.appendChild(el("div", "ppv-drop", "Drop the recording"));
     var lanesCanvas = null, lanesGeo = null, tlMarks = [];
 
     function setUnits(s) {
@@ -499,10 +508,10 @@ justify-content:center;font-size:20px;font-weight:700;letter-spacing:.08em;z-ind
       meta.innerHTML = "";
       if (!s || state.status !== "ready") return;
       if (opts.live) {
-        var rec = el("span", "ppv-rec"); rec.appendChild(el("i")); rec.appendChild(document.createTextNode("REC"));
+        var rec = el("span", "ppv-rec"); rec.appendChild(el("i")); rec.appendChild(document.createTextNode("Recording"));
         meta.appendChild(rec);
       }
-      meta.appendChild(el("b", null, (s.car || "car").toUpperCase()));
+      meta.appendChild(el("b", null, s.car || "car"));
       var bits = [];
       if (s.config) bits.push(s.config);
       if (s.started) bits.push(s.started);
@@ -574,12 +583,11 @@ justify-content:center;font-size:20px;font-weight:700;letter-spacing:.08em;z-ind
     function renderList(list) {
       state.events.slice().reverse().forEach(function (ev) {
         var it = el("div", "ppv-item" + (ev.id === state.selected ? " sel" : ""));
-        var bar = el("span", "bar"); bar.style.background = catCol(ev.kind); it.appendChild(bar);
-        it.appendChild(el("span", "num", pad2(ev.id)));
-        it.appendChild(el("span", "name", ev.title));
+        it.appendChild(el("span", "num", String(ev.id)));
+        it.appendChild(el("span", "name", nice(ev.title)));
         it.appendChild(el("span", "val", listValue(ev, U)));
         var sub = el("span", "sub");
-        if (ev.live) sub.appendChild(el("span", "live", "REC"));
+        if (ev.live) sub.appendChild(el("span", "live", "Recording"));
         sub.appendChild(document.createTextNode(ev.kind === "damage" ? (ev.detail || "") : clock(ev.t)));
         it.appendChild(sub);
         it.appendChild(el("span", "sub2", ev.duration > 0.05 ? fmt(ev.duration, 1) + " s" : ev.kind === "damage" ? clock(ev.t) : ""));
@@ -602,8 +610,8 @@ justify-content:center;font-size:20px;font-weight:700;letter-spacing:.08em;z-ind
       var win = ev.window || {};
       var eh = el("div", "ppv-evhead"); detail.appendChild(eh);
       var tt = el("div", "ppv-evtitle"); eh.appendChild(tt);
-      tt.appendChild(el("div", "no", "EVENT " + pad2(ev.id) + (ev.live ? "  ·  STILL RECORDING" : "")));
-      var title = el("div", "t", ev.title); title.style.color = catCol(ev.kind); tt.appendChild(title);
+      tt.appendChild(el("div", "no", "Event " + ev.id + (ev.live ? "  ·  still recording" : "")));
+      tt.appendChild(el("div", "t", nice(ev.title)));
       tt.appendChild(el("div", "when", "at " + clock(ev.t) + " into the drive" + (ev.duration > 0.05 ? "  ·  lasted " + fmt(ev.duration, 1) + " s" : "")));
       var h = hero(ev, U), hb = el("div", "ppv-hero"); eh.appendChild(hb);
       hb.appendChild(el("div", "k", h.label));
@@ -620,7 +628,7 @@ justify-content:center;font-size:20px;font-weight:700;letter-spacing:.08em;z-ind
       });
       if (cells.length < 3 && gear !== undefined && gear !== "") addGear();
       function addGear() {
-        var gc = el("div", "c"); gc.appendChild(el("div", "k", "GEAR"));
+        var gc = el("div", "c"); gc.appendChild(el("div", "k", "Gear"));
         var gv = el("div", "v"); gv.appendChild(el("span", "gear", gearName(gear))); gc.appendChild(gv); cx.appendChild(gc);
       }
       if (!state.lanes) state.lanes = (DEFAULT_LANES[ev.kind] || DEFAULT_LANES.damage).filter(function (l) { return reported(win, LANES[l][0], CI); });
@@ -740,7 +748,7 @@ justify-content:center;font-size:20px;font-weight:700;letter-spacing:.08em;z-ind
         state.error = msg;
         if (state.status === "nofile") { render(); return; }
         // a recording is open: keep it, and say what went wrong in the header for a few seconds
-        meta.innerHTML = ""; var e = el("span", null, msg); e.style.color = K.red; e.style.textTransform = "none"; meta.appendChild(e);
+        meta.innerHTML = ""; var e = el("span", null, msg); e.style.color = K.accent; meta.appendChild(e);
         setTimeout(function () { state.error = null; renderHead(); }, 6000);
       },
       button: function (id) { return buttons[id] && buttons[id].el; },
