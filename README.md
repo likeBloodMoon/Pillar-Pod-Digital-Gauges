@@ -108,7 +108,8 @@ Tuning menu, category **Gauges**:
 - Overboost warning, peak recall time, shift light on/off
 - Tachometer: shift light on/off, the RPM where it starts, scale maximum
 - Oil, coolant and exhaust warning temperatures, cold-mark temperatures, low-fuel warning
-- Night brightness for the gauges, the display and the cluster
+- Night brightness: one setting for all the round gauges, and separate ones for the display and the
+  cluster
 - First page shown on the display and on the cluster
 - Shut-down sweep: when the ignition is switched off, the round gauges sweep their LED ring and fade
   out and the screens fade to black (1 = on, 0 = switch off at once)
