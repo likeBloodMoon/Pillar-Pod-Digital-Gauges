@@ -6,19 +6,29 @@
 // them (bngApi.activeObjectLua) and gets the answer as a "PillarPodRecorder" UI event.
 
 // This Source Code Form is subject to the terms of the MIT licence (see LICENSE).
-// Pillar Pod Digital Gauges: event history viewer.
+// Pillar Pod Digital Gauges: event history viewer. Design contract: viewer/DESIGN.md.
 //
 // One viewer for two places: the in-game Event History app (ui/modules/apps/PillarPodEvents) and the
 // PC page (viewer/index.html), where you drop a recording saved by the mod. tools/build_viewer.py
 // copies this file into both; edit it here, then run the build.
 //
 // A data source feeds it:
-//   listEvents()  -> Promise of {car, config, started, duration, events: [event summary], savedPath}
+//   listEvents()  -> Promise of {car, config, started, duration, events, resets, recording}
+//                    or {status: "norecorder"} / {status: "nofile"}
 //   getEvent(id)  -> Promise of the event with its window of readings
-//   getLog()      -> Promise of {log, resets, events} for the drive timeline, or null
+//   getLog()      -> Promise of {log, resets} for the drive timeline, or null
 // Readings are stored in m/s, deg C, kPa, g and kJ; the viewer converts them to the chosen units.
 (function (root) {
   "use strict";
+
+  // ------------------------------------------------------------ tokens (from mfd.html / cluster.html)
+  var K = {bg: "#05080d", bg2: "#0a111b", panel: "#0c1420", line: "#16202e", line2: "#1f2b3c",
+           white: "#f4f6f8", grey: "#8d99a8", dim: "#3b4757", blue: "#2e7cf6", sky: "#7cc4ff",
+           red: "#e8262d", amber: "#f5b31a", green: "#7ed321"};
+  var CAT = {overboost: "engine", limiter: "engine", coolant: "engine", oil: "engine", stall: "engine", damage: "engine",
+             braking: "drive", lateral: "drive", impact: "crash"};
+  var CATCOL = {engine: K.amber, drive: K.sky, crash: K.red};
+  function catCol(kind) { return CATCOL[CAT[kind]] || K.grey; }
 
   // ------------------------------------------------------------ units
   function units(sys) {
@@ -36,37 +46,46 @@
     };
   }
 
-  // channel display: label, conversion, unit, decimals, colour
+  // channels: lane label, conversion, unit, decimals, trace colour, whether "all zero" means not reported
   function channelInfo(U) {
+    var id = function (v) { return v; };
     return {
-      rpm:      {label: "Engine speed", f: function (v) { return v; }, unit: "rpm", dec: 0, col: "#ff5a3c"},
-      boost:    {label: "Boost", f: U.pressure, unit: U.pressureUnit, dec: U.pressureDec, col: "#3aa8ff"},
-      speed:    {label: "Speed", f: U.speed, unit: U.speedUnit, dec: 0, col: "#e8e8e8"},
-      throttle: {label: "Throttle", f: function (v) { return v * 100; }, unit: "%", dec: 0, col: "#3ddc84"},
-      brake:    {label: "Brake", f: function (v) { return v * 100; }, unit: "%", dec: 0, col: "#ff2a1a"},
-      coolant:  {label: "Coolant", f: U.temp, unit: U.tempUnit, dec: 0, col: "#3aa8ff"},
-      oil:      {label: "Oil", f: U.temp, unit: U.tempUnit, dec: 0, col: "#ffb020"},
-      egt:      {label: "Exhaust gas", f: U.temp, unit: U.tempUnit, dec: 0, col: "#ff7a1a"},
-      glat:     {label: "Lateral g", f: function (v) { return v; }, unit: "g", dec: 2, col: "#c77dff"},
-      glon:     {label: "Longitudinal g", f: function (v) { return v; }, unit: "g", dec: 2, col: "#3ddc84"},
-      damage:   {label: "Crash energy", f: function (v) { return v; }, unit: "kJ", dec: 1, col: "#ff2a1a"},
-      gear:     {label: "Gear", f: function (v) { return v; }, unit: "", dec: 0, col: "#e8e8e8"}
+      rpm:      {label: "RPM", f: id, unit: "rpm", dec: 0, col: K.sky},
+      boost:    {label: "BOOST", f: U.pressure, unit: U.pressureUnit, dec: U.pressureDec, col: K.sky, opt: true},
+      speed:    {label: "SPEED", f: U.speed, unit: U.speedUnit, dec: 0, col: K.white},
+      throttle: {label: "THROTTLE", f: function (v) { return v * 100; }, unit: "%", dec: 0, col: K.green},
+      brake:    {label: "BRAKE", f: function (v) { return v * 100; }, unit: "%", dec: 0, col: K.red},
+      coolant:  {label: "COOLANT", f: U.temp, unit: U.tempUnit, dec: 0, col: K.sky, opt: true},
+      oil:      {label: "OIL", f: U.temp, unit: U.tempUnit, dec: 0, col: K.amber, opt: true},
+      egt:      {label: "EGT", f: U.temp, unit: U.tempUnit, dec: 0, col: K.amber, opt: true},
+      glat:     {label: "LATERAL G", f: id, unit: "g", dec: 2, col: K.sky},
+      glon:     {label: "LONG. G", f: id, unit: "g", dec: 2, col: K.white},
+      damage:   {label: "CRASH ENERGY", f: id, unit: "kJ", dec: 1, col: K.red},
+      gear:     {label: "GEAR", f: id, unit: "", dec: 0, col: K.white}
     };
   }
 
-  // which plots an event shows first, per kind (each plot: one or two channels)
-  var PLOTS = {
-    overboost: [["boost"], ["rpm"], ["throttle", "brake"], ["speed"]],
-    limiter:   [["rpm"], ["throttle", "brake"], ["boost"], ["speed"]],
-    coolant:   [["coolant"], ["oil"], ["rpm"], ["speed"]],
-    oil:       [["oil"], ["coolant"], ["rpm"], ["speed"]],
-    braking:   [["glon"], ["speed"], ["throttle", "brake"], ["rpm"]],
-    lateral:   [["glat"], ["speed"], ["throttle", "brake"], ["glon"]],
-    impact:    [["speed"], ["damage"], ["glon", "glat"], ["rpm"]],
-    stall:     [["rpm"], ["speed"], ["throttle", "brake"], ["coolant"]],
-    damage:    [["rpm"], ["coolant", "oil"], ["boost"], ["speed"]]
+  // lanes: id -> channels drawn in it; the order of the chips
+  var LANES = {rpm: ["rpm"], boost: ["boost"], speed: ["speed"], pedals: ["throttle", "brake"], coolant: ["coolant"],
+               oil: ["oil"], egt: ["egt"], glat: ["glat"], glon: ["glon"], gear: ["gear"], damage: ["damage"]};
+  var LANE_ORDER = ["rpm", "boost", "speed", "pedals", "coolant", "oil", "egt", "glat", "glon", "gear", "damage"];
+  var LANE_CHIP = {rpm: "RPM", boost: "Boost", speed: "Speed", pedals: "Pedals", coolant: "Coolant", oil: "Oil", egt: "EGT",
+                   glat: "Lateral g", glon: "Long. g", gear: "Gear", damage: "Crash energy"};
+  // the lanes each event opens with; the first one is its main channel
+  var DEFAULT_LANES = {
+    overboost: ["boost", "rpm", "pedals", "speed"],
+    limiter:   ["rpm", "pedals", "boost", "speed"],
+    coolant:   ["coolant", "oil", "rpm", "speed"],
+    oil:       ["oil", "coolant", "rpm", "speed"],
+    braking:   ["glon", "speed", "pedals", "rpm"],
+    lateral:   ["glat", "speed", "pedals", "glon"],
+    impact:    ["speed", "damage", "glon", "glat"],
+    stall:     ["rpm", "speed", "pedals", "coolant"],
+    damage:    ["rpm", "coolant", "oil", "boost"]
   };
-  var MORE = [["egt"], ["gear"]];
+  var MAIN = {overboost: "boost", limiter: "rpm", coolant: "coolant", oil: "oil", braking: "glon", lateral: "glat",
+              impact: "speed", stall: "rpm", damage: "rpm"};
+  var AT_START = {impact: 1, stall: 1, damage: 1};    // instant events: the lanes show the moment it happened
 
   // ------------------------------------------------------------ helpers
   function arr(x) {                       // the game sends an empty Lua table as {} instead of []
@@ -78,12 +97,18 @@
   }
   function fmt(v, dec) {
     if (typeof v !== "number" || !isFinite(v)) return "--";
-    return v.toFixed(dec).replace(/\B(?=(\d{3})+(?!\d))/g, dec ? " " : ",");
+    var s = v.toFixed(dec);
+    if (Math.abs(v) >= 10000 && dec === 0) s = s.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return s;
   }
   function clock(t) {
     t = Math.max(0, t || 0);
     var m = Math.floor(t / 60), s = t - m * 60;
     return m + ":" + (s < 10 ? "0" : "") + s.toFixed(1);
+  }
+  function clockShort(t) {
+    t = Math.max(0, Math.round(t || 0));
+    return Math.floor(t / 60) + ":" + (t % 60 < 10 ? "0" : "") + (t % 60);
   }
   function pad2(n) { return (n < 10 ? "0" : "") + n; }
   function el(tag, cls, text) {
@@ -92,172 +117,233 @@
     if (text !== undefined && text !== null) e.textContent = text;
     return e;
   }
-  function gearName(i) {
-    if (typeof i !== "number") return String(i || "");
-    return i < 0 ? "R" : i === 0 ? "N" : String(i);
+  function gearName(g) {
+    if (typeof g === "string") return g;
+    if (typeof g !== "number") return "";
+    return g < 0 ? "R" : g === 0 ? "N" : String(g);
+  }
+  // a channel the car doesn't report comes through as all zeros
+  function reported(win, c, CI) {
+    if (!CI[c] || !CI[c].opt) return true;
+    var v = arr(win[c]);
+    for (var i = 0; i < v.length; i++) if (v[i] !== 0) return true;
+    return false;
   }
 
-  // ------------------------------------------------------------ the event's summary
-  function headline(ev, U) {
-    var p = ev.peak, at = ev.at || {};
+  // ------------------------------------------------------------ the answer and the situation
+  function hero(ev, U) {
+    var p = ev.peak;
     switch (ev.kind) {
-      case "overboost": return ["Peak boost", fmt(U.pressure(p), U.pressureDec) + " " + U.pressureUnit];
-      case "limiter":   return ["Max RPM", fmt(p, 0) + " rpm"];
-      case "coolant":   return ["Peak coolant", fmt(U.temp(p), 0) + " " + U.tempUnit];
-      case "oil":       return ["Peak oil", fmt(U.temp(p), 0) + " " + U.tempUnit];
-      case "braking":   return ["Peak deceleration", fmt(p, 2) + " g"];
-      case "lateral":   return ["Peak lateral", fmt(p, 2) + " g"];
-      case "impact":    return ["Crash energy", fmt(p, 1) + " kJ"];
-      case "stall":     return ["Speed at stall", fmt(U.speed(p), 0) + " " + U.speedUnit];
-      case "damage":    return ["Damage", ev.detail || "Engine damage"];
+      case "overboost": return {label: "PEAK BOOST", value: fmt(U.pressure(p), U.pressureDec), unit: U.pressureUnit};
+      case "limiter":   return {label: "MAX RPM", value: fmt(p, 0), unit: "rpm"};
+      case "coolant":   return {label: "PEAK COOLANT", value: fmt(U.temp(p), 0), unit: U.tempUnit};
+      case "oil":       return {label: "PEAK OIL", value: fmt(U.temp(p), 0), unit: U.tempUnit};
+      case "braking":   return {label: "PEAK DECELERATION", value: fmt(p, 2), unit: "g"};
+      case "lateral":   return {label: "PEAK LATERAL", value: fmt(p, 2), unit: "g"};
+      case "impact":    return {label: "CRASH ENERGY", value: fmt(p, 1), unit: "kJ"};
+      case "stall":     return {label: "SPEED AT STALL", value: fmt(U.speed(p), 0), unit: U.speedUnit};
+      case "damage":    return {label: "THE GAME REPORTED", text: ev.detail || "Engine damage"};
     }
-    return ["Peak", fmt(p, 1) + " " + (ev.peakUnit || "")];
+    return {label: "PEAK", value: fmt(p, 1), unit: ev.peakUnit || ""};
   }
 
-  function summaryRows(ev, U) {
-    var at = ev.at || {}, rows = [headline(ev, U)];
+  function context(ev, U) {
+    var at = ev.at || {}, out = [];
+    var add = function (label, value, unit) { out.push({label: label, value: value, unit: unit || ""}); };
     if (ev.kind === "impact") {
-      if (typeof ev.gPeak === "number") rows.push(["Peak g", fmt(ev.gPeak, 1) + " g"]);
-      if (typeof ev.speedBefore === "number") rows.push(["Speed before", fmt(U.speed(ev.speedBefore), 0) + " " + U.speedUnit]);
+      if (typeof ev.speedBefore === "number") add("SPEED BEFORE", fmt(U.speed(ev.speedBefore), 0), U.speedUnit);
+      if (typeof ev.gPeak === "number") add("PEAK G", fmt(ev.gPeak, 1), "g");
     }
-    if (ev.kind !== "limiter") rows.push(["RPM", fmt(at.rpm, 0)]);
-    if (ev.kind !== "stall" && ev.kind !== "impact") rows.push(["Speed", fmt(U.speed(at.speed), 0) + " " + U.speedUnit]);
-    if (at.gear !== undefined && at.gear !== "") rows.push(["Gear", String(at.gear)]);
+    if (ev.kind !== "limiter" && ev.kind !== "stall") add("RPM", fmt(at.rpm, 0));
+    if (ev.kind !== "stall" && ev.kind !== "impact") add("SPEED", fmt(U.speed(at.speed), 0), U.speedUnit);
     if (ev.kind !== "overboost" && typeof at.boost === "number" && Math.abs(at.boost) > 1)
-      rows.push(["Boost", fmt(U.pressure(at.boost), U.pressureDec) + " " + U.pressureUnit]);
-    if (ev.kind !== "coolant") rows.push(["Coolant", fmt(U.temp(at.coolant), 0) + " " + U.tempUnit]);
-    if (ev.kind !== "oil") rows.push(["Oil", fmt(U.temp(at.oil), 0) + " " + U.tempUnit]);
-    rows.push(["Throttle", fmt((at.throttle || 0) * 100, 0) + " %"]);
-    if (ev.kind === "braking" || ev.kind === "impact") rows.push(["Brake", fmt((at.brake || 0) * 100, 0) + " %"]);
-    if (ev.duration > 0.05) rows.push(["Duration", fmt(ev.duration, 1) + " s"]);
-    rows.push(["Time in drive", clock(ev.t)]);
-    return rows;
+      add("BOOST", fmt(U.pressure(at.boost), U.pressureDec), U.pressureUnit);
+    if (ev.kind !== "coolant" && at.coolant) add("COOLANT", fmt(U.temp(at.coolant), 0), U.tempUnit);
+    if (ev.kind !== "oil" && at.oil) add("OIL", fmt(U.temp(at.oil), 0), U.tempUnit);
+    add("THROTTLE", fmt((at.throttle || 0) * 100, 0), "%");
+    if (ev.kind === "braking" || ev.kind === "impact" || (at.brake || 0) > 0.05) add("BRAKE", fmt((at.brake || 0) * 100, 0), "%");
+    return out;
   }
 
   function listValue(ev, U) {
-    var h = headline(ev, U);
-    return ev.kind === "damage" ? (ev.detail || "") : h[1];
+    var h = hero(ev, U);
+    return h.text ? "" : h.value + " " + h.unit;
   }
 
-  // ------------------------------------------------------------ plotting
-  function drawPlot(canvas, win, chans, CI, ev, opts) {
-    var dpr = (root.devicePixelRatio || 1);
-    var W = canvas.clientWidth || 300, H = canvas.clientHeight || 90;
+  // ------------------------------------------------------------ the lanes
+  function peakIndex(win, ev) {
+    var c = MAIN[ev.kind], v = arr(win[c]), t = arr(win.t);
+    if (!v.length) return -1;
+    if (AT_START[ev.kind]) {
+      var k = 0; while (k < t.length - 1 && t[k + 1] <= ev.t) k++;
+      return k;
+    }
+    var t0 = ev.t, t1 = ev.t + Math.max(ev.duration || 0, 0.05), best = -1, bv = -Infinity;
+    for (var i = 0; i < t.length; i++) {
+      if (t[i] < t0 - 0.05 || t[i] > t1 + 0.3) continue;
+      var x = (c === "glon" || c === "glat") ? Math.abs(v[i]) : v[i];
+      if (x > bv) { bv = x; best = i; }
+    }
+    return best;
+  }
+
+  var FONT = function (w, px) { return w + " " + px + "px 'Barlow SC', 'Barlow Semi Condensed', 'Arial Narrow', Arial, sans-serif"; };
+
+  function drawLanes(canvas, win, lanes, CI, ev, cursor) {
+    var dpr = root.devicePixelRatio || 1, W = canvas.clientWidth || 400, H = canvas.clientHeight || 200;
     canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
     var g = canvas.getContext("2d");
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
     g.clearRect(0, 0, W, H);
     var t = arr(win.t);
-    if (t.length < 2) { g.fillStyle = "#777"; g.font = "12px sans-serif"; g.fillText("No readings", 8, 20); return; }
-    var padL = 46, padR = 8, padT = 18, padB = 16;
+    if (t.length < 2 || !lanes.length) return null;
+    var padL = 10, padR = 10, axisH = 18, gap = 6;
     var t0 = t[0], t1 = t[t.length - 1];
     var X = function (tt) { return padL + (W - padL - padR) * (tt - t0) / Math.max(1e-6, t1 - t0); };
-    // value range over all channels in this plot
-    var lo = Infinity, hi = -Infinity, series = [];
-    chans.forEach(function (c) {
-      var ci = CI[c], raw = arr(win[c]);
-      if (!ci || !raw.length) return;
-      var vals = raw.map(function (v) { return ci.f(v); });
-      vals.forEach(function (v) { if (isFinite(v)) { if (v < lo) lo = v; if (v > hi) hi = v; } });
-      series.push({c: c, ci: ci, vals: vals});
-    });
-    if (!series.length) return;
-    var fixed = chans[0] === "throttle";              // pedals: always 0 to 100 %
-    if (fixed) { lo = 0; hi = 100; }
-    if (lo === hi) { lo -= 1; hi += 1; }
-    var span = hi - lo;
-    if (!fixed) { lo -= span * 0.08; hi += span * 0.08; }
-    var Y = function (v) { return padT + (H - padT - padB) * (1 - (v - lo) / (hi - lo)); };
-    // event span
-    if (ev) {
-      var xa = X(ev.t), xb = X(ev.t + Math.max(ev.duration || 0, 0));
-      g.fillStyle = "rgba(255,42,26,0.12)";
-      g.fillRect(xa, padT, Math.max(2, xb - xa), H - padT - padB);
-      g.strokeStyle = "rgba(255,42,26,0.9)"; g.lineWidth = 1;
-      g.beginPath(); g.moveTo(xa + 0.5, padT); g.lineTo(xa + 0.5, H - padB); g.stroke();
-    }
-    // grid and labels
-    g.strokeStyle = "rgba(255,255,255,0.07)"; g.lineWidth = 1;
-    g.fillStyle = "#8a8f98"; g.font = "10px sans-serif"; g.textAlign = "right";
-    for (var k = 0; k <= 2; k++) {
-      var v = lo + (hi - lo) * k / 2, y = Y(v);
-      g.beginPath(); g.moveTo(padL, y + 0.5); g.lineTo(W - padR, y + 0.5); g.stroke();
-      g.fillText(fmt(v, series[0].ci.dec > 0 && span < 10 ? 1 : 0), padL - 5, y + 3);
-    }
-    g.textAlign = "center";
-    for (var s = Math.ceil(t0); s <= t1; s += Math.max(1, Math.round((t1 - t0) / 6))) {
-      var rel = ev ? s - ev.t : s;
-      g.fillText((rel > 0 ? "+" : "") + rel.toFixed(0) + "s", X(s), H - 3);
-    }
-    // lines
-    series.forEach(function (sr) {
-      g.strokeStyle = sr.ci.col; g.lineWidth = 1.6; g.beginPath();
-      var started = false;
-      for (var i = 0; i < t.length; i++) {
-        var vv = sr.vals[i];
-        if (!isFinite(vv)) continue;
-        var x = X(t[i]), y2 = Y(vv);
-        if (!started) { g.moveTo(x, y2); started = true; } else g.lineTo(x, y2);
+    var weights = lanes.map(function (l, i) { return i === 0 ? 1.7 : 1; });
+    var wsum = weights.reduce(function (a, b) { return a + b; }, 0);
+    var avail = H - axisH - gap * (lanes.length - 1);
+    var ci = -1;                                   // the sample under the cursor
+    var pk = peakIndex(win, ev);
+    if (typeof cursor === "number") { ci = 0; while (ci < t.length - 1 && t[ci + 1] <= cursor) ci++; }
+    var shown = ci >= 0 ? ci : pk;                 // without a cursor, the lanes show the peak
+    var xa = X(ev.t), xb = X(ev.t + Math.max(ev.duration || 0, 0));
+    var y = 0;
+    lanes.forEach(function (lane, li) {
+      var h = avail * weights[li] / wsum, top = y, bot = y + h;
+      y += h + gap;
+      var series = [], lo = Infinity, hi = -Infinity;
+      lane.forEach(function (c) {
+        var info = CI[c], raw = arr(win[c]);
+        if (!info || !raw.length) return;
+        var vals = raw.map(function (v) { return info.f(v); });
+        vals.forEach(function (v) { if (isFinite(v)) { lo = Math.min(lo, v); hi = Math.max(hi, v); } });
+        series.push({c: c, info: info, vals: vals});
+      });
+      g.fillStyle = K.panel; g.fillRect(0, top, W, h);
+      g.fillStyle = "rgba(232,38,45,0.10)"; g.fillRect(xa, top, Math.max(2, xb - xa), h);
+      if (!series.length) return;
+      var fixed = lane[0] === "throttle";
+      if (fixed) { lo = 0; hi = 100; }
+      if (lo === hi) { lo -= 1; hi += 1; }
+      var span = hi - lo, ptop = top + 24, pbot = bot - 5;
+      if (!fixed) { lo -= span * 0.06; hi += span * 0.06; }
+      var Y = function (v) { return pbot - (pbot - ptop) * (v - lo) / (hi - lo); };
+      series.forEach(function (sr) {
+        var col = series.length > 1 ? sr.info.col : (li === 0 ? K.sky : "#4f8fe8");
+        g.strokeStyle = col; g.lineWidth = li === 0 ? 2 : 1.5; g.lineJoin = "round";
+        g.beginPath();
+        var started = false;
+        for (var i = 0; i < t.length; i++) {
+          var v = sr.vals[i]; if (!isFinite(v)) continue;
+          var px = X(t[i]), py = Y(v);
+          if (sr.c === "gear" && started) g.lineTo(px, g._lastY);   // gears step
+          if (!started) { g.moveTo(px, py); started = true; } else g.lineTo(px, py);
+          g._lastY = py;
+        }
+        g.stroke();
+      });
+      // label and range on the left, the value at the cursor (or the peak) on the right
+      g.textAlign = "left";
+      var lx = padL;
+      series.forEach(function (sr) {
+        if (series.length > 1) { g.fillStyle = sr.info.col; g.fillRect(lx, top + 9, 6, 6); lx += 10; }
+        g.font = FONT(600, 11); g.fillStyle = K.grey; g.fillText(sr.info.label, lx, top + 16);
+        lx += g.measureText(sr.info.label).width + 10;
+      });
+      if (series[0].c !== "gear") {
+        g.font = FONT(500, 10); g.fillStyle = K.dim;
+        g.fillText(fmt(lo + span * 0.06 * (fixed ? 0 : 1), series[0].info.dec) + " – " + fmt(hi - span * 0.06 * (fixed ? 0 : 1), series[0].info.dec) +
+                   (series[0].info.unit ? " " + series[0].info.unit : ""), lx + 2, top + 16);
       }
-      g.stroke();
+      if (shown >= 0) {
+        g.textAlign = "right";
+        var rx = W - padR;
+        for (var s = series.length - 1; s >= 0; s--) {
+          var sr = series[s], v = sr.vals[shown];
+          var txt = sr.c === "gear" ? gearName(v) : fmt(v, sr.info.dec);
+          if (sr.info.unit) { g.font = FONT(500, 11); g.fillStyle = K.grey; g.fillText(sr.info.unit, rx, top + 17); rx -= g.measureText(sr.info.unit).width + 3; }
+          g.font = FONT(700, li === 0 ? 18 : 15); g.fillStyle = series.length > 1 ? sr.info.col : K.white;
+          g.fillText(txt, rx, top + 17);
+          rx -= g.measureText(txt).width + 12;
+        }
+        if (ci < 0 && li === 0) { g.font = FONT(600, 10); g.fillStyle = K.grey; g.fillText(AT_START[ev.kind] ? "AT THE MOMENT" : "AT PEAK", rx, top + 16); }
+      }
+      if (li === 0 && pk >= 0 && !AT_START[ev.kind]) {   // the peak on the main lane
+        var pv = series[0].vals[pk], ppx = X(t[pk]), ppy = Y(pv);
+        g.fillStyle = K.white; g.beginPath(); g.arc(ppx, ppy, 3.5, 0, Math.PI * 2); g.fill();
+        g.strokeStyle = K.bg; g.lineWidth = 1.5; g.stroke();
+      }
+      g.fillStyle = K.line; g.fillRect(0, bot - 1, W, 1);
     });
-    // legend
-    g.textAlign = "left"; g.font = "bold 11px sans-serif";
-    var lx = padL + 4;
-    series.forEach(function (sr) {
-      var label = sr.ci.label + (sr.ci.unit ? " (" + sr.ci.unit + ")" : "");
-      g.fillStyle = sr.ci.col; g.fillRect(lx, 6, 8, 8);
-      g.fillStyle = "#cfd3da"; g.fillText(label, lx + 12, 14);
-      lx += g.measureText(label).width + 26;
-    });
-    // cursor readout
-    if (opts && typeof opts.cursor === "number" && opts.cursor >= t0 && opts.cursor <= t1) {
-      var cx = X(opts.cursor);
-      g.strokeStyle = "rgba(255,255,255,0.5)"; g.beginPath(); g.moveTo(cx + 0.5, padT); g.lineTo(cx + 0.5, H - padB); g.stroke();
-      var idx = 0;
-      while (idx < t.length - 1 && t[idx + 1] <= opts.cursor) idx++;
-      var txt = series.map(function (sr) { return fmt(sr.vals[idx], sr.ci.dec) + (sr.ci.unit ? " " + sr.ci.unit : ""); }).join("  ");
-      g.font = "bold 11px sans-serif"; g.textAlign = cx > W * 0.6 ? "right" : "left";
-      g.fillStyle = "#fff"; g.fillText(txt, cx + (cx > W * 0.6 ? -6 : 6), padT + 12);
+    g.fillStyle = K.red; g.fillRect(Math.round(xa) - 1, 0, 2, H - axisH);   // where the event started
+    if (ci >= 0) {
+      var cx = Math.round(X(t[ci])) + 0.5;
+      g.strokeStyle = "rgba(244,246,248,0.6)"; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(cx, 0); g.lineTo(cx, H - axisH); g.stroke();
     }
+    // time axis, counted from the event
+    g.font = FONT(500, 10); g.textAlign = "center";
+    var stepS = (t1 - t0) > 12 ? 2 : 1;
+    for (var s2 = Math.ceil((t0 - ev.t) / stepS) * stepS; ev.t + s2 <= t1; s2 += stepS) {
+      var ax = X(ev.t + s2);
+      if (ax < padL + 10 || ax > W - padR - 10) continue;
+      if (ci >= 0 && Math.abs(ax - X(t[ci])) < 34) continue;
+      g.fillStyle = s2 === 0 ? K.red : K.grey;
+      g.fillText(s2 === 0 ? "0" : (s2 > 0 ? "+" : "") + s2 + "s", ax, H - 5);
+    }
+    if (ci >= 0) {
+      var rel = t[ci] - ev.t, cxx = X(t[ci]);
+      g.fillStyle = K.white; g.font = FONT(700, 10); g.textAlign = "center";
+      g.fillText((rel >= 0 ? "+" : "") + rel.toFixed(2) + " s", Math.max(padL + 22, Math.min(W - padR - 22, cxx)), H - 5);
+    }
+    return {t0: t0, t1: t1, padL: padL, padR: padR};
   }
 
-  function drawTimeline(canvas, log, events, resets, CI, selectedId, onPick) {
-    var dpr = (root.devicePixelRatio || 1);
-    var W = canvas.clientWidth || 600, H = canvas.clientHeight || 54;
+  function drawTimeline(canvas, log, events, resets, selected) {
+    var dpr = root.devicePixelRatio || 1, W = canvas.clientWidth || 600, H = canvas.clientHeight || 46;
     canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
     var g = canvas.getContext("2d");
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
     g.clearRect(0, 0, W, H);
-    var t = arr(log && log.t), sp = arr(log && log.speed);
-    var t1 = t.length ? t[t.length - 1] : 1;
-    events.forEach(function (e) { if (e.t > t1) t1 = e.t; });
-    var X = function (tt) { return 6 + (W - 12) * tt / Math.max(1, t1); };
+    var t = arr(log && log.t), sp = arr(log && log.speed), axisH = 13, plotH = H - axisH;
+    var tEnd = t.length ? t[t.length - 1] : 0;
+    events.forEach(function (e) { tEnd = Math.max(tEnd, e.t + (e.duration || 0)); });
+    tEnd = Math.max(tEnd, 10);
+    var X = function (tt) { return 8 + (W - 16) * tt / tEnd; };
+    g.fillStyle = K.line; g.fillRect(8, plotH - 1, W - 16, 1);
     if (t.length > 1) {
-      var mx = 1;
-      sp.forEach(function (v) { if (v > mx) mx = v; });
-      g.fillStyle = "rgba(232,232,232,0.10)"; g.strokeStyle = "rgba(232,232,232,0.55)"; g.lineWidth = 1.2;
-      g.beginPath(); g.moveTo(X(t[0]), H - 4);
-      for (var i = 0; i < t.length; i++) g.lineTo(X(t[i]), H - 4 - (H - 18) * (sp[i] || 0) / mx);
-      g.lineTo(X(t[t.length - 1]), H - 4); g.closePath(); g.fill(); g.stroke();
+      var mx = 1; sp.forEach(function (v) { mx = Math.max(mx, v || 0); });
+      var Y = function (v) { return plotH - 2 - (plotH - 10) * (v || 0) / mx; };
+      g.beginPath(); g.moveTo(X(t[0]), plotH - 1);
+      for (var i = 0; i < t.length; i++) g.lineTo(X(t[i]), Y(sp[i]));
+      g.lineTo(X(t[t.length - 1]), plotH - 1); g.closePath();
+      g.fillStyle = "rgba(46,124,246,0.16)"; g.fill();
+      g.beginPath();
+      for (var j = 0; j < t.length; j++) { if (j) g.lineTo(X(t[j]), Y(sp[j])); else g.moveTo(X(t[j]), Y(sp[j])); }
+      g.strokeStyle = "rgba(124,196,255,0.7)"; g.lineWidth = 1.2; g.stroke();
+      g.font = FONT(600, 9); g.fillStyle = K.dim; g.textAlign = "left"; g.fillText("SPEED", 10, 9);
     }
     arr(resets).forEach(function (r) {
-      g.strokeStyle = "rgba(255,176,32,0.6)"; g.setLineDash([3, 3]);
-      g.beginPath(); g.moveTo(X(r) + 0.5, 4); g.lineTo(X(r) + 0.5, H - 4); g.stroke(); g.setLineDash([]);
+      g.strokeStyle = "rgba(141,153,168,0.6)"; g.setLineDash([2, 3]); g.lineWidth = 1;
+      g.beginPath(); g.moveTo(X(r) + 0.5, 2); g.lineTo(X(r) + 0.5, plotH); g.stroke(); g.setLineDash([]);
+      g.fillStyle = K.grey; g.font = FONT(600, 9); g.textAlign = "left"; g.fillText("RESET", X(r) + 3, 9);
     });
     var marks = [];
     events.forEach(function (e) {
-      var x = X(e.t), sel = e.id === selectedId;
-      g.fillStyle = sel ? "#ffffff" : "#ff2a1a";
-      g.beginPath(); g.moveTo(x, 4); g.lineTo(x + 5, 12); g.lineTo(x - 5, 12); g.closePath(); g.fill();
-      g.fillRect(x - 0.5, 12, 1, H - 16);
+      var x = Math.round(X(e.t)), sel = e.id === selected;
+      if (sel) { g.fillStyle = "rgba(244,246,248,0.08)"; g.fillRect(X(e.t - 5), 0, X(e.t + 3) - X(e.t - 5), plotH); }
+      g.fillStyle = catCol(e.kind); g.fillRect(x - (sel ? 1.5 : 1), sel ? 0 : 5, sel ? 3 : 2, plotH - (sel ? 0 : 5));
+      if (sel) { g.fillStyle = K.white; g.fillRect(x - 3, 0, 6, 3); }
       marks.push({x: x, id: e.id});
     });
-    canvas.onclick = function (evt) {
-      var r = canvas.getBoundingClientRect(), x = evt.clientX - r.left, best = null, bd = 12;
-      marks.forEach(function (m) { var d = Math.abs(m.x - x); if (d < bd) { bd = d; best = m.id; } });
-      if (best !== null && onPick) onPick(best);
-    };
+    g.font = FONT(500, 10); g.fillStyle = K.dim;
+    var stepT = tEnd > 1200 ? 300 : tEnd > 600 ? 120 : tEnd > 240 ? 60 : tEnd > 90 ? 30 : 10;
+    for (var s = 0; s <= tEnd; s += stepT) {
+      g.textAlign = s === 0 ? "left" : X(s) > W - 24 ? "right" : "center";
+      g.fillText(clockShort(s), X(s), H - 1);
+    }
+    return marks;
   }
 
   // ------------------------------------------------------------ CSV
@@ -274,46 +360,93 @@
   }
 
   // ------------------------------------------------------------ styles
+  var FF = "'Barlow SC','Barlow Semi Condensed','Arial Narrow',Arial,sans-serif";
   var CSS = "\
-.ppv{position:relative;width:100%;height:100%;display:flex;flex-direction:column;background:#0b0d10;color:#e8e8e8;\
-font-family:'Barlow','Roboto','Segoe UI',Arial,sans-serif;font-size:13px;overflow:hidden;box-sizing:border-box;border:1px solid #23262b;border-radius:6px}\
+.ppv{position:relative;width:100%;height:100%;display:flex;flex-direction:column;color:" + K.white + ";font-family:" + FF + ";\
+font-weight:500;font-size:13px;overflow:hidden;box-sizing:border-box;outline:none;\
+background:radial-gradient(120% 80% at 50% 0%," + K.bg2 + " 0%," + K.bg + " 70%);border:1px solid " + K.line + ";border-radius:4px;\
+font-variant-numeric:tabular-nums}\
 .ppv *{box-sizing:border-box}\
-.ppv-head{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid #23262b;background:#111418;flex-wrap:wrap}\
-.ppv-title{font-weight:700;letter-spacing:.08em;font-size:12px;color:#ff2a1a}\
-.ppv-car{color:#cfd3da;font-size:12px}\
-.ppv-sp{flex:1}\
-.ppv-btn{background:#1b1f25;color:#e8e8e8;border:1px solid #2c3139;border-radius:4px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:inherit}\
-.ppv-btn:hover{background:#262b33}\
-.ppv-sel{background:#1b1f25;color:#e8e8e8;border:1px solid #2c3139;border-radius:4px;padding:3px 4px;font-size:12px;font-family:inherit}\
-.ppv-tl{height:54px;margin:8px 12px 0;border:1px solid #1d2026;border-radius:4px;background:#0e1013}\
+.ppv button,.ppv select{font-family:inherit}\
+.ppv-head{display:flex;align-items:center;gap:14px;padding:9px 14px 8px}\
+.ppv-brand{font-weight:700;font-size:16px;white-space:nowrap}\
+.ppv-meta{color:" + K.grey + ";font-size:12px;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}\
+.ppv-meta b{color:" + K.white + ";font-weight:600}\
+.ppv-rec{display:inline-flex;align-items:center;gap:5px;color:" + K.red + ";font-weight:700;font-size:11px;letter-spacing:.12em;margin-right:8px}\
+.ppv-rec i{width:7px;height:7px;border-radius:50%;background:" + K.red + ";animation:ppvblink 1.2s infinite}\
+@keyframes ppvblink{50%{opacity:.25}}\
+.ppv-tools{display:flex;gap:6px;align-items:center;flex:none}\
+.ppv-btn{background:transparent;color:" + K.white + ";border:1px solid " + K.line2 + ";border-radius:3px;padding:4px 11px;font-size:12px;\
+font-weight:600;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap}\
+.ppv-btn:hover{border-color:" + K.grey + "}\
+.ppv-btn:disabled{opacity:.35;cursor:default;border-color:" + K.line2 + "}\
+.ppv-btn.warn{border-color:" + K.red + ";color:" + K.red + "}\
+.ppv-btn.ok{border-color:" + K.green + ";color:" + K.green + "}\
+.ppv-sel{background:" + K.panel + ";color:" + K.white + ";border:1px solid " + K.line2 + ";border-radius:3px;padding:3px 4px;font-size:12px}\
+.ppv-rule{height:2px;background:" + K.red + ";margin:0 14px;flex:none}\
+.ppv-tl{height:46px;margin:8px 14px 0;flex:none}\
 .ppv-tl canvas{width:100%;height:100%;display:block;cursor:pointer}\
-.ppv-body{flex:1;display:flex;min-height:0;padding:8px 12px 10px;gap:10px}\
-.ppv-list{width:34%;min-width:180px;max-width:300px;overflow-y:auto;border:1px solid #1d2026;border-radius:4px;background:#0e1013}\
-.ppv-item{display:flex;align-items:baseline;gap:8px;padding:7px 9px;border-bottom:1px solid #171a1f;cursor:pointer}\
-.ppv-item:hover{background:#151920}\
-.ppv-item.sel{background:#1e1214;border-left:3px solid #ff2a1a;padding-left:6px}\
-.ppv-num{color:#8a8f98;font-variant-numeric:tabular-nums;font-size:11px;width:20px}\
-.ppv-name{font-weight:700;font-size:12px;letter-spacing:.04em;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\
-.ppv-val{color:#cfd3da;font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap}\
-.ppv-time{color:#6c717a;font-size:11px;font-variant-numeric:tabular-nums}\
-.ppv-detail{flex:1;min-width:0;overflow-y:auto;display:flex;flex-direction:column;gap:8px}\
-.ppv-evtitle{font-size:16px;font-weight:700;letter-spacing:.06em}\
-.ppv-evtitle b{color:#ff2a1a}\
-.ppv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px}\
-.ppv-cell{background:#111418;border:1px solid #1d2026;border-radius:4px;padding:6px 8px}\
-.ppv-cell .k{color:#8a8f98;font-size:10px;text-transform:uppercase;letter-spacing:.08em}\
-.ppv-cell .v{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px}\
-.ppv-cell.main{border-color:#5a1c16;background:#1a0f10}\
-.ppv-cell.main .v{color:#ff5a3c}\
-.ppv-plots{display:grid;grid-template-columns:1fr 1fr;gap:6px}\
-.ppv-plot{height:110px;border:1px solid #1d2026;border-radius:4px;background:#0e1013}\
-.ppv-plot.wide{grid-column:1 / -1;height:140px}\
-.ppv-plot canvas{width:100%;height:100%;display:block}\
-.ppv-empty{margin:auto;text-align:center;color:#8a8f98;line-height:1.6;padding:20px}\
-.ppv-empty b{color:#e8e8e8}\
-.ppv-note{color:#6c717a;font-size:11px}\
-.ppv-drop{position:absolute;inset:0;background:rgba(255,42,26,0.12);border:2px dashed #ff2a1a;display:none;align-items:center;justify-content:center;font-size:18px;font-weight:700;z-index:5}\
+.ppv-body{flex:1;display:flex;min-height:0;padding:8px 14px 12px;gap:14px}\
+.ppv-list{width:236px;flex:none;overflow-y:auto;border-right:1px solid " + K.line + ";padding-right:8px}\
+.ppv-item{display:grid;grid-template-columns:3px 20px 1fr auto;column-gap:8px;row-gap:1px;align-items:center;padding:7px 6px 7px 0;\
+border-bottom:1px solid " + K.line + ";cursor:pointer}\
+.ppv-item:hover{background:rgba(244,246,248,.03)}\
+.ppv-item.sel{background:rgba(46,124,246,.16)}\
+.ppv-item .bar{grid-row:1 / span 2;align-self:stretch;border-radius:1px}\
+.ppv-item .num{grid-row:1 / span 2;color:" + K.grey + ";font-size:12px;text-align:right}\
+.ppv-item .name{font-weight:700;font-size:13px;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\
+.ppv-item .val{font-weight:700;font-size:13px;text-align:right;white-space:nowrap}\
+.ppv-item .sub{color:" + K.grey + ";font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\
+.ppv-item .sub2{color:" + K.grey + ";font-size:11px;text-align:right;white-space:nowrap}\
+.ppv-item .live{color:" + K.red + ";font-weight:700;letter-spacing:.1em;margin-right:4px}\
+.ppv-detail{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px;overflow-y:auto;overflow-x:hidden}\
+.ppv-evhead{display:flex;align-items:flex-end;gap:16px}\
+.ppv-evtitle{min-width:0}\
+.ppv-evtitle .no{color:" + K.grey + ";font-size:11px;letter-spacing:.14em}\
+.ppv-evtitle .t{font-weight:700;font-size:22px;letter-spacing:.03em;line-height:1.05}\
+.ppv-evtitle .when{color:" + K.grey + ";font-size:12px;margin-top:3px}\
+.ppv-hero{margin-left:auto;text-align:right;flex:none}\
+.ppv-hero .k{color:" + K.grey + ";font-size:11px;letter-spacing:.12em}\
+.ppv-hero .v{font-weight:700;font-size:44px;line-height:.95}\
+.ppv-hero .v small{font-size:17px;font-weight:600;margin-left:3px}\
+.ppv-hero .txt{font-weight:700;font-size:20px;line-height:1.1;max-width:300px}\
+.ppv-ctx{display:flex;border-top:1px solid " + K.line + ";border-bottom:1px solid " + K.line + ";flex-wrap:wrap;flex:none}\
+.ppv-ctx .c{padding:6px 14px 6px 0;margin-right:14px;border-right:1px solid " + K.line + "}\
+.ppv-ctx .c:last-child{border-right:0}\
+.ppv-ctx .k{color:" + K.grey + ";font-size:10px;letter-spacing:.12em}\
+.ppv-ctx .v{font-weight:700;font-size:19px;line-height:1.15}\
+.ppv-ctx .v small{font-size:11px;font-weight:600;color:" + K.grey + ";margin-left:2px}\
+.ppv-ctx .gear{display:inline-block;min-width:24px;text-align:center;border:1.5px solid " + K.white + ";border-radius:4px;\
+background:rgba(46,124,246,.22);padding:0 5px;line-height:1.1}\
+.ppv-lanes{flex:1;min-height:150px;position:relative}\
+.ppv-lanes canvas{width:100%;height:100%;display:block;cursor:crosshair}\
+.ppv-foot{display:flex;align-items:center;gap:5px;flex-wrap:wrap;flex:none}\
+.ppv-chip{border:1px solid " + K.line2 + ";background:transparent;color:" + K.grey + ";border-radius:11px;padding:2px 9px;font-size:11px;\
+cursor:pointer;font-weight:600}\
+.ppv-chip:hover{color:" + K.white + "}\
+.ppv-chip.on{border-color:" + K.blue + ";color:" + K.white + ";background:rgba(46,124,246,.2)}\
+.ppv-chip:disabled{opacity:.35;cursor:default;text-decoration:line-through}\
+.ppv-sp{flex:1}\
+.ppv-state{margin:auto;max-width:440px;text-align:center;color:" + K.grey + ";line-height:1.5;padding:16px}\
+.ppv-state h3{color:" + K.white + ";font-size:19px;margin:0 0 6px}\
+.ppv-state ul{text-align:left;margin:10px auto 0;padding-left:18px;display:inline-block}\
+.ppv-state code{color:" + K.white + ";font-family:inherit;background:" + K.panel + ";padding:1px 5px;border-radius:2px}\
+.ppv-state .err{color:" + K.red + ";font-weight:600;margin-top:10px}\
+.ppv-state .cta{margin-top:12px}\
+.ppv-drop{position:absolute;inset:0;background:rgba(5,8,13,.88);border:2px dashed " + K.blue + ";display:none;align-items:center;\
+justify-content:center;font-size:20px;font-weight:700;letter-spacing:.08em;z-index:5;border-radius:4px}\
 .ppv.dragging .ppv-drop{display:flex}\
+.ppv.compact .ppv-ctx .c{padding-right:10px;margin-right:10px}\
+.ppv.compact .ppv-ctx .v{font-size:16px}\
+.ppv.compact .ppv-hero .v{font-size:36px}\
+.ppv.narrow .ppv-list{width:172px}\
+.ppv.narrow .ppv-item{grid-template-columns:3px 18px 1fr}\
+.ppv.narrow .ppv-item .val,.ppv.narrow .ppv-item .sub2{display:none}\
+.ppv.narrow .ppv-hero .v{font-size:32px}\
+.ppv.narrow .ppv-evtitle .t{font-size:18px}\
+.ppv.narrow .ppv-ctx .c{padding-right:9px;margin-right:9px}\
+.ppv.narrow .ppv-ctx .v{font-size:15px}\
+.ppv.narrow .ppv-meta{display:none}\
 ";
 
   // ------------------------------------------------------------ the viewer
@@ -321,129 +454,213 @@ font-family:'Barlow','Roboto','Segoe UI',Arial,sans-serif;font-size:13px;overflo
     opts = opts || {};
     var doc = rootEl.ownerDocument || document;
     if (!doc.getElementById("ppv-style")) {
-      var st = doc.createElement("style"); st.id = "ppv-style"; st.textContent = CSS;
+      var st = doc.createElement("style"); st.id = "ppv-style"; st.textContent = (opts.fontCSS || "") + CSS;
       (doc.head || doc.documentElement).appendChild(st);
     }
     var U = units(opts.units), CI = channelInfo(U);
-    var state = {summary: null, events: [], selected: null, detail: null, log: null, cursor: null, showAll: false};
+    var state = {status: opts.initialStatus || "connecting", summary: null, events: [], selected: null, detail: null,
+                 log: null, cursor: null, lanes: null, error: null, scrollSel: false};
     var src = opts.source;
 
     rootEl.innerHTML = "";
-    var box = el("div", "ppv"); rootEl.appendChild(box);
+    var box = el("div", "ppv"); box.tabIndex = 0; rootEl.appendChild(box);
     var head = el("div", "ppv-head"); box.appendChild(head);
-    head.appendChild(el("span", "ppv-title", "EVENT HISTORY"));
-    var carEl = el("span", "ppv-car", ""); head.appendChild(carEl);
-    head.appendChild(el("span", "ppv-sp"));
-    var tools = el("span"); tools.style.display = "flex"; tools.style.gap = "6px"; tools.style.alignItems = "center";
-    head.appendChild(tools);
+    head.appendChild(el("span", "ppv-brand", opts.title || "Event History"));
+    var meta = el("span", "ppv-meta"); head.appendChild(meta);
+    var tools = el("span", "ppv-tools"); head.appendChild(tools);
+    var buttons = {};
     (opts.buttons || []).forEach(function (b) {
       var btn = el("button", "ppv-btn", b.label);
       btn.title = b.title || "";
       btn.onclick = function () { b.onClick(api, btn); };
+      buttons[b.id] = {el: btn, needsData: !!b.needsData};
       tools.appendChild(btn);
     });
     if (opts.unitPicker) {
-      var mk = function (options, cur, onChange) {
-        var s = el("select", "ppv-sel");
+      var mk = function (options, cur, onChange, title) {
+        var s = el("select", "ppv-sel"); s.title = title;
         options.forEach(function (o) { var op = el("option", null, o[1]); op.value = o[0]; if (o[0] === cur) op.selected = true; s.appendChild(op); });
         s.onchange = function () { onChange(s.value); };
         tools.appendChild(s);
       };
-      mk([["metric", "km/h"], ["imperial", "mph"]], U.sys.speed, function (v) { setUnits({speed: v}); });
-      mk([["c", "°C"], ["f", "°F"]], U.sys.temp, function (v) { setUnits({temp: v}); });
-      mk([["bar", "bar"], ["psi", "psi"], ["kPa", "kPa"]], U.sys.pressure, function (v) { setUnits({pressure: v}); });
+      mk([["metric", "km/h"], ["imperial", "mph"]], U.sys.speed, function (v) { setUnits({speed: v}); }, "Speed unit");
+      mk([["c", "°C"], ["f", "°F"]], U.sys.temp, function (v) { setUnits({temp: v}); }, "Temperature unit");
+      mk([["bar", "bar"], ["psi", "psi"], ["kPa", "kPa"]], U.sys.pressure, function (v) { setUnits({pressure: v}); }, "Boost unit");
     }
+    box.appendChild(el("div", "ppv-rule"));
     var tl = el("div", "ppv-tl"); var tlc = el("canvas"); tl.appendChild(tlc); box.appendChild(tl);
     var body = el("div", "ppv-body"); box.appendChild(body);
-    var list = el("div", "ppv-list"); body.appendChild(list);
-    var detail = el("div", "ppv-detail"); body.appendChild(detail);
-    var drop = el("div", "ppv-drop", "Drop a recording here"); box.appendChild(drop);
+    box.appendChild(el("div", "ppv-drop", "DROP THE RECORDING"));
+    var lanesCanvas = null, lanesGeo = null, tlMarks = [];
 
     function setUnits(s) {
       var cur = U.sys;
       U = units({speed: s.speed || cur.speed, temp: s.temp || cur.temp, pressure: s.pressure || cur.pressure});
       CI = channelInfo(U);
       if (opts.onUnits) opts.onUnits(U.sys);
-      renderList(); renderDetail();
+      render();
     }
 
     function renderHead() {
       var s = state.summary;
-      if (!s) { carEl.textContent = ""; return; }
-      var bits = [];
-      if (s.car) bits.push(s.car + (s.config ? " · " + s.config : ""));
-      if (s.started) bits.push(s.started);
-      if (typeof s.duration === "number") bits.push("drive " + clock(s.duration));
-      carEl.textContent = bits.join("   ");
-    }
-
-    function renderList() {
-      list.innerHTML = "";
-      if (!state.events.length) {
-        list.appendChild(el("div", "ppv-empty", (state.summary && state.summary.note) || opts.emptyListText || "No events yet."));
-        return;
+      meta.innerHTML = "";
+      if (!s || state.status !== "ready") return;
+      if (opts.live) {
+        var rec = el("span", "ppv-rec"); rec.appendChild(el("i")); rec.appendChild(document.createTextNode("REC"));
+        meta.appendChild(rec);
       }
-      state.events.slice().reverse().forEach(function (ev) {
-        var it = el("div", "ppv-item" + (ev.id === state.selected ? " sel" : ""));
-        it.appendChild(el("span", "ppv-num", pad2(ev.id)));
-        var mid = el("div"); mid.style.flex = "1"; mid.style.minWidth = "0";
-        mid.appendChild(el("div", "ppv-name", ev.title));
-        mid.appendChild(el("div", "ppv-time", clock(ev.t)));
-        it.appendChild(mid);
-        it.appendChild(el("span", "ppv-val", listValue(ev, U)));
-        it.onclick = function () { select(ev.id); };
-        list.appendChild(it);
-      });
+      meta.appendChild(el("b", null, (s.car || "car").toUpperCase()));
+      var bits = [];
+      if (s.config) bits.push(s.config);
+      if (s.started) bits.push(s.started);
+      if (typeof s.duration === "number") bits.push("drive " + clockShort(s.duration));
+      bits.push(state.events.length + (state.events.length === 1 ? " event" : " events"));
+      meta.appendChild(document.createTextNode("  ·  " + bits.join("  ·  ")));
     }
 
     function renderTimeline() {
+      var show = state.status === "ready";
+      tl.style.display = show ? "" : "none";
+      if (!show) return;
       var lg = state.log;
-      drawTimeline(tlc, lg && lg.log, state.events, (lg && lg.resets) || (state.summary && state.summary.resets), CI, state.selected, select);
+      tlMarks = drawTimeline(tlc, lg && lg.log, state.events, (lg && lg.resets) || (state.summary && state.summary.resets), state.selected);
+    }
+    tlc.onclick = function (evt) {
+      var r = tlc.getBoundingClientRect(), x = evt.clientX - r.left, best = null, bd = 14;
+      tlMarks.forEach(function (m) { var d = Math.abs(m.x - x); if (d < bd) { bd = d; best = m.id; } });
+      if (best !== null) select(best);
+    };
+
+    function stateBox(html) {
+      body.innerHTML = "";
+      var s = el("div", "ppv-state"); s.innerHTML = html; body.appendChild(s);
+      return s;
+    }
+    function triggersHTML() {
+      return "<ul><li>boost over the car's wastegate limit</li><li>the rev limiter</li>" +
+        "<li>coolant over " + fmt(U.temp(110), 0) + " " + U.tempUnit + ", oil over " + fmt(U.temp(130), 0) + " " + U.tempUnit + "</li>" +
+        "<li>braking harder than 0.8 g</li><li>a corner past 0.9 g that beats your best of the drive</li>" +
+        "<li>a crash, a stall while moving, engine damage the game reports</li></ul>";
     }
 
-    function renderDetail() {
-      detail.innerHTML = "";
-      var ev = state.detail;
-      if (!ev) {
-        var msg = el("div", "ppv-empty");
-        msg.innerHTML = opts.emptyDetailHTML || "<b>Select an event</b><br>to see what the car was doing around it.";
-        detail.appendChild(msg);
+    function sizeClasses() {
+      var w = box.clientWidth;
+      box.classList.toggle("narrow", w > 0 && w < 720);
+      box.classList.toggle("compact", w > 0 && w < 960);
+    }
+
+    function render() {
+      sizeClasses();
+      Object.keys(buttons).forEach(function (k) { if (buttons[k].needsData) buttons[k].el.disabled = state.status !== "ready"; });
+      renderHead(); renderTimeline();
+      lanesCanvas = null;
+      if (state.status === "connecting") { stateBox("<h3>Connecting to the car…</h3>"); return; }
+      if (state.status === "norecorder") {
+        stateBox("<h3>No recorder on this car</h3>Events are recorded on cars with Pillar Pod parts. Fit the pillar gauges, " +
+                 "the multi-function display or the digital cluster, and this fills in as you drive.");
         return;
       }
-      var tt = el("div", "ppv-evtitle"); tt.innerHTML = "EVENT " + pad2(ev.id) + " <b>— " + ev.title + "</b>";
-      detail.appendChild(tt);
-      var grid = el("div", "ppv-grid"); detail.appendChild(grid);
-      summaryRows(ev, U).forEach(function (r, i) {
-        var c = el("div", "ppv-cell" + (i === 0 ? " main" : ""));
-        c.appendChild(el("div", "k", r[0])); c.appendChild(el("div", "v", r[1]));
-        grid.appendChild(c);
+      if (state.status === "nofile") {
+        var s = stateBox(opts.noFileHTML || "<h3>Open a recording</h3>");
+        if (state.error) { var e = el("div", "err", state.error); s.appendChild(e); }
+        if (opts.onNoFileRendered) opts.onNoFileRendered(s);
+        return;
+      }
+      if (!state.events.length) {
+        stateBox("<h3>" + (opts.live ? "Recording. Nothing worth a second look yet." : "No events in this recording") + "</h3>" +
+                 "An event is recorded for" + triggersHTML());
+        return;
+      }
+      body.innerHTML = "";
+      var list = el("div", "ppv-list"); body.appendChild(list);
+      var detail = el("div", "ppv-detail"); body.appendChild(detail);
+      renderList(list);
+      renderDetail(detail);
+    }
+
+    function renderList(list) {
+      state.events.slice().reverse().forEach(function (ev) {
+        var it = el("div", "ppv-item" + (ev.id === state.selected ? " sel" : ""));
+        var bar = el("span", "bar"); bar.style.background = catCol(ev.kind); it.appendChild(bar);
+        it.appendChild(el("span", "num", pad2(ev.id)));
+        it.appendChild(el("span", "name", ev.title));
+        it.appendChild(el("span", "val", listValue(ev, U)));
+        var sub = el("span", "sub");
+        if (ev.live) sub.appendChild(el("span", "live", "REC"));
+        sub.appendChild(document.createTextNode(ev.kind === "damage" ? (ev.detail || "") : clock(ev.t)));
+        it.appendChild(sub);
+        it.appendChild(el("span", "sub2", ev.duration > 0.05 ? fmt(ev.duration, 1) + " s" : ev.kind === "damage" ? clock(ev.t) : ""));
+        it.onclick = function () { select(ev.id); };
+        list.appendChild(it);
+        if (ev.id === state.selected && state.scrollSel && it.scrollIntoView) { state.scrollSel = false; it.scrollIntoView({block: "nearest"}); }
       });
-      var plots = el("div", "ppv-plots"); detail.appendChild(plots);
+    }
+
+    function renderDetail(detail) {
+      var ev = state.detail;
+      lanesCanvas = null;
+      if (!ev) {
+        var s = el("div", "ppv-state");
+        s.innerHTML = state.selected !== null ? "<h3>Loading the readings…</h3>" :
+          "<h3>Pick an event</h3>to see what the car was doing around it.<br>↑ and ↓ step through them.";
+        detail.appendChild(s);
+        return;
+      }
       var win = ev.window || {};
-      var sets = (PLOTS[ev.kind] || PLOTS.damage).slice();
-      if (state.showAll) sets = sets.concat(MORE);
-      var canvases = [];
-      sets.forEach(function (chans, i) {
-        var p = el("div", "ppv-plot" + (i === 0 ? " wide" : "")); var c = el("canvas"); p.appendChild(c); plots.appendChild(p);
-        canvases.push([c, chans]);
+      var eh = el("div", "ppv-evhead"); detail.appendChild(eh);
+      var tt = el("div", "ppv-evtitle"); eh.appendChild(tt);
+      tt.appendChild(el("div", "no", "EVENT " + pad2(ev.id) + (ev.live ? "  ·  STILL RECORDING" : "")));
+      var title = el("div", "t", ev.title); title.style.color = catCol(ev.kind); tt.appendChild(title);
+      tt.appendChild(el("div", "when", "at " + clock(ev.t) + " into the drive" + (ev.duration > 0.05 ? "  ·  lasted " + fmt(ev.duration, 1) + " s" : "")));
+      var h = hero(ev, U), hb = el("div", "ppv-hero"); eh.appendChild(hb);
+      hb.appendChild(el("div", "k", h.label));
+      if (h.text) hb.appendChild(el("div", "txt", h.text));
+      else { var v = el("div", "v", h.value); v.appendChild(el("small", null, h.unit)); hb.appendChild(v); }
+      var cx = el("div", "ppv-ctx"); detail.appendChild(cx);
+      var cells = context(ev, U);
+      var gear = ev.at && ev.at.gear;
+      cells.forEach(function (c, i) {
+        if (i === 2 && gear !== undefined && gear !== "") addGear();
+        var cell = el("div", "c"); cell.appendChild(el("div", "k", c.label));
+        var v2 = el("div", "v", c.value); if (c.unit) v2.appendChild(el("small", null, c.unit));
+        cell.appendChild(v2); cx.appendChild(cell);
       });
-      var redraw = function () { canvases.forEach(function (cc) { drawPlot(cc[0], win, cc[1], CI, ev, {cursor: state.cursor}); }); };
-      canvases.forEach(function (cc) {
-        cc[0].onmousemove = function (e) {
-          var r = cc[0].getBoundingClientRect(), t = arr(win.t);
-          if (t.length < 2) return;
-          var padL = 46, padR = 8, x = e.clientX - r.left;
-          state.cursor = t[0] + (t[t.length - 1] - t[0]) * Math.max(0, Math.min(1, (x - padL) / (r.width - padL - padR)));
-          redraw();
+      if (cells.length < 3 && gear !== undefined && gear !== "") addGear();
+      function addGear() {
+        var gc = el("div", "c"); gc.appendChild(el("div", "k", "GEAR"));
+        var gv = el("div", "v"); gv.appendChild(el("span", "gear", gearName(gear))); gc.appendChild(gv); cx.appendChild(gc);
+      }
+      if (!state.lanes) state.lanes = (DEFAULT_LANES[ev.kind] || DEFAULT_LANES.damage).filter(function (l) { return reported(win, LANES[l][0], CI); });
+      var lw = el("div", "ppv-lanes"); detail.appendChild(lw);
+      lw.style.minHeight = (40 + 52 * state.lanes.length) + "px";
+      lanesCanvas = el("canvas"); lw.appendChild(lanesCanvas);
+      lanesCanvas.onmousemove = function (e) {
+        if (!lanesGeo) return;
+        var r = lanesCanvas.getBoundingClientRect(), x = e.clientX - r.left;
+        var u = (x - lanesGeo.padL) / (r.width - lanesGeo.padL - lanesGeo.padR);
+        state.cursor = lanesGeo.t0 + (lanesGeo.t1 - lanesGeo.t0) * Math.max(0, Math.min(1, u));
+        drawCurrentLanes();
+      };
+      lanesCanvas.onmouseleave = function () { state.cursor = null; drawCurrentLanes(); };
+      var foot = el("div", "ppv-foot"); detail.appendChild(foot);
+      LANE_ORDER.forEach(function (id) {
+        var ok = reported(win, LANES[id][0], CI) && arr(win[LANES[id][0]]).length > 0;
+        var on = state.lanes.indexOf(id) >= 0;
+        var chip = el("button", "ppv-chip" + (on ? " on" : ""), LANE_CHIP[id]);
+        chip.disabled = !ok;
+        chip.title = ok ? (on ? "Hide this lane" : "Show this lane") : "This car doesn't report it";
+        chip.onclick = function () {
+          var i = state.lanes.indexOf(id);
+          if (i >= 0) { if (state.lanes.length > 1) state.lanes.splice(i, 1); }
+          else state.lanes.push(id);
+          rerenderDetail();
         };
-        cc[0].onmouseleave = function () { state.cursor = null; redraw(); };
+        foot.appendChild(chip);
       });
-      var foot = el("div"); foot.style.display = "flex"; foot.style.gap = "8px"; foot.style.alignItems = "center";
-      var more = el("button", "ppv-btn", state.showAll ? "Fewer plots" : "More plots");
-      more.onclick = function () { state.showAll = !state.showAll; renderDetail(); };
-      foot.appendChild(more);
+      foot.appendChild(el("span", "ppv-sp"));
       if (opts.allowCSV) {
-        var csv = el("button", "ppv-btn", "Download CSV");
+        var csv = el("button", "ppv-btn", "CSV");
+        csv.title = "Download this event's readings as CSV";
         csv.onclick = function () {
           var blob = new Blob([windowCSV(ev, U, CI)], {type: "text/csv"});
           var a = doc.createElement("a"); a.href = URL.createObjectURL(blob);
@@ -451,81 +668,125 @@ font-family:'Barlow','Roboto','Segoe UI',Arial,sans-serif;font-size:13px;overflo
         };
         foot.appendChild(csv);
       }
-      foot.appendChild(el("span", "ppv-note", "Red line: where the event started. Shaded: how long it lasted."));
-      detail.appendChild(foot);
-      // wait a frame so the canvases have their size
-      (root.requestAnimationFrame || setTimeout)(redraw);
+      (root.requestAnimationFrame || setTimeout)(drawCurrentLanes);
+    }
+
+    function drawCurrentLanes() {
+      var ev = state.detail;
+      if (!lanesCanvas || !ev) return;
+      lanesGeo = drawLanes(lanesCanvas, ev.window || {}, state.lanes.map(function (l) { return LANES[l]; }), CI, ev, state.cursor);
+    }
+
+    function rerenderDetail() {
+      var detail = body.querySelector(".ppv-detail");
+      if (!detail) { render(); return; }
+      detail.innerHTML = ""; renderDetail(detail);
     }
 
     function select(id) {
-      state.selected = id; state.cursor = null;
-      renderList(); renderTimeline();
+      if (state.selected !== id) { state.lanes = null; state.cursor = null; state.detail = null; }
+      state.selected = id; state.scrollSel = true;
+      render();
+      var known = state.events.filter(function (e) { return e.id === id; })[0];
       src.getEvent(id).then(function (ev) {
         if (state.selected !== id || !ev) return;
-        state.detail = ev; renderDetail();
+        if (known && known.live !== undefined) ev.live = known.live;
+        state.detail = ev; rerenderDetail();
       });
     }
 
+    function step(d) {
+      if (!state.events.length) return;
+      var ids = state.events.map(function (e) { return e.id; }).reverse();   // the list shows newest first
+      var i = ids.indexOf(state.selected);
+      select(ids[Math.max(0, Math.min(ids.length - 1, i < 0 ? 0 : i + d))]);
+    }
+    box.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowDown") { step(1); e.preventDefault(); }
+      else if (e.key === "ArrowUp") { step(-1); e.preventDefault(); }
+    });
+
+    function sig(evs) { return evs.map(function (e) { return e.id + ":" + (e.live ? 1 : 0) + ":" + (e.duration || 0).toFixed(1); }).join(","); }
+
     function refresh() {
+      if (!src) return Promise.resolve();
       return src.listEvents().then(function (s) {
-        if (!s) {
-          state.summary = null; state.events = [];
-          renderHead(); renderList(); renderTimeline(); renderDetail();
+        if (!s || s.status === "norecorder" || s.status === "nofile") {
+          var st2 = s ? s.status : "norecorder";
+          if (state.status !== st2) { state.status = st2; state.summary = null; state.events = []; render(); }
           return;
         }
-        var prevCount = state.events.length;
-        state.summary = s;
-        state.events = arr(s.events);
-        renderHead(); renderList();
-        if (state.selected !== null && !state.events.some(function (e) { return e.id === state.selected; })) {
-          state.selected = null; state.detail = null; renderDetail();
-        }
-        if (src.getLog && (state.events.length !== prevCount || !state.log)) {
-          src.getLog().then(function (lg) { state.log = lg; renderTimeline(); });
-        } else renderTimeline();
+        var wasReady = state.status === "ready", prevSig = sig(state.events);
+        state.status = "ready"; state.summary = s; state.events = arr(s.events);
+        if (state.selected !== null && !state.events.some(function (e) { return e.id === state.selected; })) { state.selected = null; state.detail = null; }
+        var changed = !wasReady || sig(state.events) !== prevSig;
+        if (changed) {
+          render();
+          if (state.selected !== null) {           // a live event's window grows: fetch it again
+            var keep = state.cursor, sel = state.selected;
+            src.getEvent(sel).then(function (ev) {
+              if (!ev || state.selected !== sel) return;
+              var k = state.events.filter(function (e) { return e.id === ev.id; })[0]; if (k) ev.live = k.live;
+              state.detail = ev; state.cursor = keep; rerenderDetail();
+            });
+          }
+          if (src.getLog) src.getLog().then(function (lg) { state.log = lg; renderTimeline(); });
+        } else renderHead();
       });
     }
 
     var api = {
       refresh: refresh,
       select: select,
-      setSource: function (s) { src = s; state.selected = null; state.detail = null; state.log = null; return refresh(); },
+      setSource: function (s) {
+        src = s; state.status = "connecting"; state.selected = null; state.detail = null; state.log = null; state.lanes = null; state.error = null;
+        return refresh();
+      },
       setUnits: setUnits,
+      setError: function (msg) {
+        state.error = msg;
+        if (state.status === "nofile") { render(); return; }
+        // a recording is open: keep it, and say what went wrong in the header for a few seconds
+        meta.innerHTML = ""; var e = el("span", null, msg); e.style.color = K.red; e.style.textTransform = "none"; meta.appendChild(e);
+        setTimeout(function () { state.error = null; renderHead(); }, 6000);
+      },
+      button: function (id) { return buttons[id] && buttons[id].el; },
       element: box,
       onDrag: function (on) { box.classList.toggle("dragging", !!on); },
-      redraw: function () { renderTimeline(); if (state.detail) renderDetail(); }
+      redraw: function () {
+        sizeClasses();
+        renderTimeline(); drawCurrentLanes();
+      }
     };
-    renderDetail();
+    if (root.ResizeObserver) new root.ResizeObserver(function () { api.redraw(); }).observe(box);
+    render();
     if (src) refresh();
     return api;
   }
 
   // a data source for a recording file (the PC page and tests)
   function fileSource(rec) {
-    var events = arr(rec.events);
+    var events = arr(rec.events).map(function (e) { e.live = false; return e; });   // a saved file is finished
     return {
       listEvents: function () {
         return Promise.resolve({car: rec.car, config: rec.config, started: rec.started, duration: rec.duration,
                                 events: events, resets: arr(rec.resets)});
       },
-      getEvent: function (id) {
-        return Promise.resolve(events.filter(function (e) { return e.id === id; })[0] || null);
-      },
-      getLog: function () {
-        return Promise.resolve(rec.log ? {log: rec.log, resets: arr(rec.resets)} : null);
-      }
+      getEvent: function (id) { return Promise.resolve(events.filter(function (e) { return e.id === id; })[0] || null); },
+      getLog: function () { return Promise.resolve(rec.log ? {log: rec.log, resets: arr(rec.resets)} : null); }
     };
   }
 
   function parseRecording(text) {
-    var rec = JSON.parse(text);
-    if (!rec || rec.format !== "pillar-pod-recording") throw new Error("This isn't a Pillar Pod Digital Gauges recording.");
-    if (rec.version > 1) throw new Error("This recording is from a newer version of the mod; update the viewer.");
+    var rec;
+    try { rec = JSON.parse(text); } catch (e) { throw new Error("That file isn't a recording (it isn't valid JSON)."); }
+    if (!rec || rec.format !== "pillar-pod-recording") throw new Error("That file isn't a Pillar Pod Digital Gauges recording.");
+    if (rec.version > 1) throw new Error("This recording is from a newer version of the mod. Get the latest viewer from the mod's GitHub page.");
     return rec;
   }
 
   root.PillarPodViewer = {create: create, fileSource: fileSource, parseRecording: parseRecording, units: units,
-                          _summaryRows: summaryRows, _windowCSV: windowCSV, _channelInfo: channelInfo};
+                          _hero: hero, _context: context, _windowCSV: windowCSV, _channelInfo: channelInfo};
 })(typeof window !== "undefined" ? window : this);
 
 angular.module('beamng.apps')
@@ -568,9 +829,7 @@ angular.module('beamng.apps')
       var source = {
         listEvents: function () {
           var p = wait(waiting.summary, 1500); ask('summary');
-          return p.then(function (s) {
-            return s || {events: [], note: 'No event recorder on this car. Fit the Pillar Pod gauges, the display or the digital cluster to record events.'};
-          });
+          return p.then(function (s) { return s || {status: 'norecorder'}; });
         },
         getEvent: function (id) {
           var list = waiting.event[id] = waiting.event[id] || [];
@@ -583,25 +842,31 @@ angular.module('beamng.apps')
         }
       };
 
-      var clearArmed = false;
+      // the mod's own font, from its vehicle folder
+      var FONT_DIR = '/vehicles/common/pillar_pod_gauges/fonts/barlow-semi-condensed-latin-';
+      var fontCSS = [500, 600, 700].map(function (w) {
+        return '@font-face{font-family:"Barlow SC";font-weight:' + w + ';src:url("' + FONT_DIR + w + '-normal.woff2") format("woff2");}';
+      }).join('');
+
+      var clearArmed = false, saveTimer = null;
       var viewer = window.PillarPodViewer.create(element[0], {
         source: source,
+        live: true,
         units: gameUnits(),
-        emptyListText: 'No events yet. They appear here when you hit the limiter, overboost, brake hard, crash and so on.',
-        emptyDetailHTML: '<b>Select an event</b><br>to see what the car was doing around it.<br><br>' +
-                         '<span class="ppv-note">Save writes this drive to your BeamNG user folder, in pillar_pod_gauges/recordings. ' +
-                         'Open the file on a PC with the Pillar Pod viewer.</span>',
+        fontCSS: fontCSS,
         buttons: [
-          {label: 'Save', title: 'Save this drive to pillar_pod_gauges/recordings in your BeamNG user folder', onClick: function (v, btn) {
-            btn.textContent = 'Saving…'; ask('save');
+          {id: 'save', needsData: true, label: 'Save', title: 'Save this drive to pillar_pod_gauges/recordings in your BeamNG user folder', onClick: function (v, btn) {
+            btn.textContent = 'Saving…'; btn.className = 'ppv-btn'; ask('save');
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(function () { btn.textContent = 'Save failed'; btn.className = 'ppv-btn warn'; }, 4000);
           }},
-          {label: 'Clear', title: 'Forget the events of this drive', onClick: function (v, btn) {
+          {id: 'clear', needsData: true, label: 'Clear', title: 'Forget the events of this drive', onClick: function (v, btn) {
             if (!clearArmed) {
-              clearArmed = true; btn.textContent = 'Sure?';
-              setTimeout(function () { clearArmed = false; btn.textContent = 'Clear'; }, 3000);
+              clearArmed = true; btn.textContent = 'Clear all?'; btn.className = 'ppv-btn warn';
+              setTimeout(function () { clearArmed = false; btn.textContent = 'Clear'; btn.className = 'ppv-btn'; }, 3000);
               return;
             }
-            clearArmed = false; btn.textContent = 'Clear'; ask('clear');
+            clearArmed = false; btn.textContent = 'Clear'; btn.className = 'ppv-btn'; ask('clear');
           }}
         ]
       });
@@ -613,11 +878,13 @@ angular.module('beamng.apps')
         else if (data.kind === 'event' && data.event) flush(waiting.event[data.event.id] || [], data);
         else if (data.kind === 'new') viewer.refresh();
         else if (data.kind === 'saved') {
-          var btns = viewer.element.querySelectorAll('.ppv-btn');
-          if (btns[0]) {
-            btns[0].textContent = data.path ? 'Saved ✓' : 'Save failed';
-            btns[0].title = data.path ? 'Saved to ' + data.path + ' in your BeamNG user folder' : 'Could not write the file';
-            setTimeout(function () { btns[0].textContent = 'Save'; }, 4000);
+          var btn = viewer.button('save');
+          clearTimeout(saveTimer);
+          if (btn) {
+            btn.textContent = data.path ? 'Saved' : 'Save failed';
+            btn.className = data.path ? 'ppv-btn ok' : 'ppv-btn warn';
+            btn.title = data.path ? 'Saved to ' + data.path + ' in your BeamNG user folder' : 'The game could not write the file';
+            saveTimer = setTimeout(function () { btn.textContent = 'Save'; btn.className = 'ppv-btn'; }, 5000);
           }
         }
       });

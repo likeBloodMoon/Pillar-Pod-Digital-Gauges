@@ -47,9 +47,7 @@ angular.module('beamng.apps')
       var source = {
         listEvents: function () {
           var p = wait(waiting.summary, 1500); ask('summary');
-          return p.then(function (s) {
-            return s || {events: [], note: 'No event recorder on this car. Fit the Pillar Pod gauges, the display or the digital cluster to record events.'};
-          });
+          return p.then(function (s) { return s || {status: 'norecorder'}; });
         },
         getEvent: function (id) {
           var list = waiting.event[id] = waiting.event[id] || [];
@@ -62,25 +60,31 @@ angular.module('beamng.apps')
         }
       };
 
-      var clearArmed = false;
+      // the mod's own font, from its vehicle folder
+      var FONT_DIR = '/vehicles/common/pillar_pod_gauges/fonts/barlow-semi-condensed-latin-';
+      var fontCSS = [500, 600, 700].map(function (w) {
+        return '@font-face{font-family:"Barlow SC";font-weight:' + w + ';src:url("' + FONT_DIR + w + '-normal.woff2") format("woff2");}';
+      }).join('');
+
+      var clearArmed = false, saveTimer = null;
       var viewer = window.PillarPodViewer.create(element[0], {
         source: source,
+        live: true,
         units: gameUnits(),
-        emptyListText: 'No events yet. They appear here when you hit the limiter, overboost, brake hard, crash and so on.',
-        emptyDetailHTML: '<b>Select an event</b><br>to see what the car was doing around it.<br><br>' +
-                         '<span class="ppv-note">Save writes this drive to your BeamNG user folder, in pillar_pod_gauges/recordings. ' +
-                         'Open the file on a PC with the Pillar Pod viewer.</span>',
+        fontCSS: fontCSS,
         buttons: [
-          {label: 'Save', title: 'Save this drive to pillar_pod_gauges/recordings in your BeamNG user folder', onClick: function (v, btn) {
-            btn.textContent = 'Saving…'; ask('save');
+          {id: 'save', needsData: true, label: 'Save', title: 'Save this drive to pillar_pod_gauges/recordings in your BeamNG user folder', onClick: function (v, btn) {
+            btn.textContent = 'Saving…'; btn.className = 'ppv-btn'; ask('save');
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(function () { btn.textContent = 'Save failed'; btn.className = 'ppv-btn warn'; }, 4000);
           }},
-          {label: 'Clear', title: 'Forget the events of this drive', onClick: function (v, btn) {
+          {id: 'clear', needsData: true, label: 'Clear', title: 'Forget the events of this drive', onClick: function (v, btn) {
             if (!clearArmed) {
-              clearArmed = true; btn.textContent = 'Sure?';
-              setTimeout(function () { clearArmed = false; btn.textContent = 'Clear'; }, 3000);
+              clearArmed = true; btn.textContent = 'Clear all?'; btn.className = 'ppv-btn warn';
+              setTimeout(function () { clearArmed = false; btn.textContent = 'Clear'; btn.className = 'ppv-btn'; }, 3000);
               return;
             }
-            clearArmed = false; btn.textContent = 'Clear'; ask('clear');
+            clearArmed = false; btn.textContent = 'Clear'; btn.className = 'ppv-btn'; ask('clear');
           }}
         ]
       });
@@ -92,11 +96,13 @@ angular.module('beamng.apps')
         else if (data.kind === 'event' && data.event) flush(waiting.event[data.event.id] || [], data);
         else if (data.kind === 'new') viewer.refresh();
         else if (data.kind === 'saved') {
-          var btns = viewer.element.querySelectorAll('.ppv-btn');
-          if (btns[0]) {
-            btns[0].textContent = data.path ? 'Saved ✓' : 'Save failed';
-            btns[0].title = data.path ? 'Saved to ' + data.path + ' in your BeamNG user folder' : 'Could not write the file';
-            setTimeout(function () { btns[0].textContent = 'Save'; }, 4000);
+          var btn = viewer.button('save');
+          clearTimeout(saveTimer);
+          if (btn) {
+            btn.textContent = data.path ? 'Saved' : 'Save failed';
+            btn.className = data.path ? 'ppv-btn ok' : 'ppv-btn warn';
+            btn.title = data.path ? 'Saved to ' + data.path + ' in your BeamNG user folder' : 'The game could not write the file';
+            saveTimer = setTimeout(function () { btn.textContent = 'Save'; btn.className = 'ppv-btn'; }, 5000);
           }
         }
       });

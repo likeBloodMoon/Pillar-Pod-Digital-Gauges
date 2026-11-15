@@ -200,6 +200,7 @@ local function newEvent(kind, t0, e, detail, defer)
   ev.window, ev.n = ringFrom(t0 - PRE)
   ev.until_ = t0 + POST
   ev.defer = defer
+  ev.live = true                                   -- still filling its window
   table.insert(collecting, ev)
   if not defer then commit(ev) end
   return ev
@@ -227,6 +228,7 @@ local function feedCollecting()
     local over = ev.done and clock >= ev.until_
     if over or clock >= ev.t + POST_MAX then
       table.remove(collecting, i)
+      ev.live = false
       if ev.defer then commit(ev) end
     end
   end
@@ -404,7 +406,8 @@ end
 
 local function eventOut(ev, withWindow)
   local o = {id = ev.id, kind = ev.kind, title = ev.title, t = ev.t, duration = ev.duration, detail = ev.detail,
-             peak = ev.peak, peakUnit = ev.peakUnit, at = ev.at, gPeak = ev.gPeak, speedBefore = ev.speedBefore}
+             peak = ev.peak, peakUnit = ev.peakUnit, at = ev.at, gPeak = ev.gPeak, speedBefore = ev.speedBefore,
+             live = ev.live or nil}
   if withWindow then
     local w = {}
     for k = 1, NCH do w[CH[k]] = ev.window[k] end

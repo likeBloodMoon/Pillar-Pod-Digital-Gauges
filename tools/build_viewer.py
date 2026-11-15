@@ -18,6 +18,17 @@ OUTPUTS = [
     (ROOT / "viewer" / "index.template.html", ROOT / "viewer" / "index.html"),
 ]
 MARK = "/*@VIEWER@*/"
+FONTS = "/*@FONTS@*/"                     # the PC page embeds the mod's font so it works offline
+FONT_DIR = ROOT / "vehicles" / "common" / "pillar_pod_gauges" / "fonts"
+
+
+def font_css() -> str:
+    import base64
+    rules = []
+    for w in (500, 600, 700):
+        data = base64.b64encode((FONT_DIR / f"barlow-semi-condensed-latin-{w}-normal.woff2").read_bytes()).decode("ascii")
+        rules.append('@font-face{font-family:"Barlow SC";font-weight:%d;src:url(data:font/woff2;base64,%s) format("woff2");}' % (w, data))
+    return "\n".join(rules)
 
 
 def build() -> dict:
@@ -27,7 +38,10 @@ def build() -> dict:
         text = template.read_text(encoding="utf-8")
         if text.count(MARK) != 1:
             raise SystemExit(f"{template.relative_to(ROOT)}: needs exactly one {MARK}")
-        out[target] = text.replace(MARK, viewer.rstrip("\n"))
+        text = text.replace(MARK, viewer.rstrip("\n"))
+        if FONTS in text:
+            text = text.replace(FONTS, font_css())
+        out[target] = text
     return out
 
 
