@@ -28,6 +28,10 @@
   gauge again with Automatic Mounting and save the config.
 
 ### Fixed
+- **Screens flashed while the time of day changed.** The mod asked the game for the light level every
+  2 seconds and the screens jumped straight to each new value, so dragging the time-of-day slider made
+  them blink between bright and dim. The mod now asks twice a second and the screens fade to the new
+  brightness over about a second. The headlights still dim them at once.
 - **The display's range read double** with the display and an Upper Gauge fitted. Every screen asked the mod's module for its data, and the module did all its reading
   on each call, so the trip distance was added once per screen. The module now reads everything once
   per frame and each screen only copies the latest values. Tyre, brake and g-force readings are only

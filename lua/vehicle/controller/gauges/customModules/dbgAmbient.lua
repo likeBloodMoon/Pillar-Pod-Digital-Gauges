@@ -3,7 +3,7 @@
 -- digital pillar gauges.
 -- Works as a custom module of gauges/genericGauges: it adds customModules.dbgAmbient.light to the
 -- data sent to the gauge screens. 1 = full daylight, 0 = night. It asks the game engine for the
--- time of day every couple of seconds; if that fails for any reason the value simply stays at 1.
+-- time of day twice a second; if that fails for any reason the value simply stays at 1.
 
 local M = {}
 M.type = "auxiliary"
@@ -235,7 +235,7 @@ local function updateGFX(dt)
     pcall(applyMounting)
   end
   timer = timer + dt
-  if timer > 2 then
+  if timer > 0.5 then                     -- often enough to follow the time-of-day slider
     timer = 0
     pcall(requestLight)
   end

@@ -42,6 +42,12 @@ var bg = document.createElement("canvas"); bg.width = W; bg.height = H;
 
 var data = { e: {}, m: {} };
 var powered = true, lights = 0, ambient = 1, page = 0, pageCounter = null;
+// the ambient light changes in steps (the module asks the game a few times a second, and dragging the
+// time of day jumps it around), so the brightness follows it smoothly instead of flashing
+var ambShown = -1;
+function easeAmbient(dt) { if (ambShown >= 0) ambShown += (ambient - ambShown) * Math.min(1, dt / AMB_FADE); }
+function ambNow() { return ambShown < 0 ? ambient : ambShown; }   // the first reading after spawning is taken as it is
+var AMB_FADE = 1.0;      // seconds
 var boostPeak = 0, gPeak = { lat: 0, lon: 0 }, gTrail = [], nominal = {};
 var last = 0, clock = 0, bootT = -1, wasPowered = false, boost = 0, runT = 0;
 var OFF_TIME = 0.8, offT = -1, onT = 0, resets = null, quietT = 0;   // shut-down fade (ignition switched off)
@@ -426,7 +432,7 @@ function draw() {
   dim();
 }
 function dim() {
-  var d = lights > 0 ? cfg.nightBrightness : cfg.nightBrightness + (1 - cfg.nightBrightness) * ambient;
+  var d = lights > 0 ? cfg.nightBrightness : cfg.nightBrightness + (1 - cfg.nightBrightness) * ambNow();
   if (d < 0.999) { ctx.globalAlpha = 1 - d; ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
 }
 
@@ -469,6 +475,7 @@ function tick() {
   var now = (window.performance && performance.now) ? performance.now() : Date.now();
   var dt = lastT ? Math.min(0.1, (now - lastT) / 1000) : 0.016;
   lastT = now;
+  easeAmbient(dt);
   if (!powered && wasPowered && cfg.shutdownSweep > 0 && onT > 0.5 && quietT <= 0) offT = 0;
   if (powered) offT = -1;
   if (offT >= 0) { offT += dt; if (offT >= OFF_TIME) offT = -1; }
@@ -523,6 +530,7 @@ function updateData(d) {
   if (pc !== pageCounter) { page = (page + ((pc - pageCounter) % PAGES.length) + PAGES.length) % PAGES.length; pageCounter = pc; }
   lights = Math.max(Number(e.lights) || 0, Number(e.lowhighbeam) || 0);
   ambient = typeof m.light === "number" ? Math.max(0, Math.min(1, m.light)) : 1;
+  if (ambShown < 0 && typeof m.light === "number") ambShown = ambient;
   tick();
 }
 
