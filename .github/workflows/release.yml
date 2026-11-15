@@ -22,8 +22,8 @@ jobs:
           # Name the zip after the tag, e.g. pillar_pod_gauges_v1.1.0.zip
           ZIP="pillar_pod_gauges_${TAG}.zip"
           echo "ZIP=$ZIP" >> "$GITHUB_ENV"
-          # vehicles/ and lua/ must sit at the top level of the zip for BeamNG to load it
-          git archive --format=zip -o "$ZIP" "$GITHUB_SHA" vehicles lua
+          # vehicles/, lua/ and ui/ (the Event History app) must sit at the top level of the zip for BeamNG to load it
+          git archive --format=zip -o "$ZIP" "$GITHUB_SHA" vehicles lua ui
           unzip -l "$ZIP"
 
       - name: Publish release

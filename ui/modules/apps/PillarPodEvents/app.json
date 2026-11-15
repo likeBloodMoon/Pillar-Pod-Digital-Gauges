@@ -1,0 +1,23 @@
+{
+  "domElement": "<pillar-pod-events></pillar-pod-events>",
+  "name": "Pillar Pod Event History",
+  "types": [
+    "ui.apps.categories.vehicle_info"
+  ],
+  "description": "Events recorded by Pillar Pod Digital Gauges: overboost, rev limiter, overheating, hard braking, lateral g, impacts, stalls and engine damage, with the readings around each one.",
+  "css": {
+    "left": "40px",
+    "top": "120px",
+    "width": "760px",
+    "height": "480px",
+    "min-width": "520px",
+    "min-height": "320px"
+  },
+  "author": "Kristof (likeBloodMoon)",
+  "version": "0.1",
+  "preserveAspectRatio": false,
+  "directive": "pillarPodEvents",
+  "category": "Dashboard",
+  "isAuxiliary": false,
+  "interactive": "yes"
+}
