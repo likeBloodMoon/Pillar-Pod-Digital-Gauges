@@ -122,14 +122,16 @@ Tuning menu, category **Gauges**:
 
 Planned work is tracked as [milestones](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/milestones), one per release:
 
-- [1.3](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/milestone/1): peak and warning lights on every gauge, key bindings to show and reset
-  the peak, `--` when a car doesn't report a reading, tachometer and G-meter gauges, and a shorter
-  parts list with only automatic mounting
+- [1.3](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/milestone/1): peak and warning lights on every gauge, `---` when a car
+  doesn't report a reading, tachometer and G-meter gauges, key bindings to show and reset the peak,
+  a shorter parts list with only automatic mounting, and new styles: colour themes, needle faces, a
+  smoked-lens finish and light and dark screens for the display and cluster
 - [1.4](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/milestone/2): the Pessima, Sunburst and ETK 800, the display and cluster on the 200BX,
   a triple pillar pod and other mounts
-- [1.5](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/milestone/3): a race-dash cluster with a shift-light strip, a warning banner and timers
-- [2.0](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/milestone/4): needle-style faces, estimated readings such as oil pressure and air-fuel
-  ratio (labelled as estimates on the gauge), colour themes and ready-made configs
+- [1.5](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/milestone/3): a race-dash cluster with a shift-light strip, a warning banner and timers,
+  and a replay of the last 3 minutes on the display
+- [2.0](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/milestone/4): estimated readings such as oil pressure and air-fuel ratio (labelled as
+  estimates on the gauge) and ready-made configs
 
 The plan can change. Give an issue a 👍 if you want it, or post an idea in
 [Discussions](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/discussions). If you'd like to help, the issues labelled
