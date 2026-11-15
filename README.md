@@ -5,6 +5,7 @@
 [![Validate mod assets](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/actions/workflows/validate-assets.yml/badge.svg?branch=main)](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/actions/workflows/validate-assets.yml)
 [![BeamNG repository](https://img.shields.io/badge/BeamNG-repository-orange)](https://www.beamng.com/resources/pillar-pod-digital-gauges.40320/)
 [![Licence: MIT](https://img.shields.io/badge/licence-MIT-blue)](LICENSE)
+[![Support on Ko-fi](https://img.shields.io/badge/Ko--fi-support-ff5e5b?logo=ko-fi&logoColor=white)](https://ko-fi.com/likebloodmoon)
 
 Digital gauges for BeamNG.drive. Round gauges on the A-pillar or roll cage, a pillar-mounted
 multi-function display, and a full digital instrument cluster that replaces the car's own gauges.
@@ -138,6 +139,14 @@ The plan can change. Give an issue a 👍 if you want it, or post an idea in
 [Discussions](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/discussions). If you'd like to help, the issues labelled
 [good first issue](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/labels/good%20first%20issue) are the easiest to start with; see
 [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Support
+
+The mod is free and stays free. If it made your drives better and you'd like to say thanks, you can
+[buy me a coffee on Ko-fi](https://ko-fi.com/likebloodmoon). It helps me spend more evenings on new
+gauges, more cars and fixes. Bug reports, ideas and screenshots of your build in
+[Discussions](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/discussions) help just as
+much.
 
 ## For developers
 
