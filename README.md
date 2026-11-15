@@ -124,8 +124,8 @@ Planned work is tracked as [milestones](https://github.com/likeBloodMoon/Pillar-
 
 - [1.3](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/milestone/1): peak and warning lights on every gauge, `---` when a car
   doesn't report a reading, tachometer and G-meter gauges, key bindings to show and reset the peak,
-  a shorter parts list with only automatic mounting, and new styles: colour themes, needle faces, a
-  smoked-lens finish and light and dark screens for the display and cluster
+  a shorter parts list with only automatic mounting, and new styles: colour themes, a full purple
+  version, needle faces, a smoked-lens finish and light and dark screens for the display and cluster
 - [1.4](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/milestone/2): the Pessima, Sunburst and ETK 800, the display and cluster on the 200BX,
   a triple pillar pod and other mounts
 - [1.5](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/milestone/3): a race-dash cluster with a shift-light strip, a warning banner and timers,
