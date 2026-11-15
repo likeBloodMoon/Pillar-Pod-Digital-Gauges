@@ -283,6 +283,12 @@ var peakTimer = 0;
 var clock = 0;           // seconds, for the overboost flash
 var shifting = false;    // engine speed is at the shift point
 var ambient = 1;         // 1 = daylight .. 0 = night (from the mod's ambient light module)
+// the ambient light changes in steps (the module asks the game a few times a second, and dragging the
+// time of day jumps it around), so the brightness follows it smoothly instead of flashing
+var ambShown = -1;
+function easeAmbient(dt) { if (ambShown >= 0) ambShown += (ambient - ambShown) * Math.min(1, dt / AMB_FADE); }
+function ambNow() { return ambShown < 0 ? ambient : ambShown; }   // the first reading after spawning is taken as it is
+var AMB_FADE = 1.0;      // seconds
 var runPeak = -1e9;      // highest value of the current pull
 var storedPeak = -1e9;   // highest value since the car was spawned
 var sesPeak = -1e9;      // highest value since the ignition came on (for the PEAK light)
@@ -424,7 +430,7 @@ function render() {
   }
   // brightness: headlights on -> night level; otherwise follow the ambient light
   var dim = 1;
-  if (powered || shutting) dim = lights > 0 ? cfg.nightBrightness : cfg.nightBrightness + (1 - cfg.nightBrightness) * ambient;
+  if (powered || shutting) dim = lights > 0 ? cfg.nightBrightness : cfg.nightBrightness + (1 - cfg.nightBrightness) * ambNow();
   var key = (powered ? "1" : "0") + Math.round(pos * 25) + txt + dot + peak + (digitsOn ? "d" : "x") + (ledsOn ? "l" : "o") +
             (recalling ? "r" : "") + Math.round(dim * 50) + (shiftOn ? "s" + shiftPhase : "") + (cold ? "c" : "") +
             (shutting ? "o" + Math.round(u * 60) : "") + (peakOn ? "P" : "") + (warnOn ? "W" : "") + (missing ? "m" : "");
@@ -490,6 +496,7 @@ function tick() {
   if (lastT && now - lastT < 4) return;          // called from both the timer and the game; skip doubles
   lastT = now;
   clock += dt;
+  easeAmbient(dt);
 
   if (powered && !wasPowered) { bootT = 0; offT = -1; arcVal = 0; digitVal = 0; peakPos = 0; sesPeak = -1e9; peakLitT = 0; }
   // ignition switched off after running a while: shut-down sweep (not after a reset, and not when the
@@ -612,6 +619,7 @@ function updateData(data) {
   lights = Math.max(Number(e.lights) || 0, Number(e.lowhighbeam) || 0);
   var am = data && data.customModules && data.customModules.dbgAmbient;
   ambient = (am && typeof am.light === "number") ? Math.max(0, Math.min(1, am.light)) : 1;
+  if (ambShown < 0 && am && typeof am.light === "number") ambShown = ambient;
   var lim = (am && typeof am.maxBoost === "number" && am.maxBoost > 0) ? am.maxBoost : 0;
   if (cfg.source === "boost" && lim !== autoLimit) {
     autoLimit = lim; lastKey = "";
