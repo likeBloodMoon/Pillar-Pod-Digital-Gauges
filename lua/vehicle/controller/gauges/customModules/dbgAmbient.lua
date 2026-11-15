@@ -148,15 +148,6 @@ local function applyMounting()
   obj:queueGameEngineLua(table.concat(cmd))
 end
 
-local function updateGFX(dt)
-  -- re-applied every second: the parts selector resets mesh visibility when it highlights parts
-  autoTimer = autoTimer + dt
-  if autoTimer > 1 and autoMeshes ~= false then
-    autoTimer = 0
-    pcall(applyMounting)
-  end
-end
-
 -- Exhaust gas temperature (deg C) from the engine's thermal simulation. nil when the car has no
 -- combustion engine or its thermals aren't running; the display then shows zero.
 local egtEngine = nil       -- false when there is no engine to read
@@ -180,8 +171,9 @@ end
 -- fuel range and outside temperature. Wheel names are the car's own (FL, FR, RL, RR on most cars).
 local mfd = {tp = {}, tt = {}, bt = {}, ws = {}}
 local trip = {dist = 0, fuelUsed = 0, lastFuel = nil}
+local wantMfd = false       -- a screen fitted to the car shows the display data (the display or the cluster)
 
-local function readMfd(dt)
+local function readMfd()
   local tp, tt, bt, ws = {}, {}, {}, {}
   local envP = obj:getEnvPressure()
   for _, wd in pairs(wheels.wheels or {}) do
@@ -201,7 +193,10 @@ local function readMfd(dt)
   mfd.glat = (sensors.gx2 or sensors.gx or 0) / 9.81
   mfd.glon = (sensors.gy2 or sensors.gy or 0) / 9.81
   mfd.envT = obj:getEnvTemperature() - 273.15
-  -- range from the average consumption since spawn (needs half a kilometre of driving first)
+end
+
+-- range from the average consumption since spawn (needs half a kilometre of driving first)
+local function readTrip(dt)
   local e = electrics.values
   trip.dist = trip.dist + math.abs(e.wheelspeed or 0) * dt
   local fuel = e.fuelVolume
@@ -225,28 +220,49 @@ local function readMissing()
   for _, k in ipairs(CHECKED) do missing[k] = (ev[k] == nil) end
 end
 
-local function updateGaugeData(moduleData, dt)
-  timer = timer + (dt or 0)
+-- All the reading happens here, once per frame. Every screen fitted to the car (Lower Gauge, Upper
+-- Gauge, display) has its own gauge controller, and each one calls updateGaugeData below every frame
+-- it's shown; doing the work there ran it once per screen, which also added the trip distance once
+-- per screen and made the display's range read double with two screens fitted.
+local egtNow = nil
+
+local function updateGFX(dt)
+  -- automatic mounting, re-applied every second: the parts selector resets mesh visibility when it
+  -- highlights parts
+  autoTimer = autoTimer + dt
+  if autoTimer > 1 and autoMeshes ~= false then
+    autoTimer = 0
+    pcall(applyMounting)
+  end
+  timer = timer + dt
   if timer > 2 then
     timer = 0
     pcall(requestLight)
   end
-  moduleData.light = light
   if maxBoost == nil then
     local ok, res = pcall(findMaxBoost)
     maxBoost = (ok and tonumber(res)) or 0
   end
-  moduleData.maxBoost = maxBoost
   local okE, egt = pcall(readEgt)
-  moduleData.egt = okE and egt or nil  -- nil (no key) when the engine has no exhaust temperature
+  egtNow = okE and egt or nil
   pcall(readMissing)
+  pcall(readTrip, dt)
+  if wantMfd then pcall(readMfd) end      -- tyres, brakes and g-force only when something shows them
+end
+
+-- each screen's controller: copy the latest values into the data it sends to its page
+local function updateGaugeData(moduleData, dt)
+  moduleData.light = light
+  moduleData.maxBoost = maxBoost
+  moduleData.egt = egtNow               -- nil (no key) when the engine has no exhaust temperature
   moduleData.missing = missing
-  pcall(readMfd, dt or 0)
   moduleData.mfd = mfd
   moduleData.resets = resets            -- the screens skip their shut-down animation right after a reset
 end
 
+-- called once by each screen's controller with the properties its part lists for this module
 local function setupGaugeData(properties)
+  if type(properties) == "table" and properties.mfd then wantMfd = true end
 end
 
 local function reset()

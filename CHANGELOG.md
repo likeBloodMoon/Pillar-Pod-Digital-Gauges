@@ -27,6 +27,12 @@
   **If you saved a config with a fixed mounting**, that gauge is missing when you load it: pick the
   gauge again with Automatic Mounting and save the config.
 
+### Fixed
+- **The display's range read double** with the display and an Upper Gauge fitted. Every screen asked the mod's module for its data, and the module did all its reading
+  on each call, so the trip distance was added once per screen. The module now reads everything once
+  per frame and each screen only copies the latest values. Tyre, brake and g-force readings are only
+  taken when the display or the cluster is fitted.
+
 ## 1.2.1
 
 Fixes and polish. No new gauges, cars or parts.
