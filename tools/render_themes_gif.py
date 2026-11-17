@@ -4,6 +4,7 @@ boost (the tachometer's shift light, boost peak recall, the oil gauge passing it
 red), lift off, then ignition off (shut-down sweep).
 
     python tools/render_themes_gif.py <repo root> <out.gif>
+    RIM_ALL=1 python tools/render_themes_gif.py ...   every colour gets the glowing rim (for comparing)
 
 Needs Python with playwright and Pillow, and Google Chrome (CHROME=path if it is not google-chrome /
 chromium on the PATH). Uses the same fake clock and compositing as render_demo_gif.py, so it comes
@@ -48,6 +49,23 @@ def state(t):
     return d
 
 
+def bezel_full(face):
+    """Like render_demo_gif.bezel, but the whole face sits inside a thin bezel ring, so the lit rim
+    of the purple and super green themes (at the very edge of the face) isn't covered."""
+    s = SIZE * 2
+    ring = 14
+    inner = s - 2 * ring
+    g = face.resize((inner, inner), Image.LANCZOS)
+    out = Image.new("RGB", (s, s), BG)
+    mask = Image.new("L", (inner, inner), 0)
+    ImageDraw.Draw(mask).ellipse((0, 0, inner - 1, inner - 1), fill=255)
+    out.paste(g, (ring, ring), mask)
+    d = ImageDraw.Draw(out)
+    d.ellipse((2, 2, s - 2, s - 2), outline=(52, 54, 58), width=ring)
+    d.ellipse((2, 2, s - 2, s - 2), outline=(78, 80, 86), width=3)
+    return out.resize((SIZE, SIZE), Image.LANCZOS)
+
+
 def caption_font():
     """Barlow Semi Condensed from the mod (stored as woff2, which Pillow can't read: unpacked with
     fontTools), or Pillow's default font if fontTools/brotli aren't installed."""
@@ -64,6 +82,9 @@ def caption_font():
     except Exception as e:
         print("caption font: %s, using the default font" % e)
         return ImageFont.load_default()
+
+
+RIM_ALL = os.environ.get("RIM_ALL") == "1"   # comparison render: give every theme the glowing rim
 
 
 async def render(root, out_path):
@@ -85,6 +106,8 @@ async def render(root, out_path):
             """)
             await pg.goto("file://" + os.path.join(pages, "screen.html"))
             await pg.evaluate("() => document.fonts.ready")
+            if RIM_ALL:
+                await pg.evaluate("() => THEMES.forEach(function (t) { if (!t.rim) t.rim = t.led; })")
             await pg.evaluate("c => setup(c)", cfg)
             printed = Image.open(os.path.join(pages, "dbg_face_black_%s_b.color.png" % face)).convert("RGB")
             tabs.append((pg, printed, label))
@@ -111,7 +134,7 @@ async def render(root, out_path):
                 emissive = Image.open(io.BytesIO(shot)).convert("RGB")
                 glow = emissive.filter(ImageFilter.GaussianBlur(6)).point(lambda v: int(v * 0.45))
                 face = ImageChops.add(ImageChops.add(printed, emissive), glow)
-                row.paste(bezel(face), (GAP + j * (SIZE + GAP), GAP))
+                row.paste(bezel_full(face), (GAP + j * (SIZE + GAP), GAP))
             row.paste(strip, (0, SIZE + GAP))
             frames.append(row)
             if i % 40 == 0:
@@ -119,11 +142,11 @@ async def render(root, out_path):
         await browser.close()
 
     # one shared palette for every frame keeps the colours steady and the file small
-    sample = frames[::8]
+    sample = frames[::3]
     sheet = Image.new("RGB", (frames[0].width, frames[0].height * len(sample)))
     for k, f in enumerate(sample):
         sheet.paste(f, (0, k * f.height))
-    pal0 = sheet.quantize(colors=160, method=Image.MEDIANCUT, dither=Image.NONE)
+    pal0 = sheet.quantize(colors=255, method=Image.MEDIANCUT, dither=Image.NONE)
     pal = [f.quantize(palette=pal0, dither=Image.NONE) for f in frames]
     pal[0].save(out_path, save_all=True, append_images=pal[1:], duration=int(1000 / FPS), loop=0, optimize=True, disposal=1)
     print("wrote %s (%d frames, %.0f KB)" % (out_path, len(frames), os.path.getsize(out_path) / 1024))
