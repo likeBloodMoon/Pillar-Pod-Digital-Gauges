@@ -147,6 +147,10 @@ The plan can change. Give an issue a 👍 if you want it, or post an idea in
 [good first issue](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/labels/good%20first%20issue) are the easiest to start with; see
 [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## Contributors
+
+- [GhostCauli](https://www.patreon.com/cw/GhostCauli)
+
 ## Support
 
 The mod is free and stays free. If it made your drives better and you'd like to say thanks, you can
