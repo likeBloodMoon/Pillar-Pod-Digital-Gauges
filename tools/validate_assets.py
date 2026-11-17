@@ -26,6 +26,11 @@ MATERIALS = ROOT / "vehicles/common/pillar_pod_gauges/main.materials.json"
 SCREEN = ROOT / "vehicles/common/pillar_pod_gauges/screen.html"
 MFD_PAGE = ROOT / "vehicles/common/pillar_pod_gauges/mfd.html"
 CLUSTER_PAGE = ROOT / "vehicles/common/pillar_pod_gauges/cluster.html"
+EVENTS_APP = ROOT / "ui/modules/apps/PillarPodEvents/app.js"
+EVENTS_APP_JSON = ROOT / "ui/modules/apps/PillarPodEvents/app.json"
+VIEWER_JS = ROOT / "viewer/viewer.js"
+VIEWER_PAGE = ROOT / "viewer/index.html"
+RECORDER = ROOT / "lua/vehicle/controller/gauges/customModules/dbgRecorder.lua"
 GENERATOR = ROOT / "tools/gen_jbeam.py"
 BAKER = ROOT / "tools/bake_faceplates.html"
 EXPECTED_HTML = "local://local/vehicles/common/pillar_pod_gauges/screen.html"
@@ -94,7 +99,7 @@ def parse_jbeam(path: Path) -> dict:
 
 def check_required_files() -> bool:
     ok = True
-    for path in (*(c[1] for c in CARS), DAE, MATERIALS, SCREEN, GENERATOR, BAKER):
+    for path in (*(c[1] for c in CARS), DAE, MATERIALS, SCREEN, GENERATOR, BAKER, EVENTS_APP, EVENTS_APP_JSON, VIEWER_JS):
         if not path.is_file():
             error(f"required file is missing: {path.relative_to(ROOT)}")
             ok = False
@@ -249,7 +254,11 @@ def check_javascript() -> None:
     if not node:
         warning("Node.js is not installed; skipped embedded JavaScript syntax check")
         return
-    for page in (SCREEN, MFD_PAGE, CLUSTER_PAGE):
+    for js in (EVENTS_APP, VIEWER_JS):
+        result = subprocess.run([node, "--check", str(js)], text=True, capture_output=True)
+        if result.returncode:
+            error(f"{js.relative_to(ROOT)} JavaScript syntax error:\n" + (result.stderr.strip() or result.stdout.strip()))
+    for page in (SCREEN, MFD_PAGE, CLUSTER_PAGE, VIEWER_PAGE):
         html = page.read_text(encoding="utf-8")
         scripts = re.findall(r"<script\b[^>]*>(.*?)</script\s*>", html, flags=re.I | re.S)
         inline = [script for script in scripts if script.strip()]
@@ -263,6 +272,27 @@ def check_javascript() -> None:
                 result = subprocess.run([node, "--check", str(path)], text=True, capture_output=True)
                 if result.returncode:
                     error(f"{page.name} JavaScript syntax error:\n" + (result.stderr.strip() or result.stdout.strip()))
+
+
+def check_event_viewer() -> None:
+    """The Event History app and the PC viewer are built from viewer/viewer.js; they must be current."""
+    result = subprocess.run([sys.executable, str(ROOT / "tools" / "build_viewer.py"), "--check"],
+                            cwd=ROOT, text=True, capture_output=True)
+    if result.returncode:
+        error("event viewer: " + (result.stdout.strip() or result.stderr.strip()))
+    try:
+        app = json.loads(EVENTS_APP_JSON.read_text(encoding="utf-8"))
+        for key in ("domElement", "directive", "name", "css"):
+            if key not in app:
+                error(f"{EVENTS_APP_JSON.relative_to(ROOT)}: missing \"{key}\"")
+        if app.get("directive") and f"directive('{app['directive']}'" not in EVENTS_APP.read_text(encoding="utf-8"):
+            error(f"{EVENTS_APP.relative_to(ROOT)} doesn't define the directive {app['directive']!r} named in app.json")
+    except (OSError, json.JSONDecodeError) as exc:
+        error(f"{EVENTS_APP_JSON.relative_to(ROOT)}: {exc}")
+    if "controller/gauges/customModules/dbgRecorder" not in EVENTS_APP.read_text(encoding="utf-8"):
+        error("the Event History app doesn't ask the recorder module (controller/gauges/customModules/dbgRecorder)")
+    if not RECORDER.is_file():
+        error(f"required file is missing: {RECORDER.relative_to(ROOT)}")
 
 
 def check_python_syntax() -> None:
@@ -290,6 +320,7 @@ def main() -> int:
     check_dae(meshes)
     check_html_and_generator()
     check_javascript()
+    check_event_viewer()
     check_python_syntax()
 
     for message in WARNINGS:
