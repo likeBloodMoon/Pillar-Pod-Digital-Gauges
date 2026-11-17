@@ -16,7 +16,7 @@ Bugs, crashes, wrong readings and gauges in the wrong place aren't security issu
 
 ## How to report
 
-Use **[Report a vulnerability](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/security/advisories/new)** on GitHub, so the details stay private until there's a fix. Please don't post security problems in public issues or on the BeamNG forum.
+Use [Report a vulnerability](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/security/advisories/new) on GitHub, so the details stay private until there's a fix. Please don't post security problems in public issues or on the BeamNG forum.
 
 Include the mod version, the game version, and steps to reproduce if you can.
 

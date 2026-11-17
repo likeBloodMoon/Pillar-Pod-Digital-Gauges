@@ -49,9 +49,9 @@ The screens are plain HTML canvas pages. You can open them in a desktop browser 
 
 Keep in mind how they behave inside the game:
 
-- **Draw from `updateData`.** The game calls it every frame, and page timers can be paused inside the game, so a screen that only animates on a timer will freeze.
-- **Size text for the driver's seat.** In the game the screens are small, so check readability at about a third of full size.
-- **Keep everything inside the page.** No external fonts, scripts or network requests. Bundled files only.
+- Draw from `updateData`. The game calls it every frame, and page timers can be paused inside the game, so a screen that only animates on a timer will freeze.
+- Size text for the driver's seat. In the game the screens are small, so check readability at about a third of full size.
+- Keep everything inside the page: bundled files only, with no external fonts, scripts or network requests.
 
 ### Meshes
 
@@ -66,11 +66,11 @@ The mesh scripts in `tools/` need geometry from your own copy of the game (extra
 2. Test in the game: load the car, fit the parts, sit in the driver's seat and check the screens update.
 3. Keep each pull request to one change and explain what it does and how you tested it. Screenshots from the game help for anything visual.
 
-CI runs the validator on every push and pull request. When a pull request changes a screen page or a face texture, the **Screen previews** workflow renders every screen before and after the change and posts the ones that look different as a comment. You can render them yourself with `python tools/render_previews.py . previews`.
+CI runs the validator on every push and pull request. When a pull request changes a screen page or a face texture, the Screen previews workflow renders every screen before and after the change and posts the ones that look different as a comment. You can render them yourself with `python tools/render_previews.py . previews`.
 
 ## Releases
 
-Releases are made by the maintainer. Pushing a `v*` tag on `main` builds `pillar_pod_gauges_<tag>.zip` and attaches it to a GitHub release. Always tag **after** the last pull request is merged into `main`.
+Releases are made by the maintainer. Pushing a `v*` tag on `main` builds `pillar_pod_gauges_<tag>.zip` and attaches it to a GitHub release. Tag only after the last pull request is merged into `main`.
 
 ## Licence
 
