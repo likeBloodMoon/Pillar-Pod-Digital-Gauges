@@ -110,6 +110,8 @@ Tuning menu, category **Gauges**:
   2 amber, 3 blue, 4 purple, 5 super green. Purple and super green also light the labels and a
   glowing rim round the face. Warnings stay red in every colour
 
+  ![Five round gauges in five colours: white tachometer, amber oil temperature, purple boost, blue coolant and super green EGT going through start-up, a pull and shut-down](docs/colour-themes.gif)
+
   <img src="docs/theme-purple.jpg" alt="Purple EGT and boost gauges on the roll cage at dusk" width="49%"> <img src="docs/theme-super-green.jpg" alt="Super green EGT and boost gauges on the roll cage at night" width="49%">
 - Overboost warning, peak recall time, shift light on/off
 - Tachometer: shift light on/off, the RPM where it starts, scale maximum
