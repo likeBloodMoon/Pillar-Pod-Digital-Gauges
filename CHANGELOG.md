@@ -9,6 +9,13 @@
   in their colour and add a glowing rim round the face. Warnings stay red in every colour: the red
   LEDs, WARN, the shift light, and the digits turn red while a reading is past its warning limit.
   On the blue theme the PEAK light is white, on purple light blue, so it stands out from the ring.
+- **Event recorder and Event History app.** The car records moments worth a second look: overboost,
+  the rev limiter, coolant or oil overheating, hard braking, a new lateral-g high, impacts, stalls
+  and engine damage the game reports. Each event keeps a few seconds of readings before and after
+  it and a summary at its peak, all from the game's own data. The new **Pillar Pod Event History**
+  UI app lists them with plots and a timeline of the drive. Drives are saved to
+  `pillar_pod_gauges/recordings` in the BeamNG user folder and open in `viewer/index.html` on a PC,
+  which can also export any event as CSV.
 - **Tachometer** for the pillar gauges, in either position. The LED ring runs up to the engine's rev
   limit, with the last three (red) LEDs past it, and the digits show thousands (6.8 = 6800 rpm). The
   whole ring flashes red at the shift point. Tuning → Gauges has the shift light on/off, the RPM it

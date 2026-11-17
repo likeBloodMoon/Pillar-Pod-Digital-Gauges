@@ -8,6 +8,10 @@
 local M = {}
 M.type = "auxiliary"
 
+-- the event recorder: one per car (require() shares it between this module and the cluster's copy)
+local okRec, recorder = pcall(require, "controller/gauges/customModules/dbgRecorder")
+if not okRec then log("E", "pillar_pod_gauges", "event recorder failed to load: " .. tostring(recorder)); recorder = nil end
+
 local light = 1
 local timer = 99
 local resets = 0                        -- counts vehicle resets
@@ -225,6 +229,8 @@ end
 -- it's shown; doing the work there ran it once per screen, which also added the trip distance once
 -- per screen and made the display's range read double with two screens fitted.
 local egtNow = nil
+local recorderErr = false
+local recCtx = {}
 
 local function updateGFX(dt)
   -- automatic mounting, re-applied every second: the parts selector resets mesh visibility when it
@@ -248,6 +254,11 @@ local function updateGFX(dt)
   pcall(readMissing)
   pcall(readTrip, dt)
   if wantMfd then pcall(readMfd) end      -- tyres, brakes and g-force only when something shows them
+  if recorder then
+    recCtx.egt, recCtx.maxBoost = egtNow, maxBoost
+    local ok, err = pcall(recorder.update, dt, M, recCtx)
+    if not ok and not recorderErr then recorderErr = true; log("E", "pillar_pod_gauges", "event recorder: " .. tostring(err)) end
+  end
 end
 
 -- each screen's controller: copy the latest values into the data it sends to its page
@@ -266,6 +277,7 @@ local function setupGaugeData(properties)
 end
 
 local function reset()
+  if recorder then pcall(recorder.onReset, M) end
   resets = resets + 1
   timer = 99
   maxBoost = nil
