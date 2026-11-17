@@ -83,6 +83,9 @@ var TH = THEMES[0];
 // unlit parts printed on the face (and drawn by the page for the EGT digits): neutral grey, so every
 // theme sits on the same face. Unlit red LEDs and WARN keep a red tint, since they are always red.
 var UNLIT = "#242424", UNLIT_SEG = "#1b1b1b", UNLIT_RED = "#3a0f0b";
+// The EGT face has no printed digits, so this page draws its unlit "8"s on the glowing layer, and the
+// game's glow makes even dark grey look half lit there (374 read as 874 in game). Drawn far darker.
+var UNLIT_SEG_GLOW = "#060606";
 
 // 7-segment digit map: segments a b c d e f g
 var SEG = {
@@ -158,7 +161,7 @@ function setDigits(n) {
 function unlitDigits(g) {                        // the dark "8"s behind the lit segments
   for (var d = 0; d < nDig; d++) {
     g.save(); g.translate(DX[d], DYs); g.scale(DS, DS);
-    drawDigit(g, "8", 0, 0, UNLIT_SEG, null);
+    drawDigit(g, "8", 0, 0, UNLIT_SEG_GLOW, null);
     g.restore();
   }
 }

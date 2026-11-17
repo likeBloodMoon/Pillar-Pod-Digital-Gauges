@@ -42,6 +42,9 @@
   gauge again with Automatic Mounting and save the config.
 
 ### Fixed
+- **The EGT gauge's unlit digits looked half lit**, especially at night, so 374 could read as 874.
+  The EGT face has no printed digits (it switches between 3 and 4), so its unlit "8"s are drawn on
+  the glowing layer; they are now drawn far darker there.
 - **Unreadable Tuning sliders.** The on/off switches (shift lights, Shut-Down Sweep), the colour and
   the first-page choices had no unit, and the game shows such a slider as −100 % to 100 % without
   its real value. They now show the actual number (0/1 on/off, colour 0–5, page 0–5). The asset
