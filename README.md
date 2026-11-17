@@ -136,7 +136,7 @@ Planned work is tracked as [milestones](https://github.com/likeBloodMoon/Pillar-
   a shorter parts list with only automatic mounting, and new styles: colour themes, a full purple
   version, needle faces, a smoked-lens finish and light and dark screens for the display and cluster
 - [1.4](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/milestone/2): the Pessima, Sunburst and ETK 800, the display and cluster on the 200BX,
-  a triple pillar pod and other mounts
+  a triple pillar pod and other mounts, and a nitrous bottle-pressure gauge
 - [1.5](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/milestone/3): a race-dash cluster with a shift-light strip, a warning banner and timers,
   and a replay of the last 3 minutes on the display
 - [2.0](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/milestone/4): estimated readings such as oil pressure and air-fuel ratio (labelled as

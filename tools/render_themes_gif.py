@@ -4,7 +4,10 @@ boost (the tachometer's shift light, boost peak recall, the oil gauge passing it
 red), lift off, then ignition off (shut-down sweep).
 
     python tools/render_themes_gif.py <repo root> <out.gif>
+    FULL_FACE=1 python tools/render_themes_gif.py ... a thin bezel that shows the whole face, rims included
     RIM_ALL=1 python tools/render_themes_gif.py ...   every colour gets the glowing rim (for comparing)
+
+The default uses the README demo's bezel, which covers the edge of the face (and the rims).
 
 Needs Python with playwright and Pillow, and Google Chrome (CHROME=path if it is not google-chrome /
 chromium on the PATH). Uses the same fake clock and compositing as render_demo_gif.py, so it comes
@@ -85,6 +88,7 @@ def caption_font():
 
 
 RIM_ALL = os.environ.get("RIM_ALL") == "1"   # comparison render: give every theme the glowing rim
+FULL_FACE = os.environ.get("FULL_FACE") == "1"   # thin bezel that shows the whole face, rims included
 
 
 async def render(root, out_path):
@@ -134,7 +138,7 @@ async def render(root, out_path):
                 emissive = Image.open(io.BytesIO(shot)).convert("RGB")
                 glow = emissive.filter(ImageFilter.GaussianBlur(6)).point(lambda v: int(v * 0.45))
                 face = ImageChops.add(ImageChops.add(printed, emissive), glow)
-                row.paste(bezel_full(face), (GAP + j * (SIZE + GAP), GAP))
+                row.paste((bezel_full if FULL_FACE else bezel)(face), (GAP + j * (SIZE + GAP), GAP))
             row.paste(strip, (0, SIZE + GAP))
             frames.append(row)
             if i % 40 == 0:
