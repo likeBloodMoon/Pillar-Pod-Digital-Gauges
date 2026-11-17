@@ -10,10 +10,9 @@
 Digital gauges for BeamNG.drive. Round gauges on the A-pillar or roll cage, a pillar-mounted
 multi-function display, and a full digital instrument cluster that replaces the car's own gauges.
 
-Works on the **Ibishu Covet** and the **Ibishu 200BX**. The display and the cluster are Covet only
-for now.
+Works on the Ibishu Covet and the Ibishu 200BX. The display and the cluster are Covet only for now.
 
-**Version 1.2.1** · [Changelog](CHANGELOG.md)
+Version 1.2.1 · [Changelog](CHANGELOG.md)
 
 ![Digital cluster on the Covet's race dashboard](docs/cluster-race-dash.jpg)
 
@@ -33,11 +32,12 @@ game. Use the zip from the release.
 
 ![Five round gauges in five colours: white tachometer, amber oil temperature, purple boost, blue coolant and super green EGT going through start-up, a pull and shut-down](docs/colour-themes.gif)
 
-*Five gauge types in five colours: ignition on, a pull to full boost (shift light, the boost gauge's
-peak, the oil gauge past its warning in red), lift off, ignition off.*
+*Five gauge types in five colours through ignition on, a pull to full boost, lift off and ignition
+off. Watch the shift light on the tach, the boost gauge's peak, and the oil gauge going red past its
+warning limit.*
 
-Parts selector → **Additional Modification** → **Digital Pillar Gauges**, then pick what goes in
-the **Lower Gauge** and **Upper Gauge** positions. Each position can hold any gauge:
+In the parts selector go to Additional Modification → Digital Pillar Gauges, then pick what goes in
+the Lower Gauge and Upper Gauge slots. Either slot takes any gauge:
 
 | Gauge | Shows |
 |---|---|
@@ -48,62 +48,61 @@ the **Lower Gauge** and **Upper Gauge** positions. Each position can hold any ga
 | Fuel level | Fuel left, with a low-fuel warning |
 | Tachometer | Engine speed in thousands (6.8 = 6800 rpm), scaled to the engine's rev limit, with a shift light |
 
-Under the label, a blue **PEAK** light comes on for a moment whenever the reading sets a new high
-for the drive (in the top part of the scale), and a red **WARN** light stays on while it's past the
-warning limit: overboost, overheating, low fuel, or the shift point on the tachometer. The fuel gauge
-has only WARN.
+Under the label there are two small lights. PEAK (blue) flashes on when the reading sets a new high
+for the drive near the top of the scale. WARN (red) stays on while the reading is past its limit:
+overboost, overheating, low fuel, or the shift point on the tach. The fuel gauge only has WARN.
 
-If the car doesn't have the reading at all, for example the boost gauge on a car without a turbo or
-supercharger, the gauge shows `---` with the LED ring dark instead of a made-up 0. The display and the
-cluster do the same.
+If the car doesn't have that reading at all, say a boost gauge on a car with no turbo or
+supercharger, the gauge shows `---` and leaves the LED ring dark, so you don't get a fake 0. The
+display and the cluster do the same.
 
-Every gauge comes as **Automatic Mounting**, in black or in silver with a white face. It finds its
-own place: on the A-pillar trim, on the bare pillar of a stripped or race interior, or on the roll
-cage bar, for left- or right-hand drive.
+Every gauge uses Automatic Mounting, in black or in silver with a white face. It works out where to
+sit by itself: on the A-pillar trim, on the bare pillar of a stripped or race interior, or on the
+roll cage bar, in left- or right-hand drive.
 
 ### Digital cluster (Covet)
 
 ![Digital cluster on the Covet's standard dashboard](docs/cluster-standard-dash.jpg)
 
-Parts selector → **Gauges** → **Pillar Pod Digital Cluster**. It replaces the Covet's instrument
-cluster with a wide screen. On the standard dashboard the screen fills the old gauge opening; with
-the race dashboard choose **Pillar Pod Digital Cluster (Race Dash)** and a screen unit sits on the
-carbon panel. It uses the car's own Gauges slot, so it works alongside the pillar gauges.
+Parts selector → Gauges → Pillar Pod Digital Cluster. It swaps the Covet's instrument cluster for a
+wide screen. On the standard dashboard the screen fills the old gauge opening. With the race
+dashboard, pick Pillar Pod Digital Cluster (Race Dash) instead and a screen unit sits on the carbon
+panel. It goes in the car's own Gauges slot, so you can run it together with the pillar gauges.
 
-- **Top:** bar tachometer that turns amber near the limit, red past it, and flashes at the shift point
-- **Middle:** speed and gear, with warning lights only when they're on (parking brake, check
-  engine, overheating, headlights)
-- **Left:** fuel and coolant temperature with bars
-- **Right:** one page at a time: Boost, Tyres, Engine (oil and EGT), Brakes, G-Force, Trip
-  (range, outside temperature, drive time)
+- Top: a bar tach that turns amber near the limit, red past it, and flashes at the shift point
+- Middle: speed and gear, plus warning lights that only show up when they're on (parking brake,
+  check engine, overheating, headlights)
+- Left: fuel and coolant temperature, with bars
+- Right: one page at a time: Boost, Tyres, Engine (oil and EGT), Brakes, G-Force, Trip (range,
+  outside temperature, drive time)
 
-The layout is built to be read from the driver's seat: few readings, large numbers, and everything
-inside the part of the screen the steering wheel doesn't cover.
+I kept it to a few big numbers, and nothing important sits behind the steering wheel rim, so it
+reads fine from the driver's seat.
 
 ### Multi-function display (Covet)
 
-**Lower Gauge** → **Multi-Function Display** puts a portrait colour screen on the A-pillar instead
-of a round gauge (leave the Upper Gauge empty). It mounts itself on the standard interior, the
-stripped interior or the roll cage, left- or right-hand drive.
+Pick Multi-Function Display for the Lower Gauge and you get a portrait colour screen on the
+A-pillar in place of a round gauge (leave the Upper Gauge empty). It mounts itself on the standard
+interior, the stripped interior or the roll cage, left- or right-hand drive. The pages:
 
-- **Boost:** dial scaled to the wastegate limit, with the session maximum
-- **Tyres:** pressure, tread temperature and wheel speed per wheel; low pressure turns amber, a flat red
-- **Engine:** oil, coolant and exhaust gas temperature and engine speed, with warning limits
-- **Brakes:** temperature per brake
-- **G-Force:** friction circle with a trace and peak lateral and longitudinal g
+- Boost: a dial scaled to the wastegate limit, with the highest boost of the session
+- Tyres: pressure, tread temperature and wheel speed for each wheel. Low pressure turns amber, a
+  flat turns red
+- Engine: oil, coolant and exhaust gas temperature and engine speed, with warning limits
+- Brakes: temperature of each brake
+- G-Force: a friction circle with a trace, plus peak lateral and longitudinal g
 
 Status rows along the top and bottom show warning lights, fuel, range, drive time, gear, outside
 and coolant temperature.
 
 ### Changing pages
 
-Click the button under the display, or the page panel on the cluster, in the cabin. You can also
-bind **Display: next page** in Options → Controls. The display and the cluster flip together.
+In the cabin, click the button under the display or the page panel on the cluster. You can also
+bind "Display: next page" in Options → Controls. The display and the cluster change page together.
 
 ### Event recorder and Event History app
 
-With any of the mod's parts fitted, the car keeps an eye on what you do with it and records the
-moments worth a second look:
+With any of the mod's parts fitted, the car records the moments you'd want to look at again:
 
 | Event | When |
 |---|---|
@@ -116,15 +115,15 @@ moments worth a second look:
 | Stall | the engine stopping while you're moving |
 | Engine damage | damage the game reports: over-rev, head gasket, oil starvation, a hydrolocked engine and so on |
 
-Each event keeps a few seconds of readings from before to after it (engine speed, boost, speed,
-throttle and brake, gear, temperatures, g-forces, crash energy) and a summary at its peak. All of it
-comes from what the game simulates; nothing is made up.
+Each event keeps a few seconds of readings before and after it (engine speed, boost, speed,
+throttle and brake, gear, temperatures, g-forces, crash energy) and a summary at its peak. Every
+number comes straight from the game's simulation.
 
-To look at them, add the **Pillar Pod Event History** UI app (from the game's app editor, like any
-other UI app). Pick an event to see its summary and the readings around it; the timeline on top
-shows the whole drive. Units follow the game's settings.
+To see them, add the Pillar Pod Event History UI app from the game's app editor, like any other UI
+app. Pick an event to see its summary and the readings around it. The timeline along the top shows
+the whole drive. Units follow your game settings.
 
-**Save** writes the drive to your BeamNG user folder, in `pillar_pod_gauges/recordings` (on
+Save writes the drive to your BeamNG user folder, in `pillar_pod_gauges/recordings` (on
 Windows: `%LOCALAPPDATA%\BeamNG\BeamNG.drive\current\pillar_pod_gauges\recordings`). The mod also
 saves it a few seconds after each new event. To look at a recording on a PC, open
 [`viewer/index.html`](viewer/index.html) in a browser (download it, it works offline) and drop the
@@ -135,7 +134,7 @@ file on it. There you can also switch units and download any event as CSV.
 Everything follows the game's unit settings (psi / bar / kPa, °C / °F, km/h / mph, litres /
 gallons). All screens dim at night and with the headlights on.
 
-Tuning menu, category **Gauges**:
+In the Tuning menu, under Gauges:
 
 - Colour of the round gauges' LED ring and digits: 0 green with red digits (default), 1 white,
   2 amber, 3 blue, 4 purple, 5 super green. Purple and super green also light the labels and a
@@ -153,7 +152,7 @@ Tuning menu, category **Gauges**:
 
 ## Known limits
 
-- The pillar gauges and the display use the car's single **Additional Modification** slot, so they
+- The pillar gauges and the display use the car's single Additional Modification slot, so they
   can't be combined with another mod that uses that slot. The cluster uses the Gauges slot instead.
 
 ## Roadmap
@@ -162,8 +161,9 @@ Planned work is tracked as [milestones](https://github.com/likeBloodMoon/Pillar-
 
 - [1.3](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/milestone/1): peak and warning lights on every gauge, `---` when a car
   doesn't report a reading, tachometer and G-meter gauges, key bindings to show and reset the peak,
-  a shorter parts list with only automatic mounting, and new styles: colour themes, a full purple
-  version, needle faces, a smoked-lens finish and light and dark screens for the display and cluster
+  a shorter parts list with only automatic mounting, and new styles: colour themes (purple and super
+  green included), needle faces, a smoked-lens finish and light and dark screens for the display and
+  cluster
 - [1.4](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/milestone/2): the Pessima, Sunburst and ETK 800, the display and cluster on the 200BX,
   a triple pillar pod and other mounts, and a nitrous bottle-pressure gauge
 - [1.5](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/milestone/3): a race-dash cluster with a shift-light strip, a warning banner and timers,
@@ -176,17 +176,13 @@ The plan can change. Give an issue a 👍 if you want it, or post an idea in
 [good first issue](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/labels/good%20first%20issue) are the easiest to start with; see
 [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## Contributors
-
-- [GhostCauli](https://www.patreon.com/cw/GhostCauli)
-
 ## Support
 
-The mod is free and stays free. If it made your drives better and you'd like to say thanks, you can
-[buy me a coffee on Ko-fi](https://ko-fi.com/likebloodmoon). It helps me spend more evenings on new
-gauges, more cars and fixes. Bug reports, ideas and screenshots of your build in
-[Discussions](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/discussions) help just as
-much.
+The mod is free and will stay free. If you enjoy it and want to say thanks, you can
+[buy me a coffee on Ko-fi](https://ko-fi.com/likebloodmoon), which buys me more evenings to work on
+it. Bug reports, ideas and screenshots of your build in
+[Discussions](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/discussions) help a lot
+too.
 
 ## For developers
 

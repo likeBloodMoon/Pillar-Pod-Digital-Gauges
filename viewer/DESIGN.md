@@ -2,21 +2,21 @@
 
 The viewer is the car's own data logger. It should look like a factory performance display (the
 GT-R's multi-function screen is the reference): flat charcoal panels, thin grey outlines, white
-numerals, one red accent. It is not a web dashboard.
+numerals, one red accent.
 
 ## Who and what for
-A player, after a drive or a crash, wants to know **what happened and how bad it was**. They pick an
+A player, after a drive or a crash, wants to know what happened and how bad it was. They pick an
 event, read the answer in a couple of seconds, then scrub the readings around it. On a PC they also
 compare drives and export data.
 
 ## Hierarchy (per event)
-1. **The answer**: one hero reading, big and light (`1.21 bar`, `Peak boost`).
-2. **The situation**: a single row of context at the peak: RPM, speed, the gear in its box,
+1. The answer: one big reading, big and light (`1.21 bar`, `Peak boost`).
+2. The situation: a single row of context at the peak: RPM, speed, the gear in its box,
    temperatures, throttle. Grey label above white numerals with a small grey unit.
-3. **The readings**: stacked lanes on one shared time axis, the event's main channel first and
+3. The readings: stacked lanes on one shared time axis, the event's main channel first and
    tallest. One cursor runs through every lane and shows the values. With no cursor, each lane shows
    its value at the peak.
-4. **Where in the drive**: the timeline strip on top, with every event on the drive's speed trace.
+4. Where in the drive: the timeline strip on top, with every event on the drive's speed trace.
 
 ## Tokens (`K` in `viewer.js`)
 - Every colour is solid. No gradients, glows, tints or see-through fills.
