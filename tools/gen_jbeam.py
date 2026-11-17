@@ -134,7 +134,7 @@ out=f'''{{
 //the car's interior (pillar trim, bare pillar or roll cage, left- or right-hand drive).
 "{CAR["root"]}": {{
     "information":{{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Digital Pillar Gauges",
         "value":0,
     }},
@@ -149,7 +149,7 @@ out=f'''{{
     ],
 }},
 '''
-BOOST_VARS='''        ["$dbg_boost_shift", "range", "", "Gauges", 1, 0, 1, "Boost Gauge: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
+BOOST_VARS='''        ["$dbg_boost_shift", "range", "on/off", "Gauges", 1, 0, 1, "Boost Gauge: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
         ["$dbg_boost_warn_at", "range", "psi", "Gauges", 0, 0, 45, "Boost Gauge: Overboost Warning", "The digits flash at or above this boost pressure. 0 = automatic, just above the turbo wastegate limit", {"stepDis":0.5}],
         ["$dbg_boost_recall", "range", "s", "Gauges", 2.5, 0, 6, "Boost Gauge: Peak Recall Time", "How long the peak is shown after a pull; 0 turns peak recall off", {"stepDis":0.5}],'''
 WATER_VARS='''        ["$dbg_water_cold", "range", "C", "Gauges", 60, 0, 100, "Coolant Temp Gauge: Cold Mark Below", "A blue COLD mark shows below this coolant temperature (deg C). 0 = off", {"stepDis":1}],
@@ -158,19 +158,22 @@ EGT_VARS='''        ["$dbg_egt_warn", "range", "C", "Gauges", 900, 500, 1100, "E
 FUEL_VARS='''        ["$dbg_fuel_low", "range", "%", "Gauges", 10, 0, 40, "Fuel Gauge: Low Fuel Warning", "The digits flash at or below this tank level (percent). 0 = off", {"stepDis":1}],'''
 OIL_VARS='''        ["$dbg_oil_cold", "range", "C", "Gauges", 70, 0, 100, "Oil Temp Gauge: Cold Mark Below", "A blue COLD mark shows below this oil temperature (deg C). 0 = off", {"stepDis":1}],
         ["$dbg_oil_warn", "range", "C", "Gauges", 130, 90, 160, "Oil Temp Gauge: Warning Temperature", "The digits flash at or above this oil temperature (deg C)", {"stepDis":1}],'''
-TACH_VARS='''        ["$dbg_tach_shift", "range", "", "Gauges", 1, 0, 1, "Tachometer: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
+TACH_VARS='''        ["$dbg_tach_shift", "range", "on/off", "Gauges", 1, 0, 1, "Tachometer: Shift Light", "1 = the LED ring flashes red near the rev limit, 0 = off", {"stepDis":1}],
         ["$dbg_tach_shift_at", "range", "%", "Gauges", 96, 75, 100, "Tachometer: Shift Light At", "Engine speed where the shift light starts, in percent of the engine's maximum RPM", {"stepDis":1}],
         ["$dbg_tach_max", "range", "rpm", "Gauges", 0, 0, 12000, "Tachometer: Scale Maximum", "RPM at the last LED. 0 = automatic: the red LEDs start at the engine's rev limit", {"stepDis":250}],'''
 # shared by every gauge, the display and the cluster (a variable defined in several parts is merged by the game)
-SHUT_VAR='''        ["$dbg_shutdown_sweep", "range", "", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],'''
+SHUT_VAR='''        ["$dbg_shutdown_sweep", "range", "on/off", "Gauges", 1, 0, 1, "Shut-Down Sweep", "1 = the gauges sweep and the screens fade out when the ignition is switched off, 0 = they switch off at once", {"stepDis":1}],'''
 SHUT_CFG='''            "shutdownSweep":"$dbg_shutdown_sweep",'''
 # shared by every round gauge (the display and the cluster are much brighter and keep their own)
 NIGHT_VAR='''        ["$dbg_gauge_night", "range", "%", "Gauges", 12, 3, 100, "Gauges: Night Brightness", "Brightness of the round gauges at night or with the headlights on", {"stepDis":1}],'''
 NIGHT_CFG='''            "nightBrightness":"$dbg_gauge_night",'''
+# colour of the LED ring and digits, shared by every round gauge (warnings stay red in every theme)
+THEME_VAR='''        ["$dbg_gauge_theme", "range", "colour", "Gauges", 0, 0, 5, "Gauges: Colour", "Colour of the LED ring and digits on the round gauges: 0 green with red digits, 1 white, 2 amber, 3 blue, 4 purple, 5 super green (4 and 5 also light the labels and a rim round the face). Warnings stay red", {"stepDis":1}],'''
+THEME_CFG='''            "theme":"$dbg_gauge_theme",'''
 def part(key,name,slot,gvars,ctrl,cfgf,el,fb):
     return f'''"{key}": {{
     "information":{{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"{name}",
         "value":180,
     }},
@@ -179,6 +182,7 @@ def part(key,name,slot,gvars,ctrl,cfgf,el,fb):
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
 {gvars}
+{THEME_VAR}
 {NIGHT_VAR}
 {SHUT_VAR}
     ],
@@ -189,6 +193,7 @@ def part(key,name,slot,gvars,ctrl,cfgf,el,fb):
     "{ctrl}": {{
         "configuration": {{
 {cfgf}
+{THEME_CFG}
 {NIGHT_CFG}
 {SHUT_CFG}
         }},
@@ -249,7 +254,7 @@ for gi,(slot,ctrl,mat,own,others) in enumerate(POSITIONS):
 # multi-function display: a lower-gauge option with automatic mounting; the page button on its chin
 # is an in-cabin click trigger (one per mounting, since the mounting is only known in game) that runs
 # the dbgMfdNextPage action from pillar_pod_gauges.interaction.json
-MFD_VARS='''        ["$dbg_mfd_page", "range", "", "Gauges", 0, 0, 4, "Display: First Page", "Page shown at start: 0 boost, 1 tyres, 2 engine, 3 brakes, 4 g-force", {"stepDis":1}],
+MFD_VARS='''        ["$dbg_mfd_page", "range", "page", "Gauges", 0, 0, 4, "Display: First Page", "Page shown at start: 0 boost, 1 tyres, 2 engine, 3 brakes, 4 g-force", {"stepDis":1}],
         ["$dbg_mfd_night", "range", "%", "Gauges", 12, 3, 100, "Display: Night Brightness", "Display brightness at night or with the headlights on", {"stepDis":1}],'''
 BUTTON=(0.0,0.0028,-0.0396)            # page button centre in the display's own space, before scaling
 if "MFD" in CAR:
@@ -268,7 +273,7 @@ if "MFD" in CAR:
     slot=P+"_dbg_boost"
     out+=f'''"{slot}_mfd_auto": {{
     "information":{{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Multi-Function Display - Automatic Mounting",
         "value":420,
     }},
@@ -331,7 +336,7 @@ if "MFD" in CAR:
 '''
 # digital cluster: a part for each of the car's own Gauges slots (no Additional Modification needed).
 # Touching the page panel on the right of the screen, or the "Display: next page" binding, flips pages.
-CLUSTER_VARS='''        ["$dbg_cluster_page", "range", "", "Gauges", 0, 0, 5, "Digital Cluster: First Page", "Page shown at start on the right of the cluster: 0 boost, 1 tyres, 2 engine, 3 brakes, 4 g-force, 5 trip", {"stepDis":1}],
+CLUSTER_VARS='''        ["$dbg_cluster_page", "range", "page", "Gauges", 0, 0, 5, "Digital Cluster: First Page", "Page shown at start on the right of the cluster: 0 boost, 1 tyres, 2 engine, 3 brakes, 4 g-force, 5 trip", {"stepDis":1}],
         ["$dbg_cluster_night", "range", "%", "Gauges", 25, 3, 100, "Digital Cluster: Night Brightness", "Cluster brightness at night or with the headlights on", {"stepDis":1}],'''
 for slot,kind,sx,meshes in CAR.get("CLUSTER",()):
     tx,ty,tz=CAR["CLUSTER_TOUCH"][kind]; n1,n2,n3=CAR["TRIGGER_NODES"][1]
@@ -339,7 +344,7 @@ for slot,kind,sx,meshes in CAR.get("CLUSTER",()):
     name="Pillar Pod Digital Cluster" + (" (Race Dash)" if kind=="race" else "")
     out+=f'''"{slot}_dbg_cluster": {{
     "information":{{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"{name}",
         "value":650,
     }},

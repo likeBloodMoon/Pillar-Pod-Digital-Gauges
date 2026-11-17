@@ -136,6 +136,13 @@ gallons). All screens dim at night and with the headlights on.
 
 Tuning menu, category **Gauges**:
 
+- Colour of the round gauges' LED ring and digits: 0 green with red digits (default), 1 white,
+  2 amber, 3 blue, 4 purple, 5 super green. Purple and super green also light the labels and a
+  glowing rim round the face. Warnings stay red in every colour
+
+  ![Five round gauges in five colours: white tachometer, amber oil temperature, purple boost, blue coolant and super green EGT going through start-up, a pull and shut-down](docs/colour-themes.gif)
+
+  <img src="docs/theme-purple.jpg" alt="Purple EGT and boost gauges on the roll cage at dusk" width="49%"> <img src="docs/theme-super-green.jpg" alt="Super green EGT and boost gauges on the roll cage at night" width="49%">
 - Overboost warning, peak recall time, shift light on/off
 - Tachometer: shift light on/off, the RPM where it starts, scale maximum
 - Oil, coolant and exhaust warning temperatures, cold-mark temperatures, low-fuel warning
@@ -159,7 +166,7 @@ Planned work is tracked as [milestones](https://github.com/likeBloodMoon/Pillar-
   a shorter parts list with only automatic mounting, and new styles: colour themes, a full purple
   version, needle faces, a smoked-lens finish and light and dark screens for the display and cluster
 - [1.4](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/milestone/2): the Pessima, Sunburst and ETK 800, the display and cluster on the 200BX,
-  a triple pillar pod and other mounts
+  a triple pillar pod and other mounts, and a nitrous bottle-pressure gauge
 - [1.5](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/milestone/3): a race-dash cluster with a shift-light strip, a warning banner and timers,
   and a replay of the last 3 minutes on the display
 - [2.0](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/milestone/4): estimated readings such as oil pressure and air-fuel ratio (labelled as
@@ -169,6 +176,10 @@ The plan can change. Give an issue a 👍 if you want it, or post an idea in
 [Discussions](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/discussions). If you'd like to help, the issues labelled
 [good first issue](https://github.com/likeBloodMoon/Pillar-Pod-Digital-Gauges/labels/good%20first%20issue) are the easiest to start with; see
 [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Contributors
+
+- [GhostCauli](https://www.patreon.com/cw/GhostCauli)
 
 ## Support
 

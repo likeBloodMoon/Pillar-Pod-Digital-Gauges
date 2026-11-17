@@ -3,6 +3,12 @@
 ## Unreleased
 
 ### Added
+- **Colour themes for the round gauges** (Tuning → Gauges → Gauges: Colour), one setting for every
+  round gauge: green ring with red digits (the original look), white, amber, blue, purple or super
+  green for the LED ring and the digits. Purple and super green also light the title and unit label
+  in their colour and add a glowing rim round the face. Warnings stay red in every colour: the red
+  LEDs, WARN, the shift light, and the digits turn red while a reading is past its warning limit.
+  On the blue theme the PEAK light is white, on purple light blue, so it stands out from the ring.
 - **Event recorder and Event History app.** The car records moments worth a second look: overboost,
   the rev limiter, coolant or oil overheating, hard braking, a new lateral-g high, impacts, stalls
   and engine damage the game reports. Each event keeps a few seconds of readings before and after
@@ -27,6 +33,9 @@
   PEAK or WARN; the display and the cluster show `---` with an empty bar. A real 0 still reads 0.
 
 ### Changed
+- **Neutral unlit LEDs and digits.** The faces were re-baked with dark grey unlit LEDs, "8"
+  segments and PEAK light instead of green, blue and red tints, so every colour theme sits on the
+  same face. The unlit red LEDs and WARN keep their red tint.
 - **One Night Brightness setting for all round gauges** (Tuning → Gauges → Gauges: Night
   Brightness) instead of one per gauge type. Two fitted gauges now dim the same, and swapping a
   gauge for another type keeps the setting. The display and the cluster keep their own, since those
@@ -40,6 +49,13 @@
   gauge again with Automatic Mounting and save the config.
 
 ### Fixed
+- **The EGT gauge's unlit digits looked half lit**, especially at night, so 374 could read as 874.
+  The EGT face has no printed digits (it switches between 3 and 4), so its unlit "8"s are drawn on
+  the glowing layer; they are now drawn far darker there.
+- **Unreadable Tuning sliders.** The on/off switches (shift lights, Shut-Down Sweep), the colour and
+  the first-page choices had no unit, and the game shows such a slider as −100 % to 100 % without
+  its real value. They now show the actual number (0/1 on/off, colour 0–5, page 0–5). The asset
+  check now fails on a slider without a unit.
 - **Screens flashed while the time of day changed.** The mod asked the game for the light level every
   2 seconds and the screens jumped straight to each new value, so dragging the time-of-day slider made
   them blink between bright and dim. The mod now asks twice a second and the screens fade to the new

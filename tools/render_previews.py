@@ -35,6 +35,15 @@ GAUGES = [
     ("gauge_tach", "oil", "black", {"source": "rpm", "minValue": 0, "maxValue": 0, "titleLabel": "RPM", "shiftLight": 1, "shiftAt": 96, "peakHold": 1.5}),
     ("gauge_tach_silver", "oil", "white", {"source": "rpm", "minValue": 0, "maxValue": 0, "titleLabel": "RPM", "shiftLight": 1, "shiftAt": 96, "peakHold": 1.5}),
     ("gauge_fuel", "fuel", "black", {"source": "fuel", "minValue": 0, "maxValue": 100, "warnLow": 1, "titleLabel": "FUEL", "warnValue": 10}),
+    # colour themes (Tuning -> Gauges: Colour)
+    ("gauge_boost_theme_white", "boost", "black", dict(BOOST, uiUnitPressure="psi", theme=1)),
+    ("gauge_boost_theme_amber", "boost", "black", dict(BOOST, uiUnitPressure="psi", theme=2)),
+    ("gauge_boost_theme_blue", "boost", "black", dict(BOOST, uiUnitPressure="psi", theme=3)),
+    ("gauge_oil_theme_amber_silver", "oil", "white", {"source": "oiltemp", "decimals": 0, "minValue": 50, "maxValue": 150, "titleLabel": "OIL TEMP", "warnValue": 130, "theme": 2}),
+    ("gauge_boost_theme_purple", "boost", "black", dict(BOOST, uiUnitPressure="psi", theme=4)),
+    ("gauge_boost_theme_supergreen", "boost", "black", dict(BOOST, uiUnitPressure="psi", theme=5)),
+    ("gauge_oil_theme_purple_silver", "oil", "white", {"source": "oiltemp", "decimals": 0, "minValue": 50, "maxValue": 150, "titleLabel": "OIL TEMP", "warnValue": 130, "theme": 4}),
+    ("gauge_tach_theme_white", "oil", "black", {"source": "rpm", "minValue": 0, "maxValue": 0, "titleLabel": "RPM", "shiftLight": 1, "shiftAt": 96, "peakHold": 1.5, "theme": 1}),
 ]
 MFD_PAGES = ["boost", "tyres", "engine", "brakes", "gforce"]
 CLUSTER_PAGES = ["boost", "tyres", "engine", "brakes", "gforce", "trip"]
