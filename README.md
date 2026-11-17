@@ -31,9 +31,10 @@ game. Use the zip from the release.
 
 ### Pillar gauges (Covet and 200BX)
 
-![Boost and oil temperature gauges: start-up sweep, a pull to full boost, peak recall, shut-down sweep](docs/demo-sweep.gif)
+![Five round gauges in five colours: white tachometer, amber oil temperature, purple boost, blue coolant and super green EGT going through start-up, a pull and shut-down](docs/colour-themes.gif)
 
-*Ignition on, a pull to full boost, lift off (the boost gauge shows the peak), ignition off.*
+*Five gauge types in five colours: ignition on, a pull to full boost (shift light, the boost gauge's
+peak, the oil gauge past its warning in red), lift off, ignition off.*
 
 Parts selector → **Additional Modification** → **Digital Pillar Gauges**, then pick what goes in
 the **Lower Gauge** and **Upper Gauge** positions. Each position can hold any gauge:
@@ -139,8 +140,6 @@ Tuning menu, category **Gauges**:
 - Colour of the round gauges' LED ring and digits: 0 green with red digits (default), 1 white,
   2 amber, 3 blue, 4 purple, 5 super green. Purple and super green also light the labels and a
   glowing rim round the face. Warnings stay red in every colour
-
-  ![Five round gauges in five colours: white tachometer, amber oil temperature, purple boost, blue coolant and super green EGT going through start-up, a pull and shut-down](docs/colour-themes.gif)
 
   <img src="docs/theme-purple.jpg" alt="Purple EGT and boost gauges on the roll cage at dusk" width="49%"> <img src="docs/theme-super-green.jpg" alt="Super green EGT and boost gauges on the roll cage at night" width="49%">
 - Overboost warning, peak recall time, shift light on/off
