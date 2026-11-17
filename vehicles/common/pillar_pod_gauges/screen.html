@@ -54,7 +54,7 @@ var cfg = {
   bootTime: 1.3,      // seconds of start-up sweep when the ignition comes on
   shutdownSweep: 1,   // 1 = sweep the LED ring up and down and fade out when the ignition is switched off
   indicators: 1,      // 1 = PEAK and WARN lights under the title: PEAK when a new peak is set, WARN past the warning limit
-  theme: 0,           // colour of the LED ring and digits: 0 green, 1 white, 2 amber, 3 blue (see THEMES)
+  theme: 0,           // colour of the LED ring and digits: 0 green, 1 white, 2 amber, 3 blue, 4 purple, 5 super green (see THEMES)
   printedDigits: 1    // 1 = the unlit "8" segments are printed in the face texture; 0 = this page draws them
                       // (the EGT face, whose digit layout changes between 3 digits in deg C and 4 in deg F)
 };
@@ -67,12 +67,17 @@ var RED = "#ff1f14";
 // Colour themes (Tuning -> Gauges: Colour). A theme changes the lit LED ring, the digits and the PEAK light.
 // The warning colour stays red in every theme: the red LEDs, WARN, the shift light, and the digits while
 // the reading is past its warning limit. led = ring, vac = vacuum side of the boost ring, digit = digits
-// and decimal point, peak = PEAK light (blue, or white where the theme itself is blue).
+// and decimal point, peak = PEAK light (blue, or white where the theme itself is blue). The glow themes
+// also light the title and unit label in their colour (title, unit) and put a glowing rim round the face (rim).
 var THEMES = [
   {led: "#35ff2e", vac: "#3aa8ff", digit: RED,       peak: "#3aa8ff"},   // 0 green ring, red digits (the original look)
   {led: "#eef2ff", vac: "#3aa8ff", digit: "#eef2ff", peak: "#3aa8ff"},   // 1 white
   {led: "#ffa514", vac: "#3aa8ff", digit: "#ffa514", peak: "#3aa8ff"},   // 2 amber
-  {led: "#2f8fff", vac: "#e8eeff", digit: "#4aa8ff", peak: "#e8eeff"}    // 3 blue
+  {led: "#2f8fff", vac: "#e8eeff", digit: "#4aa8ff", peak: "#e8eeff"},   // 3 blue
+  {led: "#a84cff", vac: "#5ad8ff", digit: "#b862ff", peak: "#7fe0ff",    // 4 purple
+   title: "#e2d4ff", unit: "#c79bff", rim: "#a64dff"},
+  {led: "#39ff3a", vac: "#3aa8ff", digit: "#4dff45", peak: "#3aa8ff",    // 5 super green
+   title: "#dcffd8", unit: "#8dff6e", rim: "#2bff3a"}
 ];
 var TH = THEMES[0];
 // unlit parts printed on the face (and drawn by the page for the EGT digits): neutral grey, so every
@@ -192,6 +197,13 @@ function buildBackground(on) {
   var c = layer(W, W), g = c.getContext("2d"), n = cfg.ledCount;
   g.fillStyle = "#000"; g.fillRect(0, 0, W, W);
   if (!on) return c;
+  if (TH.rim) {                                  // glow themes: a lit ring round the edge of the face
+    g.save();
+    g.strokeStyle = TH.rim; g.lineWidth = 5; g.shadowColor = TH.rim; g.shadowBlur = 18;
+    g.beginPath(); g.arc(CX, CY, 247, 0, Math.PI * 2); g.stroke();
+    g.globalAlpha = 0.5; g.lineWidth = 2; g.beginPath(); g.arc(CX, CY, 239, 0, Math.PI * 2); g.stroke();
+    g.restore();
+  }
   if (cfg.face !== "white") {                    // backlit tick marks (printed on the white faceplate)
     var z = zeroLed();
     for (var i = 0; i < n; i++) {
@@ -205,10 +217,10 @@ function buildBackground(on) {
     }
   }
   g.textAlign = "center";
-  g.fillStyle = "#f2f2f2";
+  g.fillStyle = TH.title || "#f2f2f2";
   g.font = "bold 40px Arial, Helvetica, sans-serif";
   g.fillText(cfg.titleLabel, CX, TITLE_Y);
-  g.fillStyle = "#ffb300";
+  g.fillStyle = TH.unit || "#ffb300";
   g.font = "bold 36px Arial, Helvetica, sans-serif";
   g.fillText(cfg.unitLabel, CX, DY - 16);
   if (!cfg.printedDigits) { unlitDigits(g); g.shadowBlur = 0; }

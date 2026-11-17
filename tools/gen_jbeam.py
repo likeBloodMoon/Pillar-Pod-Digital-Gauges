@@ -168,7 +168,7 @@ SHUT_CFG='''            "shutdownSweep":"$dbg_shutdown_sweep",'''
 NIGHT_VAR='''        ["$dbg_gauge_night", "range", "%", "Gauges", 12, 3, 100, "Gauges: Night Brightness", "Brightness of the round gauges at night or with the headlights on", {"stepDis":1}],'''
 NIGHT_CFG='''            "nightBrightness":"$dbg_gauge_night",'''
 # colour of the LED ring and digits, shared by every round gauge (warnings stay red in every theme)
-THEME_VAR='''        ["$dbg_gauge_theme", "range", "", "Gauges", 0, 0, 3, "Gauges: Colour", "Colour of the LED ring and digits on the round gauges: 0 green with red digits, 1 white, 2 amber, 3 blue. Warnings stay red", {"stepDis":1}],'''
+THEME_VAR='''        ["$dbg_gauge_theme", "range", "", "Gauges", 0, 0, 5, "Gauges: Colour", "Colour of the LED ring and digits on the round gauges: 0 green with red digits, 1 white, 2 amber, 3 blue, 4 purple, 5 super green (4 and 5 also light the labels and a rim round the face). Warnings stay red", {"stepDis":1}],'''
 THEME_CFG='''            "theme":"$dbg_gauge_theme",'''
 def part(key,name,slot,gvars,ctrl,cfgf,el,fb):
     return f'''"{key}": {{

@@ -4,10 +4,11 @@
 
 ### Added
 - **Colour themes for the round gauges** (Tuning → Gauges → Gauges: Colour), one setting for every
-  round gauge: green ring with red digits (the original look), white, amber or blue for the LED ring
-  and the digits. Warnings stay red in every colour: the red LEDs, WARN, the shift light, and the
-  digits turn red while a reading is past its warning limit. On the blue theme the PEAK light is
-  white so it stands out from the ring.
+  round gauge: green ring with red digits (the original look), white, amber, blue, purple or super
+  green for the LED ring and the digits. Purple and super green also light the title and unit label
+  in their colour and add a glowing rim round the face. Warnings stay red in every colour: the red
+  LEDs, WARN, the shift light, and the digits turn red while a reading is past its warning limit.
+  On the blue theme the PEAK light is white, on purple light blue, so it stands out from the ring.
 - **Tachometer** for the pillar gauges, in either position. The LED ring runs up to the engine's rev
   limit, with the last three (red) LEDs past it, and the digits show thousands (6.8 = 6800 rpm). The
   whole ring flashes red at the shift point. Tuning → Gauges has the shift light on/off, the RPM it
