@@ -3,6 +3,11 @@
 ## Unreleased
 
 ### Added
+- **Colour themes for the round gauges** (Tuning → Gauges → Gauges: Colour), one setting for every
+  round gauge: green ring with red digits (the original look), white, amber or blue for the LED ring
+  and the digits. Warnings stay red in every colour: the red LEDs, WARN, the shift light, and the
+  digits turn red while a reading is past its warning limit. On the blue theme the PEAK light is
+  white so it stands out from the ring.
 - **Tachometer** for the pillar gauges, in either position. The LED ring runs up to the engine's rev
   limit, with the last three (red) LEDs past it, and the digits show thousands (6.8 = 6800 rpm). The
   whole ring flashes red at the shift point. Tuning → Gauges has the shift light on/off, the RPM it
@@ -20,6 +25,9 @@
   PEAK or WARN; the display and the cluster show `---` with an empty bar. A real 0 still reads 0.
 
 ### Changed
+- **Neutral unlit LEDs and digits.** The faces were re-baked with dark grey unlit LEDs, "8"
+  segments and PEAK light instead of green, blue and red tints, so every colour theme sits on the
+  same face. The unlit red LEDs and WARN keep their red tint.
 - **One Night Brightness setting for all round gauges** (Tuning → Gauges → Gauges: Night
   Brightness) instead of one per gauge type. Two fitted gauges now dim the same, and swapping a
   gauge for another type keeps the setting. The display and the cluster keep their own, since those

@@ -106,6 +106,8 @@ gallons). All screens dim at night and with the headlights on.
 
 Tuning menu, category **Gauges**:
 
+- Colour of the round gauges' LED ring and digits: 0 green with red digits (default), 1 white,
+  2 amber, 3 blue. Warnings stay red in every colour
 - Overboost warning, peak recall time, shift light on/off
 - Tachometer: shift light on/off, the RPM where it starts, scale maximum
 - Oil, coolant and exhaust warning temperatures, cold-mark temperatures, low-fuel warning

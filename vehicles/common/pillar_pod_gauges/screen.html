@@ -54,6 +54,7 @@ var cfg = {
   bootTime: 1.3,      // seconds of start-up sweep when the ignition comes on
   shutdownSweep: 1,   // 1 = sweep the LED ring up and down and fade out when the ignition is switched off
   indicators: 1,      // 1 = PEAK and WARN lights under the title: PEAK when a new peak is set, WARN past the warning limit
+  theme: 0,           // colour of the LED ring and digits: 0 green, 1 white, 2 amber, 3 blue (see THEMES)
   printedDigits: 1    // 1 = the unlit "8" segments are printed in the face texture; 0 = this page draws them
                       // (the EGT face, whose digit layout changes between 3 digits in deg C and 4 in deg F)
 };
@@ -63,6 +64,20 @@ var ctx = cv.getContext("2d");
 var W = 512, CX = 256, CY = 256;
 var A0 = Math.PI * 0.75, SWEEP = Math.PI * 1.5;
 var RED = "#ff1f14";
+// Colour themes (Tuning -> Gauges: Colour). A theme changes the lit LED ring, the digits and the PEAK light.
+// The warning colour stays red in every theme: the red LEDs, WARN, the shift light, and the digits while
+// the reading is past its warning limit. led = ring, vac = vacuum side of the boost ring, digit = digits
+// and decimal point, peak = PEAK light (blue, or white where the theme itself is blue).
+var THEMES = [
+  {led: "#35ff2e", vac: "#3aa8ff", digit: RED,       peak: "#3aa8ff"},   // 0 green ring, red digits (the original look)
+  {led: "#eef2ff", vac: "#3aa8ff", digit: "#eef2ff", peak: "#3aa8ff"},   // 1 white
+  {led: "#ffa514", vac: "#3aa8ff", digit: "#ffa514", peak: "#3aa8ff"},   // 2 amber
+  {led: "#2f8fff", vac: "#e8eeff", digit: "#4aa8ff", peak: "#e8eeff"}    // 3 blue
+];
+var TH = THEMES[0];
+// unlit parts printed on the face (and drawn by the page for the EGT digits): neutral grey, so every
+// theme sits on the same face. Unlit red LEDs and WARN keep a red tint, since they are always red.
+var UNLIT = "#242424", UNLIT_SEG = "#1b1b1b", UNLIT_RED = "#3a0f0b";
 
 // 7-segment digit map: segments a b c d e f g
 var SEG = {
@@ -122,7 +137,7 @@ var DY4 = DY + DH * (1 - S4) / 2;
 var nDig = 3, DX = DX3, DS = 1, DYs = DY;
 // PEAK and WARN indicator lights, in the gap at the bottom of the LED ring under the title
 var IND_Y = TITLE_Y + 50, IND_DX = 50, IND_FONT = "bold 27px Arial, Helvetica, sans-serif";
-var PEAK_COL = "#3aa8ff", WARN_COL = "#ff2a1a";
+var WARN_COL = "#ff2a1a";
 function hasPeakLight() { return cfg.indicators > 0 && cfg.warnLow <= 0; }   // a fuel gauge has no peak to show
 function warnX() { return hasPeakLight() ? CX + IND_DX : CX; }                  // WARN alone is centred
 function drawIndicator(g, label, x, col, glow) {
@@ -138,13 +153,13 @@ function setDigits(n) {
 function unlitDigits(g) {                        // the dark "8"s behind the lit segments
   for (var d = 0; d < nDig; d++) {
     g.save(); g.translate(DX[d], DYs); g.scale(DS, DS);
-    drawDigit(g, "8", 0, 0, "#210606", null);
+    drawDigit(g, "8", 0, 0, UNLIT_SEG, null);
     g.restore();
   }
 }
 
 // ---- pre-rendered layers: everything expensive (glow) is drawn once ----
-var bgOn, bgOff, ledSprites = [], ledSpritesRed = [], digitSprites = {}, indSprites = {};
+var bgOn, bgOff, ledSprites = [], ledSpritesRed = [], digitSprites = {}, digitSpritesWarn = {}, indSprites = {};
 
 function zeroLed() {     // index of the first LED above zero (0 when there is no vacuum zone)
   if (typeof cfg.zeroLed === "number") return cfg.zeroLed;   // fixed, so it matches the printed faceplate
@@ -220,12 +235,12 @@ function buildStaticFace(white) {
       g.save(); g.translate(CX + Math.cos(a) * (major ? 186 : 188), CY + Math.sin(a) * (major ? 186 : 188)); g.rotate(a);
       g.fillStyle = (z > 0 && i === z) ? "#c03000" : "#111"; g.fillRect(major ? -9 : -5, -2, major ? 18 : 10, 4); g.restore();
     }
-    drawLed(g, i, isRed(i) ? "#3a0f0b" : (i < z ? "#0c2540" : "#12380f"), false);   // unlit LEDs
+    drawLed(g, i, isRed(i) ? UNLIT_RED : UNLIT, false);   // unlit LEDs
   }
-  if (cfg.printedDigits) for (var d = 0; d < 3; d++) drawDigit(g, "8", DX3[d], DY, "#210606", null);   // unlit segments
+  if (cfg.printedDigits) for (var d = 0; d < 3; d++) drawDigit(g, "8", DX3[d], DY, UNLIT_SEG, null);   // unlit segments
   if (cfg.indicators > 0) {                       // unlit PEAK and WARN lights
-    var marks = [["WARN", warnX(), "#3a0f0b"]];
-    if (hasPeakLight()) marks.unshift(["PEAK", CX - IND_DX, "#0c2540"]);
+    var marks = [["WARN", warnX(), UNLIT_RED]];
+    if (hasPeakLight()) marks.unshift(["PEAK", CX - IND_DX, UNLIT]);
     marks.forEach(function (m) {
       if (white) { g.fillStyle = "#060606"; g.fillRect(m[1] - 42, IND_Y - 27, 84, 35); }   // dark window in the faceplate
       drawIndicator(g, m[0], m[1], m[2], false);
@@ -235,14 +250,30 @@ function buildStaticFace(white) {
   return c;
 }
 
+function digitSet(col) {                         // glowing digit sprites and decimal point in one colour
+  var set = {};
+  for (var ch in SEG) {
+    if (ch === " ") continue;
+    var dc = layer(DW + PAD * 2 + 16, DH + PAD * 2), dg = dc.getContext("2d");
+    drawDigit(dg, ch, PAD + 8, PAD, col, null);
+    set[ch] = dc;
+  }
+  var pc = layer(60, 60), pg = pc.getContext("2d");
+  pg.fillStyle = col; pg.shadowColor = col; pg.shadowBlur = 16;
+  pg.beginPath(); pg.arc(30, 30, 13, 0, Math.PI * 2); pg.fill();
+  set["."] = pc;
+  return set;
+}
+
 function buildLayers() {
+  TH = THEMES[Math.max(0, Math.min(THEMES.length - 1, Math.round(Number(cfg.theme) || 0)))];
   bgOn = buildBackground(true);
   bgOff = buildBackground(false);
   ledSprites = []; ledSpritesRed = [];
   for (var i = 0; i < cfg.ledCount; i++) {
     // crop to the LED's neighbourhood so blits stay small
     var a = ledAngle(i), x = Math.round(CX + Math.cos(a) * 216 - 50), y = Math.round(CY + Math.sin(a) * 216 - 50);
-    var cols = [isRed(i) ? "#ff2a1a" : (i < zeroLed() ? "#3aa8ff" : "#35ff2e"), "#ff2a1a"];
+    var cols = [isRed(i) ? "#ff2a1a" : (i < zeroLed() ? TH.vac : TH.led), "#ff2a1a"];
     for (var k = 0; k < 2; k++) {                 // normal colour, and all-red for the shift light
       var c = layer(W, W), g = c.getContext("2d");
       drawLed(g, i, cols[k], true);
@@ -250,24 +281,15 @@ function buildLayers() {
       (k === 0 ? ledSprites : ledSpritesRed).push({img: s, x: x, y: y});
     }
   }
-  digitSprites = {};
-  for (var ch in SEG) {
-    if (ch === " ") continue;
-    var dc = layer(DW + PAD * 2 + 16, DH + PAD * 2), dg = dc.getContext("2d");
-    drawDigit(dg, ch, PAD + 8, PAD, RED, null);
-    digitSprites[ch] = dc;
-  }
+  digitSprites = digitSet(TH.digit);
+  digitSpritesWarn = TH.digit === RED ? digitSprites : digitSet(RED);   // past the warning limit the digits go red
   indSprites = {};
-  [["PEAK", CX - IND_DX, PEAK_COL], ["WARN", warnX(), WARN_COL]].forEach(function (d) {
+  [["PEAK", CX - IND_DX, TH.peak], ["WARN", warnX(), WARN_COL]].forEach(function (d) {
     var ic = layer(140, 70), ig = ic.getContext("2d");
     ig.translate(70 - d[1], 50 - IND_Y);
     drawIndicator(ig, d[0], d[1], d[2], true);
     indSprites[d[0]] = {img: ic, x: d[1] - 70, y: IND_Y - 50};
   });
-  var pc = layer(60, 60), pg = pc.getContext("2d");
-  pg.fillStyle = RED; pg.shadowColor = RED; pg.shadowBlur = 16;
-  pg.beginPath(); pg.arc(30, 30, 13, 0, Math.PI * 2); pg.fill();
-  digitSprites["."] = pc;
 }
 
 // ---- state ----
@@ -386,7 +408,7 @@ function render() {
   var n = cfg.ledCount, z = zeroLed();
   var booting = powered && bootT >= 0, recalling = powered && !booting && recallT >= 0;
   var shutting = !powered && offT >= 0, u = 0, digA = 1, bgA = 1;
-  var pos = 0, txt = "", dot = -1, peak = -1, digitsOn = true, ledsOn = true, sweep = false;
+  var pos = 0, txt = "", dot = -1, peak = -1, digitsOn = true, ledsOn = true, sweep = false, warnDig = false;
   if (booting) {
     // LEDs run up and back down, digits show 88.8
     var u = bootT / cfg.bootTime;
@@ -414,7 +436,7 @@ function render() {
     pos = ledPos(arcVal);                        // e.g. 13.4 = 13 LEDs full, the 14th at 40%
     var dt1 = digitText(digitVal); txt = dt1[0]; dot = dt1[1];
     if (cfg.peakHold > 0 && peakPos > Math.max(pos, z) + 0.6) peak = Math.min(n - 1, Math.ceil(peakPos) - 1);
-    if (warning(arcVal)) digitsOn = Math.floor(clock * 12) % 2 === 0;   // overboost / overheat / low fuel flash
+    if (warning(arcVal)) { digitsOn = Math.floor(clock * 12) % 2 === 0; warnDig = true; }   // overboost / overheat / low fuel: flash in red
   }
   var shiftOn = powered && !booting && shifting;
   var shiftPhase = shiftOn ? Math.floor(clock * 10) % 2 : 0;
@@ -433,7 +455,7 @@ function render() {
   if (powered || shutting) dim = lights > 0 ? cfg.nightBrightness : cfg.nightBrightness + (1 - cfg.nightBrightness) * ambNow();
   var key = (powered ? "1" : "0") + Math.round(pos * 25) + txt + dot + peak + (digitsOn ? "d" : "x") + (ledsOn ? "l" : "o") +
             (recalling ? "r" : "") + Math.round(dim * 50) + (shiftOn ? "s" + shiftPhase : "") + (cold ? "c" : "") +
-            (shutting ? "o" + Math.round(u * 60) : "") + (peakOn ? "P" : "") + (warnOn ? "W" : "") + (missing ? "m" : "");
+            (shutting ? "o" + Math.round(u * 60) : "") + (peakOn ? "P" : "") + (warnOn ? "W" : "") + (missing ? "m" : "") + (warnDig ? "w" : "");
   if (key === lastKey) return;                  // nothing visible changed
   lastKey = key;
 
@@ -467,12 +489,13 @@ function render() {
   }
   if (digitsOn && digA > 0.01) {
     ctx.globalAlpha = digA;
+    var dset = warnDig ? digitSpritesWarn : digitSprites;
     for (var d = 0; d < nDig; d++) {
-      var sp = digitSprites[txt[d]];
+      var sp = dset[txt[d]];
       if (sp) ctx.drawImage(sp, DX[d] - (PAD + 8) * DS, DYs - PAD * DS, sp.width * DS, sp.height * DS);
     }
     if (booting && nDig === 3) dot = 1;
-    if (dot >= 0) ctx.drawImage(digitSprites["."], DX[dot] + DW + (dot === 0 ? 9 : 12) - 30, DY + DH + 1 - 30);
+    if (dot >= 0) ctx.drawImage(dset["."], DX[dot] + DW + (dot === 0 ? 9 : 12) - 30, DY + DH + 1 - 30);
     ctx.globalAlpha = 1;
   }
   if (peakOn) { var pk = indSprites.PEAK; ctx.drawImage(pk.img, pk.x, pk.y); }

@@ -167,6 +167,9 @@ SHUT_CFG='''            "shutdownSweep":"$dbg_shutdown_sweep",'''
 # shared by every round gauge (the display and the cluster are much brighter and keep their own)
 NIGHT_VAR='''        ["$dbg_gauge_night", "range", "%", "Gauges", 12, 3, 100, "Gauges: Night Brightness", "Brightness of the round gauges at night or with the headlights on", {"stepDis":1}],'''
 NIGHT_CFG='''            "nightBrightness":"$dbg_gauge_night",'''
+# colour of the LED ring and digits, shared by every round gauge (warnings stay red in every theme)
+THEME_VAR='''        ["$dbg_gauge_theme", "range", "", "Gauges", 0, 0, 3, "Gauges: Colour", "Colour of the LED ring and digits on the round gauges: 0 green with red digits, 1 white, 2 amber, 3 blue. Warnings stay red", {"stepDis":1}],'''
+THEME_CFG='''            "theme":"$dbg_gauge_theme",'''
 def part(key,name,slot,gvars,ctrl,cfgf,el,fb):
     return f'''"{key}": {{
     "information":{{
@@ -179,6 +182,7 @@ def part(key,name,slot,gvars,ctrl,cfgf,el,fb):
     "variables": [
         ["name", "type", "unit", "category", "default", "min", "max", "title", "description"],
 {gvars}
+{THEME_VAR}
 {NIGHT_VAR}
 {SHUT_VAR}
     ],
@@ -189,6 +193,7 @@ def part(key,name,slot,gvars,ctrl,cfgf,el,fb):
     "{ctrl}": {{
         "configuration": {{
 {cfgf}
+{THEME_CFG}
 {NIGHT_CFG}
 {SHUT_CFG}
         }},
