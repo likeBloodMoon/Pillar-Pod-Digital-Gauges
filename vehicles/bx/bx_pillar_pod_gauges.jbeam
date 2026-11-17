@@ -7,7 +7,7 @@
 //the car's interior (pillar trim, bare pillar or roll cage, left- or right-hand drive).
 "bx_pillar_pod_gauges": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Digital Pillar Gauges",
         "value":0,
     },
@@ -25,7 +25,7 @@
 },
 "bx_dbg_boost_auto": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Boost - Automatic Mounting",
         "value":180,
     },
@@ -117,7 +117,7 @@
 },
 "bx_dbg_boost_auto_silver": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Boost - Automatic Mounting, Silver",
         "value":180,
     },
@@ -209,7 +209,7 @@
 },
 "bx_dbg_boost_oil_auto": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Oil Temp - Automatic Mounting",
         "value":180,
     },
@@ -285,7 +285,7 @@
 },
 "bx_dbg_boost_oil_auto_silver": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Oil Temp - Automatic Mounting, Silver",
         "value":180,
     },
@@ -361,7 +361,7 @@
 },
 "bx_dbg_boost_water_auto": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Coolant Temp - Automatic Mounting",
         "value":180,
     },
@@ -437,7 +437,7 @@
 },
 "bx_dbg_boost_water_auto_silver": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Coolant Temp - Automatic Mounting, Silver",
         "value":180,
     },
@@ -513,7 +513,7 @@
 },
 "bx_dbg_boost_egt_auto": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Exhaust Temp - Automatic Mounting",
         "value":180,
     },
@@ -587,7 +587,7 @@
 },
 "bx_dbg_boost_egt_auto_silver": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Exhaust Temp - Automatic Mounting, Silver",
         "value":180,
     },
@@ -661,7 +661,7 @@
 },
 "bx_dbg_boost_fuel_auto": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Fuel Level - Automatic Mounting",
         "value":180,
     },
@@ -734,7 +734,7 @@
 },
 "bx_dbg_boost_fuel_auto_silver": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Fuel Level - Automatic Mounting, Silver",
         "value":180,
     },
@@ -807,7 +807,7 @@
 },
 "bx_dbg_boost_tach_auto": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Tachometer - Automatic Mounting",
         "value":180,
     },
@@ -886,7 +886,7 @@
 },
 "bx_dbg_boost_tach_auto_silver": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Tachometer - Automatic Mounting, Silver",
         "value":180,
     },
@@ -965,7 +965,7 @@
 },
 "bx_dbg_oil_auto": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Oil Temp - Automatic Mounting",
         "value":180,
     },
@@ -1041,7 +1041,7 @@
 },
 "bx_dbg_oil_auto_silver": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Oil Temp - Automatic Mounting, Silver",
         "value":180,
     },
@@ -1117,7 +1117,7 @@
 },
 "bx_dbg_oil_water_auto": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Coolant Temp - Automatic Mounting",
         "value":180,
     },
@@ -1193,7 +1193,7 @@
 },
 "bx_dbg_oil_water_auto_silver": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Coolant Temp - Automatic Mounting, Silver",
         "value":180,
     },
@@ -1269,7 +1269,7 @@
 },
 "bx_dbg_oil_egt_auto": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Exhaust Temp - Automatic Mounting",
         "value":180,
     },
@@ -1343,7 +1343,7 @@
 },
 "bx_dbg_oil_egt_auto_silver": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Exhaust Temp - Automatic Mounting, Silver",
         "value":180,
     },
@@ -1417,7 +1417,7 @@
 },
 "bx_dbg_oil_fuel_auto": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Fuel Level - Automatic Mounting",
         "value":180,
     },
@@ -1490,7 +1490,7 @@
 },
 "bx_dbg_oil_fuel_auto_silver": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Fuel Level - Automatic Mounting, Silver",
         "value":180,
     },
@@ -1563,7 +1563,7 @@
 },
 "bx_dbg_oil_tach_auto": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Tachometer - Automatic Mounting",
         "value":180,
     },
@@ -1642,7 +1642,7 @@
 },
 "bx_dbg_oil_tach_auto_silver": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Tachometer - Automatic Mounting, Silver",
         "value":180,
     },
@@ -1721,7 +1721,7 @@
 },
 "bx_dbg_oil_boost_auto": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Boost - Automatic Mounting",
         "value":180,
     },
@@ -1813,7 +1813,7 @@
 },
 "bx_dbg_oil_boost_auto_silver": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Boost - Automatic Mounting, Silver",
         "value":180,
     },

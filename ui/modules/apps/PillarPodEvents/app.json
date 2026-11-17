@@ -13,7 +13,7 @@
     "min-width": "520px",
     "min-height": "320px"
   },
-  "author": "Kristof (likeBloodMoon)",
+  "author": "likeBloodMoon",
   "version": "0.1",
   "preserveAspectRatio": false,
   "directive": "pillarPodEvents",

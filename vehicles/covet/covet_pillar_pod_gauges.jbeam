@@ -7,7 +7,7 @@
 //the car's interior (pillar trim, bare pillar or roll cage, left- or right-hand drive).
 "covet_digital_boost_gauge_pillar": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Digital Pillar Gauges",
         "value":0,
     },
@@ -25,7 +25,7 @@
 },
 "covet_dbg_boost_auto": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Boost - Automatic Mounting",
         "value":180,
     },
@@ -123,7 +123,7 @@
 },
 "covet_dbg_boost_auto_silver": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Boost - Automatic Mounting, Silver",
         "value":180,
     },
@@ -221,7 +221,7 @@
 },
 "covet_dbg_boost_oil_auto": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Oil Temp - Automatic Mounting",
         "value":180,
     },
@@ -303,7 +303,7 @@
 },
 "covet_dbg_boost_oil_auto_silver": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Oil Temp - Automatic Mounting, Silver",
         "value":180,
     },
@@ -385,7 +385,7 @@
 },
 "covet_dbg_boost_water_auto": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Coolant Temp - Automatic Mounting",
         "value":180,
     },
@@ -467,7 +467,7 @@
 },
 "covet_dbg_boost_water_auto_silver": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Coolant Temp - Automatic Mounting, Silver",
         "value":180,
     },
@@ -549,7 +549,7 @@
 },
 "covet_dbg_boost_egt_auto": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Exhaust Temp - Automatic Mounting",
         "value":180,
     },
@@ -629,7 +629,7 @@
 },
 "covet_dbg_boost_egt_auto_silver": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Exhaust Temp - Automatic Mounting, Silver",
         "value":180,
     },
@@ -709,7 +709,7 @@
 },
 "covet_dbg_boost_fuel_auto": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Fuel Level - Automatic Mounting",
         "value":180,
     },
@@ -788,7 +788,7 @@
 },
 "covet_dbg_boost_fuel_auto_silver": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Fuel Level - Automatic Mounting, Silver",
         "value":180,
     },
@@ -867,7 +867,7 @@
 },
 "covet_dbg_boost_tach_auto": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Tachometer - Automatic Mounting",
         "value":180,
     },
@@ -952,7 +952,7 @@
 },
 "covet_dbg_boost_tach_auto_silver": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Tachometer - Automatic Mounting, Silver",
         "value":180,
     },
@@ -1037,7 +1037,7 @@
 },
 "covet_dbg_oil_auto": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Oil Temp - Automatic Mounting",
         "value":180,
     },
@@ -1119,7 +1119,7 @@
 },
 "covet_dbg_oil_auto_silver": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Oil Temp - Automatic Mounting, Silver",
         "value":180,
     },
@@ -1201,7 +1201,7 @@
 },
 "covet_dbg_oil_water_auto": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Coolant Temp - Automatic Mounting",
         "value":180,
     },
@@ -1283,7 +1283,7 @@
 },
 "covet_dbg_oil_water_auto_silver": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Coolant Temp - Automatic Mounting, Silver",
         "value":180,
     },
@@ -1365,7 +1365,7 @@
 },
 "covet_dbg_oil_egt_auto": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Exhaust Temp - Automatic Mounting",
         "value":180,
     },
@@ -1445,7 +1445,7 @@
 },
 "covet_dbg_oil_egt_auto_silver": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Exhaust Temp - Automatic Mounting, Silver",
         "value":180,
     },
@@ -1525,7 +1525,7 @@
 },
 "covet_dbg_oil_fuel_auto": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Fuel Level - Automatic Mounting",
         "value":180,
     },
@@ -1604,7 +1604,7 @@
 },
 "covet_dbg_oil_fuel_auto_silver": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Fuel Level - Automatic Mounting, Silver",
         "value":180,
     },
@@ -1683,7 +1683,7 @@
 },
 "covet_dbg_oil_tach_auto": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Tachometer - Automatic Mounting",
         "value":180,
     },
@@ -1768,7 +1768,7 @@
 },
 "covet_dbg_oil_tach_auto_silver": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Tachometer - Automatic Mounting, Silver",
         "value":180,
     },
@@ -1853,7 +1853,7 @@
 },
 "covet_dbg_oil_boost_auto": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Boost - Automatic Mounting",
         "value":180,
     },
@@ -1951,7 +1951,7 @@
 },
 "covet_dbg_oil_boost_auto_silver": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Boost - Automatic Mounting, Silver",
         "value":180,
     },
@@ -2049,7 +2049,7 @@
 },
 "covet_dbg_boost_mfd_auto": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Multi-Function Display - Automatic Mounting",
         "value":420,
     },
@@ -2146,7 +2146,7 @@
 },
 "covet_gauges_dbg_cluster": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Pillar Pod Digital Cluster",
         "value":650,
     },
@@ -2210,7 +2210,7 @@
 },
 "covet_gauges_rhd_dbg_cluster": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Pillar Pod Digital Cluster",
         "value":650,
     },
@@ -2274,7 +2274,7 @@
 },
 "covet_gauges_race_lhd_dbg_cluster": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Pillar Pod Digital Cluster (Race Dash)",
         "value":650,
     },
@@ -2341,7 +2341,7 @@
 },
 "covet_gauges_race_rhd_dbg_cluster": {
     "information":{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Pillar Pod Digital Cluster (Race Dash)",
         "value":650,
     },

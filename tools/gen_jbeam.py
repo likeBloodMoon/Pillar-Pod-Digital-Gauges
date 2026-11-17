@@ -134,7 +134,7 @@ out=f'''{{
 //the car's interior (pillar trim, bare pillar or roll cage, left- or right-hand drive).
 "{CAR["root"]}": {{
     "information":{{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Digital Pillar Gauges",
         "value":0,
     }},
@@ -173,7 +173,7 @@ THEME_CFG='''            "theme":"$dbg_gauge_theme",'''
 def part(key,name,slot,gvars,ctrl,cfgf,el,fb):
     return f'''"{key}": {{
     "information":{{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"{name}",
         "value":180,
     }},
@@ -273,7 +273,7 @@ if "MFD" in CAR:
     slot=P+"_dbg_boost"
     out+=f'''"{slot}_mfd_auto": {{
     "information":{{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"Multi-Function Display - Automatic Mounting",
         "value":420,
     }},
@@ -344,7 +344,7 @@ for slot,kind,sx,meshes in CAR.get("CLUSTER",()):
     name="Pillar Pod Digital Cluster" + (" (Race Dash)" if kind=="race" else "")
     out+=f'''"{slot}_dbg_cluster": {{
     "information":{{
-        "authors":"Kristof",
+        "authors":"likeBloodMoon",
         "name":"{name}",
         "value":650,
     }},
