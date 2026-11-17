@@ -135,6 +135,11 @@ def check_jbeam_structure(document: dict, root_part: str) -> None:
         for key in ("slots2", "controller", "variables", "flexbodies"):
             if key in part and not isinstance(part[key], list):
                 error(f"{name}: {key} must be an array")
+        # A slider with a blank unit is shown by the game as -100 % .. 100 % without its real values,
+        # which makes 0/1 switches and numbered choices unreadable, so every slider needs a unit.
+        for row in (part.get("variables") or [])[1:]:
+            if isinstance(row, list) and len(row) > 2 and row[1] == "range" and not str(row[2]).strip():
+                error(f"{name}: slider {row[0]} has no unit (the Tuning menu would show it as -100..100 %)")
         if "flexbodies" in part:
             rows = part["flexbodies"]
             if len(rows) < 2 or not isinstance(rows[0], list) or rows[0][:1] != ["mesh"]:

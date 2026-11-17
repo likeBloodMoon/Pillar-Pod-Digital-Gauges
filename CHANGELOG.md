@@ -42,6 +42,10 @@
   gauge again with Automatic Mounting and save the config.
 
 ### Fixed
+- **Unreadable Tuning sliders.** The on/off switches (shift lights, Shut-Down Sweep), the colour and
+  the first-page choices had no unit, and the game shows such a slider as −100 % to 100 % without
+  its real value. They now show the actual number (0/1 on/off, colour 0–5, page 0–5). The asset
+  check now fails on a slider without a unit.
 - **Screens flashed while the time of day changed.** The mod asked the game for the light level every
   2 seconds and the screens jumped straight to each new value, so dragging the time-of-day slider made
   them blink between bright and dim. The mod now asks twice a second and the screens fade to the new
