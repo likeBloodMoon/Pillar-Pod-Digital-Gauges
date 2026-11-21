@@ -91,7 +91,8 @@ var UNLIT_SEG_GLOW = "#060606";
 var SEG = {
   "0": "abcdef", "1": "bc", "2": "abdeg", "3": "abcdg", "4": "bcfg",
   "5": "acdfg", "6": "acdefg", "7": "abc", "8": "abcdefg", "9": "abcdfg",
-  "-": "g", " ": ""
+  "-": "g", " ": "",
+  "C": "adef", "L": "def", "r": "eg"          // "CLr" when the stored peak is cleared
 };
 // sized for reading from the driver's seat, where the whole 52 mm face is only ~100 px across
 var DW = 78, DH = 166, DT = 24, GAP = 18, PAD = 38;
@@ -327,7 +328,14 @@ function easeAmbient(dt) { if (ambShown >= 0) ambShown += (ambient - ambShown) *
 function ambNow() { return ambShown < 0 ? ambient : ambShown; }   // the first reading after spawning is taken as it is
 var AMB_FADE = 1.0;      // seconds
 var runPeak = -1e9;      // highest value of the current pull
-var storedPeak = -1e9;   // highest value since the car was spawned
+var storedPeak = -1e9;   // highest value since the car was spawned or the peak was cleared
+// key bindings (Options -> Controls): "Gauges: show peak" and "Gauges: reset peak" count presses in the
+// electrics values dbg_peak_show and dbg_peak_reset; a change in the count is a press
+var showCount = null, resetCount = null;
+var SHOW_TIME = 3, CLR_TIME = 1.5;
+var showT = -1;          // >= 0 while the stored peak is shown after a "show peak" press
+var clrT = -1;           // >= 0 while "CLr" is shown after a "reset peak" press
+function hasPeak() { return cfg.warnLow <= 0; }   // a fuel gauge keeps no peak
 var sesPeak = -1e9;      // highest value since the ignition came on (for the PEAK light)
 var peakLitT = 0;        // seconds the PEAK light stays on
 var overRev = false;     // tachometer: engine speed at or past the shift point (lights WARN)
@@ -421,7 +429,9 @@ function ledPos(value) {
 
 function render() {
   var n = cfg.ledCount, z = zeroLed();
-  var booting = powered && bootT >= 0, recalling = powered && !booting && recallT >= 0;
+  var booting = powered && bootT >= 0, clearing = powered && !booting && clrT >= 0;
+  var showing = powered && !booting && !clearing && showT >= 0;
+  var recalling = powered && !booting && !clearing && (showing || recallT >= 0);
   var shutting = !powered && offT >= 0, u = 0, digA = 1, bgA = 1;
   var pos = 0, txt = "", dot = -1, peak = -1, digitsOn = true, ledsOn = true, sweep = false, warnDig = false;
   if (booting) {
@@ -431,11 +441,17 @@ function render() {
     pos = n * (tri * tri * (3 - 2 * tri));
     txt = nDig === 4 ? "8888" : "888"; sweep = true;
     digitsOn = u < 0.8 || Math.floor(u * 40) % 2 === 0;
+  } else if (clearing) {
+    // the stored peak was cleared: "CLr" with the ring dark
+    txt = nDig === 4 ? " CLr" : "CLr"; ledsOn = false;
+  } else if (recalling && showing && storedPeak < -1e8) {
+    txt = dashes(); ledsOn = false;              // "show peak" with nothing stored yet
   } else if (recalling) {
     // peak recall: digits hold the peak, the outer LEDs flash up to it
-    pos = ledPos(recallVal);
-    var dt0 = digitText(recallVal); txt = dt0[0]; dot = dt0[1];
-    ledsOn = Math.floor(recallT * 6) % 2 === 0;
+    var rv = showing ? storedPeak : recallVal, rt = showing ? showT : recallT;
+    pos = ledPos(rv);
+    var dt0 = digitText(rv); txt = dt0[0]; dot = dt0[1];
+    ledsOn = Math.floor(rt * 6) % 2 === 0;
   } else if (shutting) {
     // shut-down: the ring sweeps up to full and back to empty while the digits and backlight fade out
     u = Math.min(1, offT / OFF_TIME);
@@ -469,7 +485,7 @@ function render() {
   var dim = 1;
   if (powered || shutting) dim = lights > 0 ? cfg.nightBrightness : cfg.nightBrightness + (1 - cfg.nightBrightness) * ambNow();
   var key = (powered ? "1" : "0") + Math.round(pos * 25) + txt + dot + peak + (digitsOn ? "d" : "x") + (ledsOn ? "l" : "o") +
-            (recalling ? "r" : "") + Math.round(dim * 50) + (shiftOn ? "s" + shiftPhase : "") + (cold ? "c" : "") +
+            (recalling ? "r" : "") + (clearing ? "C" : "") + Math.round(dim * 50) + (shiftOn ? "s" + shiftPhase : "") + (cold ? "c" : "") +
             (shutting ? "o" + Math.round(u * 60) : "") + (peakOn ? "P" : "") + (warnOn ? "W" : "") + (missing ? "m" : "") + (warnDig ? "w" : "");
   if (key === lastKey) return;                  // nothing visible changed
   lastKey = key;
@@ -564,10 +580,15 @@ function tick() {
     if (arcVal > runPeak) runPeak = arcVal;
     if (target <= zv + 0.5) offBoost += dt; else { offBoost = 0; if (target > zv + 1.5) recallT = -1; }
     if (recallT < 0 && offBoost > 0.6 && runPeak >= zv + cfg.recallMin) {
-      recallT = 0; recallVal = runPeak; storedPeak = Math.max(storedPeak, runPeak); runPeak = -1e9;
+      recallT = 0; recallVal = runPeak; runPeak = -1e9;
     }
     if (recallT >= 0) { recallT += dt; if (recallT >= cfg.recallTime) recallT = -1; }
   } else { recallT = -1; }
+
+  // stored peak (shown with the "show peak" binding): the highest reading while the gauge is live
+  if (powered && bootT < 0 && offT < 0 && !missing && hasPeak() && arcVal > storedPeak) storedPeak = arcVal;
+  if (showT >= 0) { showT += dt; if (showT >= SHOW_TIME || !powered) { showT = -1; lastKey = ""; } }
+  if (clrT >= 0) { clrT += dt; if (clrT >= CLR_TIME || !powered) { clrT = -1; lastKey = ""; } }
 
   // PEAK light: comes on for a moment whenever the reading sets a new high for this drive in the top
   // part of the scale (so a warming engine or idling doesn't keep it lit)
@@ -668,7 +689,28 @@ function updateData(data) {
   }
   var ign = e.ignitionLevel;
   powered = (ign === undefined || ign === null) ? true : (Number(ign) >= 1);
+  peakKeys(Number(e.dbg_peak_show) || 0, Number(e.dbg_peak_reset) || 0);
   tick();
+}
+
+// "Gauges: show peak" / "Gauges: reset peak" presses. The first count seen is only remembered (the page
+// can be reloaded with presses already counted); a press with the ignition off or during the start-up
+// or shut-down sweep is ignored, like the buttons on a real gauge.
+function peakKeys(sc, rc) {
+  if (showCount === null) showCount = sc;
+  if (resetCount === null) resetCount = rc;
+  var live = powered && bootT < 0 && offT < 0 && hasPeak();
+  if (rc !== resetCount) {
+    resetCount = rc;
+    if (live) {
+      storedPeak = -1e9; runPeak = -1e9; sesPeak = -1e9; peakPos = 0; peakLitT = 0;
+      recallT = -1; showT = -1; clrT = 0; lastKey = "";
+    }
+  }
+  if (sc !== showCount) {
+    showCount = sc;
+    if (live && !missing) { showT = 0; clrT = -1; recallT = -1; lastKey = ""; }
+  }
 }
 
 function updateMode(data) {}

@@ -52,6 +52,12 @@ Under the label there are two small lights. PEAK (blue) flashes on when the read
 for the drive near the top of the scale. WARN (red) stays on while the reading is past its limit:
 overboost, overheating, low fuel, or the shift point on the tach. The fuel gauge only has WARN.
 
+Each gauge also stores the highest reading of the drive. Bind "Gauges: show peak" and "Gauges: reset
+peak" in Options → Controls: show peak puts the stored peak on the digits for 3 seconds with PEAK
+in place of the label, and reset peak clears it (the gauge shows `CLr`). The display and the cluster
+show their session maximums (boost, engine speed, oil, coolant and exhaust temperature, g) on the
+same bindings. The fuel gauge keeps no peak.
+
 If the car doesn't have that reading at all, say a boost gauge on a car with no turbo or
 supercharger, the gauge shows `---` and leaves the LED ring dark, so you don't get a fake 0. The
 display and the cluster do the same.

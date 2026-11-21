@@ -44,6 +44,12 @@
         ["fileName"],
         ["gauges/genericGauges", {"name":"dbgGauge"}],
     ],
+    //"Gauges: show peak" and "Gauges: reset peak" in Options -> Controls (pillar_pod_gauges.interaction.json)
+    "actionsEnabled": [
+        ["id"],
+        ["dbgPeakShow"],
+        ["dbgPeakReset"],
+    ],
     "dbgGauge": {
         "configuration": {
             "materialName": "@dbg_screen",
@@ -87,6 +93,8 @@
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
+                "dbg_peak_show",
+                "dbg_peak_reset",
             ],
             "customModules": [
                 ["moduleName", "property"],
@@ -136,6 +144,12 @@
         ["fileName"],
         ["gauges/genericGauges", {"name":"dbgGauge"}],
     ],
+    //"Gauges: show peak" and "Gauges: reset peak" in Options -> Controls (pillar_pod_gauges.interaction.json)
+    "actionsEnabled": [
+        ["id"],
+        ["dbgPeakShow"],
+        ["dbgPeakReset"],
+    ],
     "dbgGauge": {
         "configuration": {
             "materialName": "@dbg_screen",
@@ -179,6 +193,8 @@
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
+                "dbg_peak_show",
+                "dbg_peak_reset",
             ],
             "customModules": [
                 ["moduleName", "property"],
@@ -227,6 +243,12 @@
         ["fileName"],
         ["gauges/genericGauges", {"name":"dbgGauge"}],
     ],
+    //"Gauges: show peak" and "Gauges: reset peak" in Options -> Controls (pillar_pod_gauges.interaction.json)
+    "actionsEnabled": [
+        ["id"],
+        ["dbgPeakShow"],
+        ["dbgPeakReset"],
+    ],
     "dbgGauge": {
         "configuration": {
             "materialName": "@dbg_screen",
@@ -255,6 +277,8 @@
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
+                "dbg_peak_show",
+                "dbg_peak_reset",
             ],
             "customModules": [
                 ["moduleName", "property"],
@@ -303,6 +327,12 @@
         ["fileName"],
         ["gauges/genericGauges", {"name":"dbgGauge"}],
     ],
+    //"Gauges: show peak" and "Gauges: reset peak" in Options -> Controls (pillar_pod_gauges.interaction.json)
+    "actionsEnabled": [
+        ["id"],
+        ["dbgPeakShow"],
+        ["dbgPeakReset"],
+    ],
     "dbgGauge": {
         "configuration": {
             "materialName": "@dbg_screen",
@@ -331,6 +361,8 @@
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
+                "dbg_peak_show",
+                "dbg_peak_reset",
             ],
             "customModules": [
                 ["moduleName", "property"],
@@ -379,6 +411,12 @@
         ["fileName"],
         ["gauges/genericGauges", {"name":"dbgGauge"}],
     ],
+    //"Gauges: show peak" and "Gauges: reset peak" in Options -> Controls (pillar_pod_gauges.interaction.json)
+    "actionsEnabled": [
+        ["id"],
+        ["dbgPeakShow"],
+        ["dbgPeakReset"],
+    ],
     "dbgGauge": {
         "configuration": {
             "materialName": "@dbg_screen",
@@ -407,6 +445,8 @@
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
+                "dbg_peak_show",
+                "dbg_peak_reset",
             ],
             "customModules": [
                 ["moduleName", "property"],
@@ -455,6 +495,12 @@
         ["fileName"],
         ["gauges/genericGauges", {"name":"dbgGauge"}],
     ],
+    //"Gauges: show peak" and "Gauges: reset peak" in Options -> Controls (pillar_pod_gauges.interaction.json)
+    "actionsEnabled": [
+        ["id"],
+        ["dbgPeakShow"],
+        ["dbgPeakReset"],
+    ],
     "dbgGauge": {
         "configuration": {
             "materialName": "@dbg_screen",
@@ -483,6 +529,8 @@
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
+                "dbg_peak_show",
+                "dbg_peak_reset",
             ],
             "customModules": [
                 ["moduleName", "property"],
@@ -530,6 +578,12 @@
         ["fileName"],
         ["gauges/genericGauges", {"name":"dbgGauge"}],
     ],
+    //"Gauges: show peak" and "Gauges: reset peak" in Options -> Controls (pillar_pod_gauges.interaction.json)
+    "actionsEnabled": [
+        ["id"],
+        ["dbgPeakShow"],
+        ["dbgPeakReset"],
+    ],
     "dbgGauge": {
         "configuration": {
             "materialName": "@dbg_screen",
@@ -557,6 +611,8 @@
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
+                "dbg_peak_show",
+                "dbg_peak_reset",
             ],
             "customModules": [
                 ["moduleName", "property"],
@@ -604,6 +660,12 @@
         ["fileName"],
         ["gauges/genericGauges", {"name":"dbgGauge"}],
     ],
+    //"Gauges: show peak" and "Gauges: reset peak" in Options -> Controls (pillar_pod_gauges.interaction.json)
+    "actionsEnabled": [
+        ["id"],
+        ["dbgPeakShow"],
+        ["dbgPeakReset"],
+    ],
     "dbgGauge": {
         "configuration": {
             "materialName": "@dbg_screen",
@@ -631,6 +693,8 @@
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
+                "dbg_peak_show",
+                "dbg_peak_reset",
             ],
             "customModules": [
                 ["moduleName", "property"],
@@ -678,6 +742,12 @@
         ["fileName"],
         ["gauges/genericGauges", {"name":"dbgGauge"}],
     ],
+    //"Gauges: show peak" and "Gauges: reset peak" in Options -> Controls (pillar_pod_gauges.interaction.json)
+    "actionsEnabled": [
+        ["id"],
+        ["dbgPeakShow"],
+        ["dbgPeakReset"],
+    ],
     "dbgGauge": {
         "configuration": {
             "materialName": "@dbg_screen",
@@ -704,6 +774,8 @@
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
+                "dbg_peak_show",
+                "dbg_peak_reset",
             ],
             "customModules": [
                 ["moduleName", "property"],
@@ -751,6 +823,12 @@
         ["fileName"],
         ["gauges/genericGauges", {"name":"dbgGauge"}],
     ],
+    //"Gauges: show peak" and "Gauges: reset peak" in Options -> Controls (pillar_pod_gauges.interaction.json)
+    "actionsEnabled": [
+        ["id"],
+        ["dbgPeakShow"],
+        ["dbgPeakReset"],
+    ],
     "dbgGauge": {
         "configuration": {
             "materialName": "@dbg_screen",
@@ -777,6 +855,8 @@
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
+                "dbg_peak_show",
+                "dbg_peak_reset",
             ],
             "customModules": [
                 ["moduleName", "property"],
@@ -826,6 +906,12 @@
         ["fileName"],
         ["gauges/genericGauges", {"name":"dbgGauge"}],
     ],
+    //"Gauges: show peak" and "Gauges: reset peak" in Options -> Controls (pillar_pod_gauges.interaction.json)
+    "actionsEnabled": [
+        ["id"],
+        ["dbgPeakShow"],
+        ["dbgPeakReset"],
+    ],
     "dbgGauge": {
         "configuration": {
             "materialName": "@dbg_screen",
@@ -856,6 +942,8 @@
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
+                "dbg_peak_show",
+                "dbg_peak_reset",
             ],
             "customModules": [
                 ["moduleName", "property"],
@@ -905,6 +993,12 @@
         ["fileName"],
         ["gauges/genericGauges", {"name":"dbgGauge"}],
     ],
+    //"Gauges: show peak" and "Gauges: reset peak" in Options -> Controls (pillar_pod_gauges.interaction.json)
+    "actionsEnabled": [
+        ["id"],
+        ["dbgPeakShow"],
+        ["dbgPeakReset"],
+    ],
     "dbgGauge": {
         "configuration": {
             "materialName": "@dbg_screen",
@@ -935,6 +1029,8 @@
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
+                "dbg_peak_show",
+                "dbg_peak_reset",
             ],
             "customModules": [
                 ["moduleName", "property"],
@@ -983,6 +1079,12 @@
         ["fileName"],
         ["gauges/genericGauges", {"name":"dbgOilGauge"}],
     ],
+    //"Gauges: show peak" and "Gauges: reset peak" in Options -> Controls (pillar_pod_gauges.interaction.json)
+    "actionsEnabled": [
+        ["id"],
+        ["dbgPeakShow"],
+        ["dbgPeakReset"],
+    ],
     "dbgOilGauge": {
         "configuration": {
             "materialName": "@dbg_oil_screen",
@@ -1011,6 +1113,8 @@
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
+                "dbg_peak_show",
+                "dbg_peak_reset",
             ],
             "customModules": [
                 ["moduleName", "property"],
@@ -1059,6 +1163,12 @@
         ["fileName"],
         ["gauges/genericGauges", {"name":"dbgOilGauge"}],
     ],
+    //"Gauges: show peak" and "Gauges: reset peak" in Options -> Controls (pillar_pod_gauges.interaction.json)
+    "actionsEnabled": [
+        ["id"],
+        ["dbgPeakShow"],
+        ["dbgPeakReset"],
+    ],
     "dbgOilGauge": {
         "configuration": {
             "materialName": "@dbg_oil_screen",
@@ -1087,6 +1197,8 @@
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
+                "dbg_peak_show",
+                "dbg_peak_reset",
             ],
             "customModules": [
                 ["moduleName", "property"],
@@ -1135,6 +1247,12 @@
         ["fileName"],
         ["gauges/genericGauges", {"name":"dbgOilGauge"}],
     ],
+    //"Gauges: show peak" and "Gauges: reset peak" in Options -> Controls (pillar_pod_gauges.interaction.json)
+    "actionsEnabled": [
+        ["id"],
+        ["dbgPeakShow"],
+        ["dbgPeakReset"],
+    ],
     "dbgOilGauge": {
         "configuration": {
             "materialName": "@dbg_oil_screen",
@@ -1163,6 +1281,8 @@
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
+                "dbg_peak_show",
+                "dbg_peak_reset",
             ],
             "customModules": [
                 ["moduleName", "property"],
@@ -1211,6 +1331,12 @@
         ["fileName"],
         ["gauges/genericGauges", {"name":"dbgOilGauge"}],
     ],
+    //"Gauges: show peak" and "Gauges: reset peak" in Options -> Controls (pillar_pod_gauges.interaction.json)
+    "actionsEnabled": [
+        ["id"],
+        ["dbgPeakShow"],
+        ["dbgPeakReset"],
+    ],
     "dbgOilGauge": {
         "configuration": {
             "materialName": "@dbg_oil_screen",
@@ -1239,6 +1365,8 @@
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
+                "dbg_peak_show",
+                "dbg_peak_reset",
             ],
             "customModules": [
                 ["moduleName", "property"],
@@ -1286,6 +1414,12 @@
         ["fileName"],
         ["gauges/genericGauges", {"name":"dbgOilGauge"}],
     ],
+    //"Gauges: show peak" and "Gauges: reset peak" in Options -> Controls (pillar_pod_gauges.interaction.json)
+    "actionsEnabled": [
+        ["id"],
+        ["dbgPeakShow"],
+        ["dbgPeakReset"],
+    ],
     "dbgOilGauge": {
         "configuration": {
             "materialName": "@dbg_oil_screen",
@@ -1313,6 +1447,8 @@
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
+                "dbg_peak_show",
+                "dbg_peak_reset",
             ],
             "customModules": [
                 ["moduleName", "property"],
@@ -1360,6 +1496,12 @@
         ["fileName"],
         ["gauges/genericGauges", {"name":"dbgOilGauge"}],
     ],
+    //"Gauges: show peak" and "Gauges: reset peak" in Options -> Controls (pillar_pod_gauges.interaction.json)
+    "actionsEnabled": [
+        ["id"],
+        ["dbgPeakShow"],
+        ["dbgPeakReset"],
+    ],
     "dbgOilGauge": {
         "configuration": {
             "materialName": "@dbg_oil_screen",
@@ -1387,6 +1529,8 @@
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
+                "dbg_peak_show",
+                "dbg_peak_reset",
             ],
             "customModules": [
                 ["moduleName", "property"],
@@ -1434,6 +1578,12 @@
         ["fileName"],
         ["gauges/genericGauges", {"name":"dbgOilGauge"}],
     ],
+    //"Gauges: show peak" and "Gauges: reset peak" in Options -> Controls (pillar_pod_gauges.interaction.json)
+    "actionsEnabled": [
+        ["id"],
+        ["dbgPeakShow"],
+        ["dbgPeakReset"],
+    ],
     "dbgOilGauge": {
         "configuration": {
             "materialName": "@dbg_oil_screen",
@@ -1460,6 +1610,8 @@
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
+                "dbg_peak_show",
+                "dbg_peak_reset",
             ],
             "customModules": [
                 ["moduleName", "property"],
@@ -1507,6 +1659,12 @@
         ["fileName"],
         ["gauges/genericGauges", {"name":"dbgOilGauge"}],
     ],
+    //"Gauges: show peak" and "Gauges: reset peak" in Options -> Controls (pillar_pod_gauges.interaction.json)
+    "actionsEnabled": [
+        ["id"],
+        ["dbgPeakShow"],
+        ["dbgPeakReset"],
+    ],
     "dbgOilGauge": {
         "configuration": {
             "materialName": "@dbg_oil_screen",
@@ -1533,6 +1691,8 @@
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
+                "dbg_peak_show",
+                "dbg_peak_reset",
             ],
             "customModules": [
                 ["moduleName", "property"],
@@ -1582,6 +1742,12 @@
         ["fileName"],
         ["gauges/genericGauges", {"name":"dbgOilGauge"}],
     ],
+    //"Gauges: show peak" and "Gauges: reset peak" in Options -> Controls (pillar_pod_gauges.interaction.json)
+    "actionsEnabled": [
+        ["id"],
+        ["dbgPeakShow"],
+        ["dbgPeakReset"],
+    ],
     "dbgOilGauge": {
         "configuration": {
             "materialName": "@dbg_oil_screen",
@@ -1612,6 +1778,8 @@
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
+                "dbg_peak_show",
+                "dbg_peak_reset",
             ],
             "customModules": [
                 ["moduleName", "property"],
@@ -1661,6 +1829,12 @@
         ["fileName"],
         ["gauges/genericGauges", {"name":"dbgOilGauge"}],
     ],
+    //"Gauges: show peak" and "Gauges: reset peak" in Options -> Controls (pillar_pod_gauges.interaction.json)
+    "actionsEnabled": [
+        ["id"],
+        ["dbgPeakShow"],
+        ["dbgPeakReset"],
+    ],
     "dbgOilGauge": {
         "configuration": {
             "materialName": "@dbg_oil_screen",
@@ -1691,6 +1865,8 @@
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
+                "dbg_peak_show",
+                "dbg_peak_reset",
             ],
             "customModules": [
                 ["moduleName", "property"],
@@ -1740,6 +1916,12 @@
         ["fileName"],
         ["gauges/genericGauges", {"name":"dbgOilGauge"}],
     ],
+    //"Gauges: show peak" and "Gauges: reset peak" in Options -> Controls (pillar_pod_gauges.interaction.json)
+    "actionsEnabled": [
+        ["id"],
+        ["dbgPeakShow"],
+        ["dbgPeakReset"],
+    ],
     "dbgOilGauge": {
         "configuration": {
             "materialName": "@dbg_oil_screen",
@@ -1783,6 +1965,8 @@
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
+                "dbg_peak_show",
+                "dbg_peak_reset",
             ],
             "customModules": [
                 ["moduleName", "property"],
@@ -1832,6 +2016,12 @@
         ["fileName"],
         ["gauges/genericGauges", {"name":"dbgOilGauge"}],
     ],
+    //"Gauges: show peak" and "Gauges: reset peak" in Options -> Controls (pillar_pod_gauges.interaction.json)
+    "actionsEnabled": [
+        ["id"],
+        ["dbgPeakShow"],
+        ["dbgPeakReset"],
+    ],
     "dbgOilGauge": {
         "configuration": {
             "materialName": "@dbg_oil_screen",
@@ -1875,6 +2065,8 @@
                 "ignitionLevel",
                 "lights",
                 "lowhighbeam",
+                "dbg_peak_show",
+                "dbg_peak_reset",
             ],
             "customModules": [
                 ["moduleName", "property"],
