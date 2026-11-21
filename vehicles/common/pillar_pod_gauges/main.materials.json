@@ -736,13 +736,13 @@
     "Stages": [
       {
         "baseColorFactor": [
-          0.008,
-          0.008,
-          0.009,
+          0.006,
+          0.006,
+          0.007,
           1
         ],
-        "metallicFactor": 0.2,
-        "roughnessFactor": 0.18
+        "metallicFactor": 1,
+        "roughnessFactor": 0.4
       },
       {},
       {},
@@ -774,8 +774,8 @@
         ],
         "emissiveIntensityNits": 2200,
         "emissiveMap": "@dbg_screen",
-        "metallicFactor": 0,
-        "roughnessFactor": 0.12,
+        "metallicFactor": 1,
+        "roughnessFactor": 0.3,
         "baseColorMap": "/vehicles/common/pillar_pod_gauges/dbg_face_smoked_boost_b.color.png"
       },
       {},
@@ -809,8 +809,8 @@
         ],
         "emissiveIntensityNits": 2200,
         "emissiveMap": "@dbg_screen",
-        "metallicFactor": 0,
-        "roughnessFactor": 0.12,
+        "metallicFactor": 1,
+        "roughnessFactor": 0.3,
         "baseColorMap": "/vehicles/common/pillar_pod_gauges/dbg_face_smoked_oil_b.color.png"
       },
       {},
@@ -844,8 +844,8 @@
         ],
         "emissiveIntensityNits": 2200,
         "emissiveMap": "@dbg_screen",
-        "metallicFactor": 0,
-        "roughnessFactor": 0.12,
+        "metallicFactor": 1,
+        "roughnessFactor": 0.3,
         "baseColorMap": "/vehicles/common/pillar_pod_gauges/dbg_face_smoked_fuel_b.color.png"
       },
       {},
@@ -879,8 +879,8 @@
         ],
         "emissiveIntensityNits": 2200,
         "emissiveMap": "@dbg_screen",
-        "metallicFactor": 0,
-        "roughnessFactor": 0.12,
+        "metallicFactor": 1,
+        "roughnessFactor": 0.3,
         "baseColorMap": "/vehicles/common/pillar_pod_gauges/dbg_face_smoked_egt_b.color.png"
       },
       {},
@@ -914,8 +914,8 @@
         ],
         "emissiveIntensityNits": 2200,
         "emissiveMap": "@dbg_oil_screen",
-        "metallicFactor": 0,
-        "roughnessFactor": 0.12,
+        "metallicFactor": 1,
+        "roughnessFactor": 0.3,
         "baseColorMap": "/vehicles/common/pillar_pod_gauges/dbg_face_smoked_oil_b.color.png"
       },
       {},
@@ -949,8 +949,8 @@
         ],
         "emissiveIntensityNits": 2200,
         "emissiveMap": "@dbg_oil_screen",
-        "metallicFactor": 0,
-        "roughnessFactor": 0.12,
+        "metallicFactor": 1,
+        "roughnessFactor": 0.3,
         "baseColorMap": "/vehicles/common/pillar_pod_gauges/dbg_face_smoked_boost_b.color.png"
       },
       {},
@@ -984,8 +984,8 @@
         ],
         "emissiveIntensityNits": 2200,
         "emissiveMap": "@dbg_oil_screen",
-        "metallicFactor": 0,
-        "roughnessFactor": 0.12,
+        "metallicFactor": 1,
+        "roughnessFactor": 0.3,
         "baseColorMap": "/vehicles/common/pillar_pod_gauges/dbg_face_smoked_fuel_b.color.png"
       },
       {},
@@ -1019,8 +1019,8 @@
         ],
         "emissiveIntensityNits": 2200,
         "emissiveMap": "@dbg_oil_screen",
-        "metallicFactor": 0,
-        "roughnessFactor": 0.12,
+        "metallicFactor": 1,
+        "roughnessFactor": 0.3,
         "baseColorMap": "/vehicles/common/pillar_pod_gauges/dbg_face_smoked_egt_b.color.png"
       },
       {},
