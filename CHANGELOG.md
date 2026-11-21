@@ -17,6 +17,11 @@
   UI app lists them with plots and a timeline of the drive. Drives are saved to
   `pillar_pod_gauges/recordings` in the BeamNG user folder and open in `viewer/index.html` on a PC,
   which can also export any event as CSV.
+- Smoked finish for every round gauge, next to black and silver, like the smoked lens on Defi-style
+  gauges. With the gauge off the face is plain black: the unlit LEDs are only a faint shadow, and
+  the "8" segments and the PEAK and WARN lights don't show until they light up. The bezel is a
+  darker gloss black. The lit LEDs, digits and labels glow the same as on the black finish, and
+  every colour theme works with it. Pick "Automatic Mounting, Smoked" for any gauge type.
 - Tachometer for the pillar gauges, in either position. The LED ring runs up to the engine's rev
   limit, with the last three (red) LEDs past it, and the digits show thousands (6.8 = 6800 rpm). The
   whole ring flashes red at the shift point. Tuning → Gauges has the shift light on/off, the RPM it
@@ -44,8 +49,8 @@
   (12 %) once; set it again and save.
 - Only automatic mounting. The fixed mountings (one part per interior, side and finish for the
   Boost and Oil Temp gauges) are gone, since automatic mounting finds the same spots by itself. The
-  parts list is much shorter (30 parts instead of 54 on the Covet, 25 instead of 41 on the 200BX),
-  and the mod's mesh file is about a fifth smaller.
+  parts list is much shorter: in black and silver, 30 parts instead of 54 on the Covet and 25 instead
+  of 41 on the 200BX (the smoked finish adds 12 to each).
   If you saved a config with a fixed mounting, that gauge is missing when you load it: pick the
   gauge again with Automatic Mounting and save the config.
 

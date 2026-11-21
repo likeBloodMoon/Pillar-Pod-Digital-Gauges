@@ -44,6 +44,11 @@ GAUGES = [
     ("gauge_boost_theme_supergreen", "boost", "black", dict(BOOST, uiUnitPressure="psi", theme=5)),
     ("gauge_oil_theme_purple_silver", "oil", "white", {"source": "oiltemp", "decimals": 0, "minValue": 50, "maxValue": 150, "titleLabel": "OIL TEMP", "warnValue": 130, "theme": 4}),
     ("gauge_tach_theme_white", "oil", "black", {"source": "rpm", "minValue": 0, "maxValue": 0, "titleLabel": "RPM", "shiftLight": 1, "shiftAt": 96, "peakHold": 1.5, "theme": 1}),
+    # smoked-lens finish: the unlit LEDs, segments and PEAK/WARN are hidden behind the lens
+    ("gauge_boost_smoked", "boost", "smoked", dict(BOOST, uiUnitPressure="psi")),
+    ("gauge_oil_smoked_theme_purple", "oil", "smoked", {"source": "oiltemp", "decimals": 0, "minValue": 50, "maxValue": 150, "titleLabel": "OIL TEMP", "warnValue": 130, "theme": 4}),
+    ("gauge_egt_smoked", "egt", "smoked", {"source": "egt", "decimals": 0, "minValue": 200, "maxValue": 1000, "titleLabel": "EGT", "warnValue": 900, "printedDigits": 0}),
+    ("gauge_fuel_smoked", "fuel", "smoked", {"source": "fuel", "minValue": 0, "maxValue": 100, "warnLow": 1, "titleLabel": "FUEL", "warnValue": 10}),
 ]
 MFD_PAGES = ["boost", "tyres", "engine", "brakes", "gforce"]
 CLUSTER_PAGES = ["boost", "tyres", "engine", "brakes", "gforce", "trip"]
@@ -88,7 +93,7 @@ async def render(root, out):
         for name, face, fin, cfg in GAUGES:
             if not os.path.exists(os.path.join(pages, "dbg_face_%s_%s_b.color.png" % (fin, face))):
                 continue                         # an older version without this face
-            cfg = dict(cfg, face="white" if fin == "white" else "black")
+            cfg = dict(cfg, face=fin)
             emissive = await run("screen.html", (512, 512), cfg, DATA)
             printed = Image.open(os.path.join(pages, "dbg_face_%s_%s_b.color.png" % (fin, face))).convert("RGB")
             ImageChops.add(printed, emissive).save(os.path.join(out, name + ".png"))
