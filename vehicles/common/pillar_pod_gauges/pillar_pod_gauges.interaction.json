@@ -2,6 +2,9 @@
     "fileversion": 2,
     "actions": {
         //page button of the Pillar Pod Digital Gauges multi-function display: counts presses in an electrics value the display reads
-        "dbgMfdNextPage": {"order":9100, "onDown":"electrics.values.dbg_mfd_page = (electrics.values.dbg_mfd_page or 0) + 1", "title":"Display: next page", "desc":"Pillar Pod Digital Gauges: show the next page of the multi-function display"}
+        "dbgMfdNextPage": {"order":9100, "onDown":"electrics.values.dbg_mfd_page = (electrics.values.dbg_mfd_page or 0) + 1", "title":"Display: next page", "desc":"Pillar Pod Digital Gauges: show the next page of the multi-function display"},
+        //peak buttons for every Pillar Pod screen: count presses in electrics values the screens read
+        "dbgPeakShow": {"order":9101, "onDown":"electrics.values.dbg_peak_show = (electrics.values.dbg_peak_show or 0) + 1", "title":"Gauges: show peak", "desc":"Pillar Pod Digital Gauges: the round gauges show their stored peak for 3 seconds, the display and the cluster their session maximums"},
+        "dbgPeakReset": {"order":9102, "onDown":"electrics.values.dbg_peak_reset = (electrics.values.dbg_peak_reset or 0) + 1", "title":"Gauges: reset peak", "desc":"Pillar Pod Digital Gauges: clear the stored peaks and session maximums (the round gauges show CLr)"}
     }
 }

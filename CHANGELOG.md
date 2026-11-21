@@ -3,6 +3,12 @@
 ## Unreleased
 
 ### Added
+- Key bindings to show and reset the peak (Options → Controls → "Gauges: show peak" and "Gauges:
+  reset peak"). Show peak puts each round gauge's stored peak (the highest reading since the car
+  was spawned or the peak was last cleared) on the digits for 3 seconds, with PEAK in place of the
+  label, and the display and the cluster list their session maximums: boost, engine speed, oil,
+  coolant and exhaust temperature, and g. Reset peak clears them all; the round gauges confirm with
+  `CLr`. The fuel gauge keeps no peak and ignores both. Presses with the ignition off are ignored.
 - Colour themes for the round gauges (Tuning → Gauges → Gauges: Colour). One setting covers every
   round gauge: a green ring with red digits (the original look), or a white, amber, blue, purple or
   super green ring and digits. Purple and super green also light the title and unit label

@@ -190,6 +190,12 @@ def part(key,name,slot,gvars,ctrl,cfgf,el,fb):
         ["fileName"],
         ["gauges/genericGauges", {{"name":"{ctrl}"}}],
     ],
+    //"Gauges: show peak" and "Gauges: reset peak" in Options -> Controls (pillar_pod_gauges.interaction.json)
+    "actionsEnabled": [
+        ["id"],
+        ["dbgPeakShow"],
+        ["dbgPeakReset"],
+    ],
     "{ctrl}": {{
         "configuration": {{
 {cfgf}
@@ -217,7 +223,9 @@ def part(key,name,slot,gvars,ctrl,cfgf,el,fb):
     ],
 }},
 '''
-LIGHT=["ignitionLevel","lights","lowhighbeam"]
+# electrics values bumped by the "Gauges: show peak" / "Gauges: reset peak" bindings
+PEAK_KEYS=["dbg_peak_show","dbg_peak_reset"]
+LIGHT=["ignitionLevel","lights","lowhighbeam"]+PEAK_KEYS
 # gauge types: (key, name, config, sliders, electrics, printed face b/t/f/e)
 TYPES={"boost":("Boost",BOOST_CFG,BOOST_VARS,["turboBoost","superchargerBoost","engineRunning","rpm","maxrpm"]+LIGHT,"b"),
        "oil":("Oil Temp",OIL_CFG,OIL_VARS,["oiltemp"]+LIGHT,"t"),
@@ -300,7 +308,7 @@ if "MFD" in CAR:
         }},
         "displayData": {{
             "electrics": [
-                "dbg_mfd_page", "turboBoost", "superchargerBoost", "rpm", "maxrpm", "oiltemp", "watertemp",
+                "dbg_mfd_page", "dbg_peak_show", "dbg_peak_reset", "turboBoost", "superchargerBoost", "rpm", "maxrpm", "oiltemp", "watertemp",
                 "fuel", "fuelVolume", "lowfuel", "wheelspeed", "gear", "checkengine", "parkingbrake",
                 "ignitionLevel", "lights", "lowhighbeam",
             ],
@@ -327,6 +335,8 @@ if "MFD" in CAR:
     "actionsEnabled": [
         ["id"],
         ["dbgMfdNextPage"],
+        ["dbgPeakShow"],
+        ["dbgPeakReset"],
     ],
     "triggerEventLinks2":[
         ["triggerId:triggers2", "triggerInput", "inputAction"],
@@ -372,7 +382,7 @@ for slot,kind,sx,meshes in CAR.get("CLUSTER",()):
         }},
         "displayData": {{
             "electrics": [
-                "dbg_mfd_page", "turboBoost", "superchargerBoost", "rpm", "maxrpm", "oiltemp", "watertemp",
+                "dbg_mfd_page", "dbg_peak_show", "dbg_peak_reset", "turboBoost", "superchargerBoost", "rpm", "maxrpm", "oiltemp", "watertemp",
                 "fuel", "fuelVolume", "lowfuel", "wheelspeed", "gear", "checkengine", "parkingbrake",
                 "ignitionLevel", "lights", "lowhighbeam",
             ],
@@ -399,6 +409,8 @@ for slot,kind,sx,meshes in CAR.get("CLUSTER",()):
     "actionsEnabled": [
         ["id"],
         ["dbgMfdNextPage"],
+        ["dbgPeakShow"],
+        ["dbgPeakReset"],
     ],
     "triggerEventLinks2":[
         ["triggerId:triggers2", "triggerInput", "inputAction"],

@@ -49,6 +49,22 @@ function easeAmbient(dt) { if (ambShown >= 0) ambShown += (ambient - ambShown) *
 function ambNow() { return ambShown < 0 ? ambient : ambShown; }   // the first reading after spawning is taken as it is
 var AMB_FADE = 1.0;      // seconds
 var boostPeak = 0, gPeak = { lat: 0, lon: 0 }, gTrail = [], nominal = {};
+// session maximums for the "Gauges: show peak" binding (boost and g are kept above); null = nothing yet
+var rpmPeak = null, oilPeak = null, waterPeak = null, egtPeak = null;
+// "Gauges: show peak" / "Gauges: reset peak" presses, counted in the electrics values dbg_peak_show and
+// dbg_peak_reset: the maximums are shown for SHOW_TIME seconds, or cleared with a short confirmation
+var showCount = null, resetCount = null, showT = -1, clrT = -1, SHOW_TIME = 3, CLR_TIME = 1.5;
+function clearPeaks() { boostPeak = 0; gPeak = { lat: 0, lon: 0 }; rpmPeak = oilPeak = waterPeak = egtPeak = null; }
+function hi(cur, v) { return cur === null || v > cur ? v : cur; }
+function peakKeys(sc, rc) {                       // the first count seen is only remembered
+  if (showCount === null) showCount = sc;
+  if (resetCount === null) resetCount = rc;
+  var live = powered && bootT < 0 && offT < 0;
+  if (rc !== resetCount) { resetCount = rc; if (live) { clearPeaks(); showT = -1; clrT = 0; } }
+  if (sc !== showCount) { showCount = sc; if (live) { showT = 0; clrT = -1; } }
+}
+// a session maximum for the list, "---" when the car doesn't have the reading or there is none yet
+function peakText(v, none, f) { return none || v === null ? NA : f(v); }
 var last = 0, clock = 0, bootT = -1, wasPowered = false, boost = 0, runT = 0;
 var OFF_TIME = 0.8, offT = -1, onT = 0, resets = null, quietT = 0;   // shut-down fade (ignition switched off)
 
@@ -337,8 +353,29 @@ function pTrip(x0, y0, w) {
 }
 var PAGE_FN = [pBoost, pTyres, pEngine, pBrakes, pG, pTrip];
 var PAGE_UNIT = function (i) { return i === 1 ? pKpa(0)[2] : (i === 3 ? deg() : ""); };
+// "Gauges: show peak": the session maximums in the right panel, three columns of two, for a few seconds
+function peaksPanel(x0, y0, w) {
+  var b = pPsi(boostPeak), cw = w / 3, d = function (v) { return fmt(tC(v), 0) + "°"; };
+  var cells = [["Boost", noBoost() ? NA : fmt(b[0], b[1])],
+               ["RPM", peakText(rpmPeak, gone("rpm"), function (v) { return fmt(v, 0); })],
+               ["G", fmt(Math.max(gPeak.lat, gPeak.lon), 2)],
+               ["Oil", peakText(oilPeak, gone("oiltemp"), d)],
+               ["Water", peakText(waterPeak, gone("watertemp"), d)],
+               ["EGT", peakText(egtPeak, noEgt(), d)]];
+  for (var i = 0; i < cells.length; i++) {
+    var x = x0 + (i % 3) * cw, y = y0 + (i < 3 ? 0 : 70), c = cells[i];
+    label(c[0], x, y + 22, "left", C.grey, 22);
+    txt(c[1], x, y + 58, 34, c[1] === NA ? C.dim : C.white, "left", 700);
+  }
+}
 function rightPanel() {
   var x0 = RIGHT.x0, w = RIGHT.x1 - RIGHT.x0;
+  if (showT >= 0 || clrT >= 0) {                 // session maximums, or the "cleared" confirmation
+    label("Max  " + pPsi(0)[2] + "  " + deg(), x0, RIGHT.top - 16, "left", C.white, 26);
+    if (clrT >= 0) { txt("Cleared", x0 + w / 2, RIGHT.top + 84, 48, C.white, "center", 700); ctx.fillStyle = C.line; ctx.fillRect(x0 + w / 2 - 60, RIGHT.top + 100, 120, 3); }
+    else peaksPanel(x0, RIGHT.top, w);
+    return;
+  }
   var t = PAGES[page] + (PAGE_UNIT(page) ? "  " + PAGE_UNIT(page) : "");
   label(t, x0, RIGHT.top - 16, "left", C.white, 26);
   PAGE_FN[page](x0, RIGHT.top, w);
@@ -404,7 +441,7 @@ function setup(config) {
 // based, so it feels the same at any frame rate, like the round gauges) and draws the frame.
 var raw = { e: {}, m: {} };
 var DISCRETE = { gear: 1, ignitionLevel: 1, lights: 1, lowhighbeam: 1, checkengine: 1, parkingbrake: 1, lowfuel: 1,
-                 dbg_mfd_page: 1, maxrpm: 1, maxBoost: 1, range: 1, engineRunning: 1 };
+                 dbg_mfd_page: 1, dbg_peak_show: 1, dbg_peak_reset: 1, maxrpm: 1, maxBoost: 1, range: 1, engineRunning: 1 };
 var TAU = { rpm: 0.05, boost: 0.06, wheelspeed: 0.1, glat: 0.08, glon: 0.08, fuel: 0.6, fuelVolume: 0.6,
             oiltemp: 0.4, watertemp: 0.4, egt: 0.3, envT: 1.0 };
 function ease(cur, tgt, key, dt) {
@@ -430,7 +467,7 @@ function tick() {
   if (offT >= 0) { offT += dt; if (offT >= OFF_TIME) offT = -1; }
   onT = powered ? onT + dt : 0;
   quietT = Math.max(0, quietT - dt);
-  if (powered && !wasPowered) { bootT = 0; clock = 0; boostPeak = 0; gPeak = { lat: 0, lon: 0 }; nominal = {}; gTrail = []; }
+  if (powered && !wasPowered) { bootT = 0; clock = 0; clearPeaks(); nominal = {}; gTrail = []; showT = -1; clrT = -1; }
   wasPowered = powered;
   // the start-up splash only advances while powered: a shut-down fade that starts during it fades
   // the splash itself instead of jumping to the live screen mid-fade
@@ -451,6 +488,15 @@ function tick() {
   var gx = Number(data.m.glat) || 0, gy = Number(data.m.glon) || 0;
   trailT += dt; if (trailT >= 1 / 30) { trailT = 0; gTrail.push([gx, gy]); if (gTrail.length > 90) gTrail.shift(); }
   gPeak.lat = Math.max(gPeak.lat, Math.abs(gx)); gPeak.lon = Math.max(gPeak.lon, Math.abs(gy));
+  // the other session maximums, from the game's readings (engine speed once the engine has settled)
+  if (powered && bootT < 0) {
+    if (runT > 2 && !gone("rpm")) rpmPeak = hi(rpmPeak, Number(raw.e.rpm) || 0);
+    if (!gone("oiltemp") && typeof raw.e.oiltemp === "number") oilPeak = hi(oilPeak, raw.e.oiltemp);
+    if (!gone("watertemp") && typeof raw.e.watertemp === "number") waterPeak = hi(waterPeak, raw.e.watertemp);
+    if (typeof raw.m.egt === "number") egtPeak = hi(egtPeak, raw.m.egt);
+  }
+  if (showT >= 0) { showT += dt; if (showT >= SHOW_TIME || !powered) showT = -1; }
+  if (clrT >= 0) { clrT += dt; if (clrT >= CLR_TIME || !powered) clrT = -1; }
   render();
 }
 
@@ -474,6 +520,7 @@ function updateData(d) {
   }
   var ign = e.ignitionLevel;
   powered = (ign === undefined || ign === null) ? true : (Number(ign) >= 1);
+  peakKeys(Number(e.dbg_peak_show) || 0, Number(e.dbg_peak_reset) || 0);
   var pc = Number(e.dbg_mfd_page) || 0;                  // page button presses
   if (pageCounter === null) pageCounter = pc;
   if (pc !== pageCounter) { page = (page + ((pc - pageCounter) % PAGES.length) + PAGES.length) % PAGES.length; pageCounter = pc; }
