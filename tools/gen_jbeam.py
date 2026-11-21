@@ -130,7 +130,7 @@ out=f'''{{
 //  Additional Modification -> Digital Pillar Gauges
 //      Lower Gauge: boost (default), oil temp, coolant temp, exhaust temp, fuel level or tachometer
 //      Upper Gauge: empty (default), oil temp, coolant temp, exhaust temp, fuel level, tachometer or boost
-//Every gauge comes with automatic mounting, in black or silver: it picks the position that matches
+//Every gauge comes with automatic mounting, in black, silver or smoked: it picks the position that matches
 //the car's interior (pillar trim, bare pillar or roll cage, left- or right-hand drive).
 "{CAR["root"]}": {{
     "information":{{
@@ -229,20 +229,20 @@ TYPES={"boost":("Boost",BOOST_CFG,BOOST_VARS,["turboBoost","superchargerBoost","
 # positions: (slot, controller, screen material, its own gauge type, other types in list order)
 POSITIONS=((P+"_dbg_boost","dbgGauge","dbg_screen","boost",("oil","water","egt","fuel","tach")),
            (P+"_dbg_oil","dbgOilGauge","dbg_oil_screen","oil",("water","egt","fuel","tach","boost")))
-FINS=(("black","","","black"),("silver","_silver",", Silver","white"))
+# finishes: (name, part key suffix, part name suffix, face for screen.html, mesh letter for the bezel and screen)
+FINS=(("black","","","black","k"),("silver","_silver",", Silver","white","s"),("smoked","_smoked",", Smoked","smoked","m"))
 def auto_part(gi,slot,ctrl,mat,tkey,keyname):
     gname,tcfg,gvars,electrics,facecode=TYPES[tkey]
     el="\n".join('                "%s",'%e for e in electrics)
     global out
     # automatic mounting: every mounting's meshes are fitted; the mod's script shows the matching one
-    for fin,fkey,fname,face in FINS:
+    for fin,fkey,fname,face,k in FINS:
         fb="        //meshes for every mounting (%s); dbgAmbient.lua"%"".join(c for c,_,_ in CAR["AUTO"])+" hides all but the one matching the car's interior\n"
         lines=[]
         for code,key,sx in CAR["AUTO"]:
             (x,y,z),yaw=POS[key][gi]
             pr='{"pos":{"x":%g,"y":%g,"z":%g},"rot":{"x":0,"y":0,"z":%g}}'%(sx*x,y,z,sx*yaw)
             base="dbgv%s%d"%(code,gi+1)
-            k="k" if fin=="black" else "s"
             lines+=['        ["%spod", ["%s"],[],%s],'%(base,GROUP,pr),'        ["%sbz%s", ["%s"],[],%s],'%(base,k,GROUP,pr),'        ["%ss%s%s", ["%s"],[],%s],'%(base,facecode,k,GROUP,pr)]
         cfgf=HEAD_CFG.format(mat=mat)+"\n"+tcfg+'\n            "face":"%s",'%face
         out+=part(f"{keyname}_auto{fkey}", f"{gname} - Automatic Mounting{fname}", slot, gvars, ctrl, cfgf, el, fb+"\n".join(lines))

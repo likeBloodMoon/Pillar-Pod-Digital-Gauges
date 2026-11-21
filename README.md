@@ -56,8 +56,8 @@ If the car doesn't have that reading at all, say a boost gauge on a car with no 
 supercharger, the gauge shows `---` and leaves the LED ring dark, so you don't get a fake 0. The
 display and the cluster do the same.
 
-Every gauge uses Automatic Mounting, in black or in silver with a white face. It works out where to
-sit by itself: on the A-pillar trim, on the bare pillar of a stripped or race interior, or on the
+Every gauge uses Automatic Mounting, in black, in silver with a white face, or smoked (a plain black
+face where the LEDs and digits only show when they light up). It works out where to sit by itself: on the A-pillar trim, on the bare pillar of a stripped or race interior, or on the
 roll cage bar, in left- or right-hand drive.
 
 ### Digital cluster (Covet)

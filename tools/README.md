@@ -20,7 +20,7 @@ These scripts produce or validate the mod's generated assets.
 | `render_demo_gif.py` | Renders `docs/demo-sweep.gif` for the README: a boost and an oil gauge through ignition on, a pull, peak recall and ignition off, on a fixed clock so it comes out the same every time |
 | `render_themes_gif.py` | Renders `docs/colour-themes.gif`: five gauge types in five colour themes through the same drive as the demo, with the oil gauge passing its warning limit in red |
 | `build_viewer.py` | Builds the event viewer (`viewer/viewer.js`) into the in-game Event History app (`ui/modules/apps/PillarPodEvents/app.js`) and the PC page (`viewer/index.html`). `--check` fails if either is out of date; `validate_assets.py` runs it |
-| `bake_faces.py` | Runs `bake_faceplates.html` in headless Chrome and writes all six face textures |
+| `bake_faces.py` | Runs `bake_faceplates.html` in headless Chrome and writes all twelve face textures (black, white and smoked) |
 | `bake_faceplates.html` | Bakes the printed face textures from the display page's own drawing code |
 | `validate_assets.py` | Checks JBeam structure, DAE mesh/material references, material texture paths, JavaScript syntax, Python syntax, and generated JBeam consistency |
 

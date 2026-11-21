@@ -33,7 +33,8 @@ var cfg = {
   unit: "auto",       // boost only: "auto" follows the game's pressure unit setting, or force "psi", "bar", "kpa"
   zeroLed: null,      // fix the zero mark at this LED index (the scale above and below it stretches to fit)
   zeroValue: null,    // LEDs light outwards from this value; below it they show vacuum. null = same as minValue
-  face: "black",      // "black", or "white" for the silver-bezel version (white faceplate is in the material)
+  face: "black",      // "black", "white" for the silver-bezel version (white faceplate is in the material),
+                      // or "smoked" (plain black face: the unlit parts are hidden behind the smoked lens)
   shiftLight: 0,      // boost gauge and tachometer: 1 = the whole LED ring flashes red near the rev limit
   shiftAt: 0.96,      // fraction of the engine's maximum RPM where the shift light starts (a value above 1 is a percentage)
   coldBelow: 0,       // temperature gauges: show a blue COLD mark below this temperature in deg C (0 = off)
@@ -86,6 +87,9 @@ var UNLIT = "#242424", UNLIT_SEG = "#1b1b1b", UNLIT_RED = "#3a0f0b";
 // The EGT face has no printed digits, so this page draws its unlit "8"s on the glowing layer, and the
 // game's glow makes even dark grey look half lit there (374 read as 874 in game). Drawn far darker.
 var UNLIT_SEG_GLOW = "#060606";
+// Smoked lens: with the gauge off the face looks plain black. The LEDs are only a faint shadow behind
+// the lens; the "8" segments and the PEAK and WARN lights aren't printed at all.
+var SMOKED_FACE = "#040405", UNLIT_SMOKED = "#0e0e0f", UNLIT_RED_SMOKED = "#130605";
 
 // 7-segment digit map: segments a b c d e f g
 var SEG = {
@@ -226,14 +230,21 @@ function buildBackground(on) {
   g.fillStyle = TH.unit || "#ffb300";
   g.font = "bold 36px Arial, Helvetica, sans-serif";
   g.fillText(cfg.unitLabel, CX, DY - 16);
-  if (!cfg.printedDigits) { unlitDigits(g); g.shadowBlur = 0; }
+  if (!cfg.printedDigits && cfg.face !== "smoked") { unlitDigits(g); g.shadowBlur = 0; }
   return c;
 }
 
 // The printed face, used to bake the material's base-colour textures (not used at runtime).
-function buildStaticFace(white) {
+// fin: "black", "white" (the silver version's faceplate; true also means white) or "smoked".
+function buildStaticFace(fin) {
   var c = layer(W, W), g = c.getContext("2d"), n = cfg.ledCount, z = zeroLed(), i, a;
+  var white = fin === true || fin === "white", smoked = fin === "smoked";
   g.fillStyle = "#000"; g.fillRect(0, 0, W, W);
+  if (smoked) {
+    g.beginPath(); g.arc(CX, CY, 255, 0, 7); g.fillStyle = SMOKED_FACE; g.fill();
+    for (i = 0; i < n; i++) drawLed(g, i, isRed(i) ? UNLIT_RED_SMOKED : UNLIT_SMOKED, false);
+    return c;
+  }
   if (white) {
     g.beginPath(); g.arc(CX, CY, 255, 0, 7); g.fillStyle = "#b2b2ae"; g.fill();      // faceplate
     g.beginPath(); g.arc(CX, CY, 180, 0, 7); g.fillStyle = "#080808"; g.fill();      // display window (fits the larger digits)

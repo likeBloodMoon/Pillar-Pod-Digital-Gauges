@@ -1,4 +1,4 @@
-"""Bake the printed face textures (dbg_face_<black|white>_<boost|oil|fuel|egt>_b.color.png) with headless
+"""Bake the printed face textures (dbg_face_<black|white|smoked>_<boost|oil|fuel|egt>_b.color.png) with headless
 Chrome, using bake_faceplates.html and the display page's own drawing code.
 
     pip install playwright
@@ -15,7 +15,7 @@ async def main():
         b = await p.chromium.launch(executable_path=CHROME, args=['--allow-file-access-from-files'])
         pg = await b.new_page(viewport={'width': 512, 'height': 512})
         for face in ('boost', 'oil', 'fuel', 'egt'):
-            for fin in ('black', 'white'):
+            for fin in ('black', 'white', 'smoked'):
                 await pg.goto('about:blank')                 # a hash-only change would not reload the page
                 await pg.goto('file://' + ROOT + '/tools/bake_faceplates.html#' + face + ',' + fin)
                 await pg.wait_for_timeout(700)
